@@ -249,33 +249,36 @@ export default function App(){
   const handleDownload=async()=>{
     setDownloading(true);
     try{
-      if(!window.html2pdf){
-        await new Promise((res,rej)=>{
-          const s=document.createElement('script');
-          s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
-          s.onload=res;s.onerror=rej;document.head.appendChild(s);
-        });
-      }
-      const pages=document.querySelectorAll('.a4');
+      /* Load html2canvas and jsPDF separately for more control */
+      const loadJS=src=>new Promise((r,j)=>{if(document.querySelector('script[src="'+src+'"]'))return r();const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=j;document.head.appendChild(s)});
+      await loadJS('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+      await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js');
+      
+      const pages=[...document.querySelectorAll('.a4')];
       if(!pages.length){setDownloading(false);return;}
-      /* Clone pages into a temp container with exact A4 width */
-      const tmp=document.createElement('div');
-      tmp.style.cssText='position:absolute;left:-9999px;top:0;width:794px;background:#fff;';
-      pages.forEach(p=>{const c=p.cloneNode(true);c.style.boxShadow='none';c.style.margin='0';c.style.width='794px';tmp.appendChild(c)});
-      document.body.appendChild(tmp);
+      
+      const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+      const pw=210;const ph=297; /* A4 mm */
+      
+      for(let i=0;i<pages.length;i++){
+        if(i>0)pdf.addPage();
+        const canvas=await window.html2canvas(pages[i],{
+          scale:2,useCORS:true,backgroundColor:'#ffffff',
+          width:794,windowWidth:794,scrollY:-window.scrollY
+        });
+        const imgData=canvas.toDataURL('image/jpeg',0.95);
+        /* Scale image to fit A4 exactly */
+        const imgW=canvas.width;const imgH=canvas.height;
+        const ratio=Math.min(pw/(imgW/2),ph/(imgH/2));
+        const w=imgW/2*ratio;const h=imgH/2*ratio;
+        pdf.addImage(imgData,'JPEG',0,0,w,h);
+      }
+      
       const name=f.customerName||'Contract';
-      const fn=`SeatOS_${name.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`;
-      await window.html2pdf(tmp,{
-        margin:0,filename:fn,
-        image:{type:'jpeg',quality:0.98},
-        html2canvas:{scale:2,useCORS:true,width:794,windowWidth:794},
-        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-        pagebreak:{mode:['css'],before:'.a4'}
-      });
-      document.body.removeChild(tmp);
+      pdf.save(`SeatOS_${name.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`);
     }catch(e){
       console.error('PDF error:',e);
-      try{window.print()}catch(e2){alert('Please use Ctrl+P / Cmd+P to print.')}
+      window.print();
     }
     setDownloading(false);
   };
