@@ -245,28 +245,50 @@ export default function App(){
   const f=form;const co=company;const curL=cur+" "+pr.name;
   let pn=0;const pgN=()=>++pn;
 
-  const handleDownload=()=>{
-    // Collect all A4 pages
-    const pages=document.querySelectorAll('.a4');
-    if(!pages.length){window.print();return;}
-    const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>SeatOS Contract</title><style>@page{size:A4;margin:20mm}*{margin:0;padding:0;box-sizing:border-box}body{background:#fff;font-family:Arial,Helvetica,sans-serif}.a4{width:794px;background:#fff;padding:48px 56px 40px;position:relative;page-break-after:always;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.5;color:#222}.a4:last-child{page-break-after:auto}@media print{.a4{box-shadow:none!important;margin:0!important}}</style></head><body>${Array.from(pages).map(p=>p.outerHTML).join('')}</body></html>`;
-    const blob=new Blob([html],{type:'text/html'});
-    const url=URL.createObjectURL(blob);
-    const w=window.open(url,'_blank');
-    if(w){setTimeout(()=>{w.print()},800)}else{
-      const a=document.createElement('a');a.href=url;a.download='SeatOS_Contract.html';a.click();
+  const [downloading, setDownloading] = useState(false);
+
+  const loadScript=(src)=>new Promise((res,rej)=>{
+    if(window.html2pdf)return res();
+    const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);
+  });
+
+  const handleDownload=async()=>{
+    setDownloading(true);
+    try{
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js');
+      const pages=document.querySelectorAll('.a4');
+      if(!pages.length){setDownloading(false);return;}
+      const customerName=f.customerName||'Contract';
+      const filename=`SeatOS_${customerName.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`;
+      
+      /* Generate PDF page-by-page */
+      let worker=window.html2pdf().set({
+        margin:0,filename,
+        image:{type:'jpeg',quality:0.95},
+        html2canvas:{scale:2,useCORS:true,width:794,scrollY:0},
+        jsPDF:{unit:'px',format:[794,1123],orientation:'portrait',hotfixes:['px_scaling']},
+      });
+      worker=worker.from(pages[0]).toContainer().toCanvas().toPdf();
+      for(let i=1;i<pages.length;i++){
+        worker=worker.get('pdf').then(pdf=>{pdf.addPage()});
+        worker=worker.from(pages[i]).toContainer().toCanvas().toPdf();
+      }
+      await worker.save();
+    }catch(e){
+      console.error('PDF failed, using print:',e);
+      window.print();
     }
+    setDownloading(false);
   };
 
   return(
     <div style={ui.app}>
-      <style>{`@media print{body,html{margin:0;padding:0;background:#fff!important}.no-print{display:none!important}.a4{box-shadow:none!important;margin:0!important;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.a4:last-child{page-break-after:auto}@page{size:A4;margin:20mm}}`}</style>
+      <style>{`@media print{body,html{margin:0;padding:0;background:#fff!important}.no-print{display:none!important}.a4{box-shadow:none!important;margin:0!important;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.a4:last-child{page-break-after:auto}@page{size:A4;margin:0}}`}</style>
       <div className="no-print" style={{position:"sticky",top:0,zIndex:100,background:"rgba(245,240,235,.95)",backdropFilter:"blur(8px)",padding:"12px 24px",display:"flex",justifyContent:"center",gap:16,borderBottom:"1px solid #e0d8d0"}}>
         <button style={{...ui.btn,...ui.sec2,padding:"10px 24px",fontSize:14}} onClick={()=>setView("form")}>← Back to Edit</button>
-        <button style={{...ui.btn,...ui.pri,padding:"10px 24px",fontSize:14}} onClick={handleDownload}>Download PDF</button>
-        <button style={{...ui.btn,padding:"10px 24px",fontSize:14,background:"#555",color:"#fff"}} onClick={()=>{const pages=document.querySelectorAll('.a4');const html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>SeatOS Contract</title><style>@page{size:A4;margin:20mm}*{margin:0;padding:0;box-sizing:border-box}body{background:#fff;font-family:Arial,Helvetica,sans-serif}.a4{width:794px;background:#fff;padding:48px 56px 40px;position:relative;page-break-after:always;font-size:10px;line-height:1.5;color:#222}.a4:last-child{page-break-after:auto}</style></head><body>'+Array.from(pages).map(p=>p.outerHTML).join('')+'</body></html>';const blob=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SeatOS_Contract.html';a.click()}}>Save HTML</button>
+        <button style={{...ui.btn,...ui.pri,padding:"10px 24px",fontSize:14,opacity:downloading?0.6:1}} onClick={handleDownload} disabled={downloading}>{downloading?"Generating PDF...":"Download PDF"}</button>
       </div>
-      <div style={{maxWidth:840,margin:"24px auto",padding:"0 16px 80px"}}>
+      <div id="contract-pages" style={{maxWidth:840,margin:"24px auto",padding:"0 16px 80px"}}>
 
 {/* PAGE 1 */}
 <div className="a4" style={pg.page}>
