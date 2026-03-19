@@ -18,16 +18,17 @@ const TERMS=[{l:"1 Year",m:12},{l:"2 Years",m:24},{l:"3 Years",m:36},{l:"4 Years
 const TGO=["12Go (Thailand) Co., Ltd.","12Go Asia PTE. LTD."];
 const fN=(n,c)=>{if(!n&&n!==0)return"";const d=["IDR","VND"].includes(c)?0:2;return Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d})};
 
-/* ═══ UI ═══ */
-const ui={app:{fontFamily:"'Segoe UI',Tahoma,sans-serif",background:"#F5F0EB",minHeight:"100vh"},wrap:{maxWidth:880,margin:"0 auto",padding:"32px 16px 80px"},card:{background:"#fff",borderRadius:16,padding:"24px 28px",marginBottom:20,boxShadow:"0 2px 12px rgba(0,0,0,.06)"},ct:{fontSize:15,fontWeight:700,color:"#E91E8C",marginBottom:14,display:"flex",alignItems:"center",gap:8,justifyContent:"space-between"},g2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14},g3:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14},lb:{fontSize:11.5,fontWeight:600,color:"#555",marginBottom:3,display:"block"},inp:{width:"100%",padding:"10px 12px",borderRadius:10,border:"1.5px solid #ddd",fontSize:14,outline:"none",boxSizing:"border-box"},sel:{width:"100%",padding:"10px 12px",borderRadius:10,border:"1.5px solid #ddd",fontSize:14,outline:"none",boxSizing:"border-box",background:"#fff",cursor:"pointer"},full:{gridColumn:"1/-1"},btn:{padding:"14px 36px",borderRadius:12,border:"none",fontWeight:700,fontSize:16,cursor:"pointer"},pri:{background:"linear-gradient(135deg,#E8850C,#E91E8C)",color:"#fff",boxShadow:"0 4px 20px rgba(232,133,12,.35)"},sec2:{background:"#fff",color:"#E8850C",border:"2px solid #E8850C"},badge:{display:"inline-block",background:"#FFF3E0",color:"#E8850C",fontWeight:700,padding:"3px 12px",borderRadius:8,fontSize:12}};
+/* ═══ UI — seatOS CI: beige bg, orange/pink/green/cyan/purple, rounded, playful ═══ */
+const CI={orange:"#F5A623",pink:"#E91E8C",green:"#4CAF50",cyan:"#00BCD4",purple:"#7C4DFF",bg:"#F5F0EB",dark:"#2D2D2D"};
+const ui={app:{fontFamily:"'Nunito','Segoe UI',Tahoma,sans-serif",background:CI.bg,minHeight:"100vh"},wrap:{maxWidth:880,margin:"0 auto",padding:"32px 16px 80px"},card:{background:"#fff",borderRadius:24,padding:"28px 28px",marginBottom:20,boxShadow:"0 4px 20px rgba(0,0,0,.05)",border:"1px solid rgba(0,0,0,.04)"},ct:{fontSize:15,fontWeight:800,color:CI.dark,marginBottom:14,display:"flex",alignItems:"center",gap:10,justifyContent:"space-between"},g2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14},g3:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14},lb:{fontSize:11.5,fontWeight:700,color:"#777",marginBottom:4,display:"block",textTransform:"uppercase",letterSpacing:"0.5px"},inp:{width:"100%",padding:"12px 14px",borderRadius:14,border:"2px solid #e8e4df",fontSize:14,outline:"none",boxSizing:"border-box",transition:"border .2s,box-shadow .2s"},sel:{width:"100%",padding:"12px 14px",borderRadius:14,border:"2px solid #e8e4df",fontSize:14,outline:"none",boxSizing:"border-box",background:"#fff",cursor:"pointer"},full:{gridColumn:"1/-1"},btn:{padding:"14px 36px",borderRadius:50,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",transition:"transform .15s,box-shadow .15s"},pri:{background:CI.orange,color:"#fff",boxShadow:"0 4px 16px rgba(245,166,35,.3)"},sec2:{background:"#fff",color:CI.orange,border:`2px solid ${CI.orange}`},badge:{display:"inline-block",background:"#FFF3E0",color:CI.orange,fontWeight:800,padding:"4px 14px",borderRadius:50,fontSize:12}};
 const pg={page:{width:794,background:"#fff",padding:"48px 56px 40px",boxSizing:"border-box",position:"relative",pageBreakAfter:"always",marginBottom:24,boxShadow:"0 2px 16px rgba(0,0,0,.1)",fontFamily:"Arial,Helvetica,sans-serif",fontSize:10,lineHeight:1.5,color:"#222"},hr:{height:2,background:"#000",margin:"4px 0 8px"},title:{fontSize:13,fontWeight:700,textAlign:"center",margin:"12px 0 8px"},secTitle:{fontSize:11,fontWeight:700,textDecoration:"underline",margin:"14px 0 6px"},tbl:{width:"100%",borderCollapse:"collapse",fontSize:9.5,marginBottom:8},thDark:{background:"#333",color:"#fff",border:"1px solid #333",padding:"4px 6px",textAlign:"left",fontWeight:700,fontSize:9},th:{background:"#f5f5f5",border:"1px solid #ccc",padding:"4px 6px",textAlign:"left",fontWeight:700,fontSize:9},td:{border:"1px solid #ccc",padding:"4px 6px",fontSize:9.5,verticalAlign:"top"},tdB:{border:"1px solid #ccc",padding:"4px 6px",fontSize:9.5,verticalAlign:"top",fontWeight:700},ft:{display:"flex",justifyContent:"space-between",fontSize:8,color:"#999",borderTop:"1px solid #eee",paddingTop:6,marginTop:16},init:{textAlign:"right",fontSize:8.5,color:"#555",marginTop:12}};
 
 /* Components */
-const Inp=({label,value,onChange,type="text",ph="",style={},disabled=false})=>(<div style={style}><label style={ui.lb}>{label}</label><input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={ph} disabled={disabled} style={{...ui.inp,...(disabled?{background:"#f5f5f5",color:"#999"}:{})}} onFocus={e=>{if(!disabled)e.target.style.borderColor="#E8850C"}} onBlur={e=>{e.target.style.borderColor="#ddd"}}/></div>);
-const Sel=({label,value,onChange,opts,style={}})=>(<div style={style}><label style={ui.lb}>{label}</label><select value={value} onChange={e=>onChange(e.target.value)} style={ui.sel}>{opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}</select></div>);
-const Tog=({label,value,onChange})=>(<div style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:14,fontWeight:600,color:"#555"}} onClick={()=>onChange(!value)}><div style={{width:44,height:24,borderRadius:12,background:value?"#E8850C":"#ccc",position:"relative",flexShrink:0}}><div style={{width:20,height:20,borderRadius:10,background:"#fff",position:"absolute",top:2,left:value?22:2,transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,.2)"}}/></div><span>{label}</span></div>);
-const Chk=({label,value,onChange})=>(<div style={{display:"flex",alignItems:"center",cursor:"pointer",gap:6}} onClick={()=>onChange(!value)}><span style={{width:20,height:20,borderRadius:4,border:value?"2px solid #E8850C":"2px solid #ddd",background:value?"#E8850C":"#fff",color:"#fff",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,flexShrink:0}}>{value?"✓":""}</span><span style={{fontSize:14,color:"#555"}}>{label}</span></div>);
-const Waive=({on,set})=>(<span style={{display:"inline-flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,color:on?"#e53935":"#aaa",fontWeight:600,marginLeft:8}} onClick={()=>set(!on)}><span style={{width:16,height:16,borderRadius:3,border:on?"2px solid #e53935":"2px solid #ccc",background:on?"#e53935":"#fff",color:"#fff",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,flexShrink:0}}>{on?"✕":""}</span>Waive</span>);
+const Inp=({label,value,onChange,type="text",ph="",style={},disabled=false})=>(<div style={style}><label style={ui.lb}>{label}</label><input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={ph} disabled={disabled} style={{...ui.inp,...(disabled?{background:"#f7f5f2",color:"#999",border:"2px solid #e8e4df"}:{})}} onFocus={e=>{if(!disabled){e.target.style.borderColor=CI.orange;e.target.style.boxShadow="0 0 0 3px rgba(245,166,35,.15)"}}} onBlur={e=>{e.target.style.borderColor="#e8e4df";e.target.style.boxShadow="none"}}/></div>);
+const Sel=({label,value,onChange,opts,style={}})=>(<div style={style}><label style={ui.lb}>{label}</label><select value={value} onChange={e=>onChange(e.target.value)} style={ui.sel} onFocus={e=>{e.target.style.borderColor=CI.orange}} onBlur={e=>{e.target.style.borderColor="#e8e4df"}}>{opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}</select></div>);
+const Tog=({label,value,onChange})=>(<div style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:14,fontWeight:700,color:CI.dark}} onClick={()=>onChange(!value)}><div style={{width:48,height:26,borderRadius:13,background:value?CI.green:"#ccc",position:"relative",flexShrink:0,transition:"background .2s"}}><div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:2,left:value?24:2,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/></div><span>{label}</span></div>);
+const Chk=({label,value,onChange})=>(<div style={{display:"flex",alignItems:"center",cursor:"pointer",gap:8}} onClick={()=>onChange(!value)}><span style={{width:22,height:22,borderRadius:6,border:value?`2px solid ${CI.green}`:"2px solid #d0ccc7",background:value?CI.green:"#fff",color:"#fff",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,flexShrink:0,transition:"all .15s"}}>{value?"✓":""}</span><span style={{fontSize:14,fontWeight:600,color:CI.dark}}>{label}</span></div>);
+const Waive=({on,set})=>(<span style={{display:"inline-flex",alignItems:"center",gap:5,cursor:"pointer",fontSize:11,color:on?CI.pink:"#bbb",fontWeight:700,marginLeft:8}} onClick={()=>set(!on)}><span style={{width:18,height:18,borderRadius:4,border:on?`2px solid ${CI.pink}`:"2px solid #d0ccc7",background:on?CI.pink:"#fff",color:"#fff",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,flexShrink:0}}>{on?"✕":""}</span>Waive</span>);
 const Ft=({label,n})=>(<><div style={pg.init}>Initial (SeatOS): ...............................................</div><div style={pg.ft}><span>{label}</span><span>Page {n}</span></div></>);
 
 export default function App(){
@@ -46,8 +47,7 @@ export default function App(){
     discount:"",taxes:"",offsetArrangements:"",
     custSignName:"",custSignTitle:"",custSignAddress:"",custSignEmail:"",custSignPhone:"",
     billingContact:"",billingEmail:"",billingPhone:"",
-    specialTerm1:"In order to utilize the capacity of the Licensed Software, the Customer undertakes to process and manage offline and online all ticket bookings using the Licensed Software (seatOS), thereby improving inventory management and reducing poor customer experience caused by booking decline.",
-    specialTerm2:"In the event that the Customer requests a new feature to be developed for the Licensed Software, the Customer agrees to process and manage all offline and online ticket bookings using the Licensed Software (seatOS) only.",
+    specialTerms:["In order to utilize the capacity of the Licensed Software, the Customer undertakes to process and manage offline and online all ticket bookings using the Licensed Software (seatOS), thereby improving inventory management and reducing poor customer experience caused by booking decline.","In the event that the Customer requests a new feature to be developed for the Licensed Software, the Customer agrees to process and manage all offline and online ticket bookings using the Licensed Software (seatOS) only."],
     includeAmendment:true,twelveGoEntity:TGO[0]
   });
   const[view,setView]=useState("form");
@@ -74,11 +74,14 @@ export default function App(){
     const upP=(c,k,v)=>setPricing(p=>{const n={...p};n[c]={...n[c],[k]:v};return n});
     const upC=(k,v)=>setCompany(p=>({...p,[k]:v}));
     return(
-    <div style={ui.app}><div style={ui.wrap}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-        <h1 style={{fontSize:24,fontWeight:800,color:"#E8850C"}}>⚙️ Settings</h1>
-        <button style={{...ui.btn,...ui.pri,padding:"10px 24px",fontSize:14}} onClick={()=>setShowSettings(false)}>← Back to Builder</button>
+    <div style={ui.app}>
+      <div style={{background:`linear-gradient(135deg,${CI.purple},${CI.cyan})`,padding:"24px 0 20px"}}>
+        <div style={{maxWidth:880,margin:"0 auto",padding:"0 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <h1 style={{fontSize:26,fontWeight:900,color:"#fff",margin:0}}>⚙️ Settings</h1>
+          <button style={{...ui.btn,background:"rgba(255,255,255,.2)",color:"#fff",padding:"10px 22px",fontSize:13,border:"1.5px solid rgba(255,255,255,.3)"}} onClick={()=>setShowSettings(false)}>← Back to Builder</button>
+        </div>
       </div>
+      <div style={ui.wrap}>
 
       <div style={ui.card}><div style={ui.ct}><span>🏢 Company (SeatOS) Details</span></div>
         <div style={ui.g2}>
@@ -107,24 +110,26 @@ export default function App(){
         </div>
       ))}
 
-      <button style={{...ui.btn,background:"#e53935",color:"#fff",width:"100%"}} onClick={()=>{setPricing(JSON.parse(JSON.stringify(DEF_PRICING)));setCompany({...DEF_COMPANY})}}>Reset to Defaults</button>
+      <button style={{...ui.btn,background:"#E91E8C",color:"#fff",width:"100%"}} onClick={()=>{setPricing(JSON.parse(JSON.stringify(DEF_PRICING)));setCompany({...DEF_COMPANY})}}>Reset to Defaults</button>
     </div></div>
   )}
 
   /* ═══ FORM ═══ */
   if(view==="form"){return(
-    <div style={ui.app}><div style={ui.wrap}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-        <Lg w={180}/>
-        <button style={{...ui.btn,...ui.sec2,padding:"8px 20px",fontSize:13}} onClick={()=>setShowSettings(true)}>⚙️ Settings</button>
+    <div style={ui.app}>
+    <div style={ui.wrap}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24}}>
+        <div>
+          <h1 style={{fontSize:30,fontWeight:900,color:CI.dark,margin:0,letterSpacing:"-0.5px"}}>Contract Builder</h1>
+          <p style={{fontSize:14,color:"#999",margin:"4px 0 0"}}>SeatOS Software Subscription &amp; Services Agreement</p>
+        </div>
+        <button style={{...ui.btn,background:"#fff",color:"#777",padding:"10px 22px",fontSize:13,border:"2px solid #e8e4df"}} onClick={()=>setShowSettings(true)}>⚙️ Settings</button>
       </div>
-      <h1 style={{fontSize:28,fontWeight:800,color:"#E8850C",marginBottom:4}}>Contract Builder</h1>
-      <p style={{fontSize:14,color:"#888",marginBottom:28}}>Generate a SeatOS Software Subscription &amp; Services Agreement.</p>
 
       {/* Order Type */}
       <div style={ui.card}><div style={ui.ct}><span>📋 Order Type</span></div>
         <div style={{display:"flex",gap:12}}>
-          {["regular","bundle"].map(v=>(<button key={v} onClick={()=>up("orderType")(v)} style={{flex:1,padding:"14px",borderRadius:12,border:form.orderType===v?"2px solid #E8850C":"2px solid #eee",background:form.orderType===v?"#FFF8F0":"#fff",fontWeight:700,fontSize:15,cursor:"pointer",color:form.orderType===v?"#E8850C":"#999"}}>{v==="regular"?"📄 Regular":"📦 Bundle"}</button>))}
+          {["regular","bundle"].map(v=>(<button key={v} onClick={()=>up("orderType")(v)} style={{flex:1,padding:"16px",borderRadius:20,border:form.orderType===v?`3px solid ${CI.orange}`:"3px solid transparent",background:form.orderType===v?"#FFF8F0":"#fff",fontWeight:800,fontSize:15,cursor:"pointer",color:form.orderType===v?CI.orange:"#bbb",boxShadow:form.orderType===v?"0 4px 16px rgba(245,166,35,.2)":"none",transition:"all .2s"}}>{v==="regular"?"📄 Regular":"📦 Bundle"}</button>))}
         </div>
       </div>
 
@@ -133,7 +138,7 @@ export default function App(){
         <div style={ui.g3}>
           <Sel label="Country *" value={form.country} onChange={up("country")} opts={COUNTRIES.map(c=>({v:c,l:c}))}/>
           <Sel label="Currency *" value={form.currency} onChange={up("currency")} opts={CURRENCIES.map(c=>({v:c,l:c+" — "+pricing[c].name}))}/>
-          <div><label style={ui.lb}>Rate</label><div style={{padding:"10px 12px",background:"#FFF8F0",borderRadius:10,border:"1.5px solid #E8850C",fontWeight:700,color:"#E8850C",fontSize:14}}>{isBundle?"Bundle":"Regular"} ({cur})</div></div>
+          <div><label style={ui.lb}>Rate</label><div style={{padding:"10px 12px",background:"#FFF8F0",borderRadius:14,border:`2px solid ${CI.orange}`,fontWeight:800,color:CI.orange,fontSize:14}}>{isBundle?"Bundle":"Regular"} ({cur})</div></div>
         </div>
       </div>
 
@@ -170,17 +175,17 @@ export default function App(){
         {/* Admin */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Admin &amp; Maintenance (Monthly)</b><Waive on={form.wAdmin} set={up("wAdmin")}/></div>
           {!form.wAdmin&&<Inp label="" value={form.adminFee} onChange={up("adminFee")} ph={String(pr.admin)}/>}
-          {form.wAdmin&&<div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #e53935",color:"#e53935",fontSize:13,fontWeight:600}}>Waived</div>}
+          {form.wAdmin&&<div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600}}>Waived</div>}
         </div>
         {/* Implementation */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><Chk label="Implementation & Configuration" value={form.implEnabled} onChange={up("implEnabled")}/><Waive on={form.wImpl} set={up("wImpl")}/></div>
           {form.implEnabled&&!form.wImpl&&<Inp label="" value={form.implFee} onChange={up("implFee")} ph={String(pr.impl)}/>}
-          {form.wImpl&&<div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #e53935",color:"#e53935",fontSize:13,fontWeight:600}}>Waived</div>}
+          {form.wImpl&&<div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600}}>Waived</div>}
         </div>
         {/* SMS */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><Chk label="SMS Notification" value={form.smsEnabled} onChange={up("smsEnabled")}/><Waive on={form.wSms} set={up("wSms")}/></div>
           {form.smsEnabled&&!form.wSms&&<Inp label="" value={form.smsFee} onChange={up("smsFee")} ph={String(pr.sms)}/>}
-          {form.wSms&&<div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #e53935",color:"#e53935",fontSize:13,fontWeight:600}}>Waived</div>}
+          {form.wSms&&<div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600}}>Waived</div>}
         </div>
       </div>
 
@@ -223,10 +228,15 @@ export default function App(){
         </div>
       </div>
 
-      {/* Special Terms */}
-      <div style={ui.card}><div style={ui.ct}><span>📝 Special Terms</span></div>
-        <Inp label="Term 1" value={form.specialTerm1} onChange={up("specialTerm1")} style={{marginBottom:12}}/>
-        <Inp label="Term 2" value={form.specialTerm2} onChange={up("specialTerm2")}/>
+      {/* Special Terms — dynamic list */}
+      <div style={ui.card}><div style={ui.ct}><span>📝 Special Terms</span><button style={{background:"none",border:`2px solid ${CI.green}`,color:CI.green,borderRadius:50,padding:"4px 14px",fontSize:13,fontWeight:800,cursor:"pointer"}} onClick={()=>setForm(p=>({...p,specialTerms:[...p.specialTerms,""]}))}>+ Add Term</button></div>
+        {form.specialTerms.map((t,i)=>(
+          <div key={i} style={{display:"flex",gap:8,marginBottom:10,alignItems:"flex-start"}}>
+            <span style={{fontSize:12,fontWeight:700,color:"#999",paddingTop:12,flexShrink:0}}>{i+1}.</span>
+            <textarea value={t} onChange={e=>{const arr=[...form.specialTerms];arr[i]=e.target.value;setForm(p=>({...p,specialTerms:arr}))}} placeholder="Enter special term..." style={{...ui.inp,minHeight:60,resize:"vertical",flex:1}}/>
+            {form.specialTerms.length>1&&<button onClick={()=>{const arr=form.specialTerms.filter((_,j)=>j!==i);setForm(p=>({...p,specialTerms:arr}))}} style={{background:"none",border:"none",color:"#e53935",fontSize:18,cursor:"pointer",padding:"8px",flexShrink:0,fontWeight:700}}>✕</button>}
+          </div>
+        ))}
       </div>
 
       {isBundle&&<div style={ui.card}><div style={ui.ct}><span>📦 Bundle: 12GO</span></div><Sel label="12GO Entity" value={form.twelveGoEntity} onChange={up("twelveGoEntity")} opts={TGO.map(e=>({v:e,l:e}))}/></div>}
@@ -296,9 +306,9 @@ window.onload=function(){
   return(
     <div style={ui.app}>
       <style>{`@media print{body,html{margin:0;padding:0;background:#fff!important}.no-print{display:none!important}.a4{box-shadow:none!important;margin:0!important;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.a4:last-child{page-break-after:auto}@page{size:A4;margin:0}}`}</style>
-      <div className="no-print" style={{position:"sticky",top:0,zIndex:100,background:"rgba(245,240,235,.95)",backdropFilter:"blur(8px)",padding:"12px 24px",display:"flex",justifyContent:"center",gap:16,borderBottom:"1px solid #e0d8d0"}}>
-        <button style={{...ui.btn,...ui.sec2,padding:"10px 24px",fontSize:14}} onClick={()=>setView("form")}>← Back to Edit</button>
-        <button style={{...ui.btn,...ui.pri,padding:"10px 24px",fontSize:14}} onClick={handleDownload}>Download PDF</button>
+      <div className="no-print" style={{position:"sticky",top:0,zIndex:100,background:`linear-gradient(135deg,${CI.orange},${CI.pink})`,padding:"14px 24px",display:"flex",justifyContent:"center",gap:16}}>
+        <button style={{...ui.btn,background:"rgba(255,255,255,.2)",color:"#fff",padding:"10px 24px",fontSize:14,border:"1.5px solid rgba(255,255,255,.3)"}} onClick={()=>setView("form")}>← Back to Edit</button>
+        <button style={{...ui.btn,background:"#fff",color:CI.orange,padding:"10px 24px",fontSize:14,fontWeight:800}} onClick={handleDownload}>Download PDF</button>
       </div>
       <div id="contract-pages" style={{maxWidth:840,margin:"24px auto",padding:"0 16px 80px"}}>
 
@@ -333,7 +343,7 @@ window.onload=function(){
 <thead><tr><th style={pg.th}>Type</th><th style={{...pg.th,width:36}}>YES</th><th style={{...pg.th,width:36}}>NO</th><th style={{...pg.th,width:100}}>Invoicing</th><th style={{...pg.th,width:80}}>Fees ({cur})</th></tr></thead>
 <tbody>
 <tr><td style={pg.td}>Hosting</td><td colSpan={2} style={{...pg.td,fontSize:8.5}}>Included in Admin Fee</td><td style={pg.td}>Monthly</td><td style={pg.td}></td></tr>
-<tr><td style={pg.td}>Implementation and Configuration</td><td style={{...pg.td,textAlign:"center"}}>{f.implEnabled&&!f.wImpl?"✓":""}</td><td style={{...pg.td,textAlign:"center"}}>{!f.implEnabled||f.wImpl?"✓":""}</td><td style={pg.td}>One-time</td><td style={{...pg.td,textAlign:"right"}}>{f.wImpl?"Waived":(!f.implEnabled?"—":fN(v_impl,cur))}</td></tr>
+<tr><td style={pg.td}>Implementation and Configuration</td><td style={{...pg.td,textAlign:"center"}}>{f.implEnabled?"✓":""}</td><td style={{...pg.td,textAlign:"center"}}>{!f.implEnabled?"✓":""}</td><td style={pg.td}>One-time</td><td style={{...pg.td,textAlign:"right"}}>{!f.implEnabled?"—":(f.wImpl?"Waived":fN(v_impl,cur))}</td></tr>
 <tr><td style={pg.td}>Help Desk Support</td><td colSpan={2} style={{...pg.td,fontSize:8.5}}>Included in Admin Fee</td><td style={pg.td}></td><td style={pg.td}></td></tr>
 </tbody></table>
 
@@ -349,7 +359,7 @@ window.onload=function(){
 <div style={{fontWeight:700,fontSize:10,margin:"10px 0 4px"}}>ANCILLARY CHARGES</div>
 <table style={pg.tbl}>
 <thead><tr><th style={pg.th}>Type</th><th style={{...pg.th,width:36}}>YES</th><th style={{...pg.th,width:36}}>NO</th><th style={{...pg.th,width:100}}>Invoicing</th><th style={{...pg.th,width:80}}>Fees ({cur})</th></tr></thead>
-<tbody><tr><td style={pg.td}>SMS notification</td><td style={{...pg.td,textAlign:"center"}}>{f.smsEnabled&&!f.wSms?"✓":""}</td><td style={{...pg.td,textAlign:"center"}}>{!f.smsEnabled||f.wSms?"✓":""}</td><td style={pg.td}>Monthly</td><td style={{...pg.td,textAlign:"right"}}>{f.wSms?"Waived":(!f.smsEnabled?"—":fN(v_sms,cur))}</td></tr></tbody>
+<tbody><tr><td style={pg.td}>SMS notification</td><td style={{...pg.td,textAlign:"center"}}>{f.smsEnabled?"✓":""}</td><td style={{...pg.td,textAlign:"center"}}>{!f.smsEnabled?"✓":""}</td><td style={pg.td}>Monthly</td><td style={{...pg.td,textAlign:"right"}}>{!f.smsEnabled?"—":(f.wSms?"Waived":fN(v_sms,cur))}</td></tr></tbody>
 </table>
 <div style={{fontWeight:700,fontSize:10,margin:"10px 0 4px"}}>FEES SUMMARY</div>
 <table style={pg.tbl}>
@@ -375,7 +385,7 @@ window.onload=function(){
 <p style={{fontSize:9,margin:"6px 0",textAlign:"justify"}}><b>Offset Arrangements:</b> {f.offsetArrangements||"The Company reserves the right to offset any amounts due to it (under any agreement) against any amounts payable to the Customer under this Agreement. Furthermore, this Agreement provides the Company the option to specifically offset payments received from Customer's subscription services against any due payments to the Company and its affiliates, as part of the settlement process."}</p>
 {isBundle&&(<div style={{margin:"10px 0"}}><p style={{fontSize:9,textAlign:"justify",marginBottom:6}}><b>12GO Borne Fees:</b> Notwithstanding anything to the contrary in this Order, all fees shall be borne by {f.twelveGoEntity} ("12GO"), an affiliate of the Company (the "12GO Borne Fees"), for as long as the Travel Supply Services Supplier Agreement, attached to this Order as Schedule D (the "Travel Supplier Services Agreement"), remains in full force and effect.</p><p style={{fontSize:9,textAlign:"justify",marginBottom:6}}>Upon expiration or termination of the Travel Supplier Services Agreement for any reason, 12GO shall no longer bear the 12GO Borne Fees, and the Customer shall be responsible for paying the applicable fees specified in this Order from the effective date of such termination or expiration.</p><p style={{fontSize:9,textAlign:"justify"}}>In the event of any conflict between this Order and the Special Deal Agreement terms and conditions, the terms and conditions of this Order shall prevail with respect to this Order.</p></div>)}
 <div style={{fontWeight:700,fontSize:10,margin:"12px 0 4px"}}>SPECIAL TERMS</div>
-<table style={pg.tbl}><tbody><tr><td style={{...pg.tdB,width:"22%",fontStyle:"italic",verticalAlign:"top"}}>Special Terms</td><td style={{...pg.td,fontSize:9}}><p style={{margin:"0 0 6px"}}>• {f.specialTerm1}</p><p style={{margin:0}}>• {f.specialTerm2}</p></td></tr></tbody></table>
+<table style={pg.tbl}><tbody><tr><td style={{...pg.tdB,width:"22%",fontStyle:"italic",verticalAlign:"top"}}>Special Terms</td><td style={{...pg.td,fontSize:9}}>{f.specialTerms.filter(t=>t.trim()).map((t,i)=><p key={i} style={{margin:i<f.specialTerms.length-1?"0 0 6px":"0"}}>• {t}</p>)}</td></tr></tbody></table>
 <div style={{border:"2px solid #000",borderLeft:"none",borderRight:"none",padding:"8px 12px",margin:"12px 0",textAlign:"center"}}><b style={{fontSize:8.5,textTransform:"uppercase"}}>EACH PARTY EXECUTING THIS ORDER REPRESENTS THAT, ON THE DATE SET FORTH BELOW (THE "EFFECTIVE DATE"), SUCH PARTY'S AUTHORIZED REPRESENTATIVE HAS READ, UNDERSTANDS, AND AGREES TO BE BOUND BY THIS THE TERMS OF THIS ORDER</b></div>
 
 {/* SIGNATURES — 50/50 split */}
