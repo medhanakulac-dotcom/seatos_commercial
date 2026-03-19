@@ -64,7 +64,7 @@ export default function App(){
     implEnabled:true,smsEnabled:true,
     wOnline:false,wOffline:false,wAdmin:false,wImpl:false,wSms:false,
     posQty:0,kioskQty:0,
-    discount:"",taxes:"",offsetArrangements:"",
+    discount:"",taxes:"",
     custSignName:"",custSignTitle:"",custSignAddress:"",custSignEmail:"",custSignPhone:"",
     billingContact:"",billingEmail:"",billingPhone:"",
     specialTerms:["In order to utilize the capacity of the Licensed Software, the Customer undertakes to process and manage offline and online all ticket bookings using the Licensed Software (seatOS), thereby improving inventory management and reducing poor customer experience caused by booking decline.","In the event that the Customer requests a new feature to be developed for the Licensed Software, the Customer agrees to process and manage all offline and online ticket bookings using the Licensed Software (seatOS) only."],
@@ -223,15 +223,14 @@ export default function App(){
         <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:"6px 20px",fontSize:14,marginBottom:12}}>
           <span style={{color:"#555"}}>Online Conv.</span><span style={{fontWeight:600,textAlign:"right"}}>{onD}{form.onlineFeeMode==="flat"&&!form.wOnline?" "+cur:""}</span>
           <span style={{color:"#555"}}>Offline Conv.</span><span style={{fontWeight:600,textAlign:"right"}}>{offD}{form.offlineFeeMode==="flat"&&!form.wOffline?" "+cur:""}</span>
-          <span style={{color:"#555"}}>Admin (Monthly)</span><span style={{fontWeight:600,textAlign:"right"}}>{form.wAdmin?"Waived":fN(v_admin,cur)+" "+cur}</span>
-          <span style={{color:"#555"}}>Implementation</span><span style={{fontWeight:600,textAlign:"right"}}>{form.wImpl?"Waived":(!form.implEnabled?"N/A":fN(v_impl,cur)+" "+cur)}</span>
-          <span style={{color:"#555"}}>SMS</span><span style={{fontWeight:600,textAlign:"right"}}>{form.wSms?"Waived":(!form.smsEnabled?"N/A":fN(v_sms,cur)+" "+cur)}</span>
-          {form.posQty>0&&<><span style={{color:"#555"}}>POS ×{form.posQty}</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.posQty*pr.pos,cur)} {cur}/mo</span></>}
-          {form.kioskQty>0&&<><span style={{color:"#555"}}>Kiosk ×{form.kioskQty}</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.kioskQty*pr.kiosk,cur)} {cur}/mo</span></>}
+          <span style={{color:"#555"}}>Admin &amp; Maintenance (Monthly)</span><span style={{fontWeight:600,textAlign:"right"}}>{form.wAdmin?"Waived":fN(v_admin,cur)+" "+cur}</span>
+          <span style={{color:"#555"}}>Implementation (One-time)</span><span style={{fontWeight:600,textAlign:"right"}}>{form.wImpl?"Waived":(!form.implEnabled?"N/A":fN(v_impl,cur)+" "+cur)}</span>
+          <span style={{color:"#555"}}>SMS Notification (per msg)</span><span style={{fontWeight:600,textAlign:"right"}}>{form.wSms?"Waived":(!form.smsEnabled?"N/A":fN(v_sms,cur)+" "+cur)}</span>
+          {form.posQty>0&&<><span style={{color:"#555"}}>POS ×{form.posQty} {form.posQty>1?"units":"unit"} (Monthly)</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.posQty*pr.pos,cur)} {cur}/mo</span></>}
+          {form.kioskQty>0&&<><span style={{color:"#555"}}>Kiosk ×{form.kioskQty} {form.kioskQty>1?"units":"unit"} (Monthly)</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.kioskQty*pr.kiosk,cur)} {cur}/mo</span></>}
         </div>
         <div style={ui.g2}><Inp label="Discount" value={form.discount} onChange={up("discount")} ph="0"/><Inp label="Taxes" value={form.taxes} onChange={up("taxes")} ph="0"/></div>
         <p style={{fontSize:12,color:"#888",marginTop:8,fontStyle:"italic"}}>* Convenience fees are usage-based. No fixed grand total.</p>
-        <Inp label="Offset Arrangements" value={form.offsetArrangements} onChange={up("offsetArrangements")} style={{marginTop:12}} ph="Offset arrangements…"/>
       </div>
 
       {/* Signatory */}
@@ -387,6 +386,9 @@ window.onload=function(){
 <tbody>
 <tr><td style={pg.td}>Convenience Fee (Online)</td><td style={{...pg.td,textAlign:"right"}}>{onD}</td></tr>
 <tr><td style={pg.td}>Convenience Fee (Offline)</td><td style={{...pg.td,textAlign:"right"}}>{offD}</td></tr>
+{f.smsEnabled&&<tr><td style={pg.td}>SMS Notification</td><td style={{...pg.td,textAlign:"right"}}>{f.wSms?"Waived":fN(v_sms,cur)+" /msg"}</td></tr>}
+{f.posQty>0&&<tr><td style={pg.td}>POS ×{f.posQty} {f.posQty>1?"units":"unit"}</td><td style={{...pg.td,textAlign:"right"}}>{fN(f.posQty*pr.pos,cur)} /mo</td></tr>}
+{f.kioskQty>0&&<tr><td style={pg.td}>Kiosk ×{f.kioskQty} {f.kioskQty>1?"units":"unit"}</td><td style={{...pg.td,textAlign:"right"}}>{fN(f.kioskQty*pr.kiosk,cur)} /mo</td></tr>}
 <tr><td style={pg.tdB}>Total for One-Time Payments</td><td style={{...pg.td,textAlign:"right",fontWeight:700}}>{fN(v_impl,cur)}</td></tr>
 <tr><td style={pg.tdB}>Total for Monthly Payments</td><td style={{...pg.td,textAlign:"right",fontWeight:700}}>{fN(v_admin+v_sms+(f.posQty*pr.pos)+(f.kioskQty*pr.kiosk),cur)}</td></tr>
 </tbody></table>
@@ -402,7 +404,7 @@ window.onload=function(){
 </tbody></table>
 {isBundle?(<p style={{fontSize:8.5,fontStyle:"italic",margin:"8px 0",textAlign:"justify"}}><i>Currency: Fees in this Order are calculated in <b>{curL}</b>. The discounts contained in the fee table(s) above are valid for this Order only and may not be carried over to any future amendments or orders, which will be, unless otherwise agreed, at the applicable list price. For the avoidance of doubt, such discounted pricing shall remain applicable throughout the entire Subscription Term, including the Initial Term and any automatic renewal periods, unless otherwise expressly agreed in writing by both parties.</i></p>):(<p style={{fontSize:8.5,fontStyle:"italic",margin:"8px 0",textAlign:"justify"}}><i>Currency: Fees in this Order are calculated in <b>{curL}</b>. The discounts contained in the fee table(s) above are valid for this Order only and may not be carried over to any future amendments or orders, which will be, unless otherwise agreed, at the applicable list price.</i></p>)}
 <p style={{fontSize:9,margin:"6px 0",textAlign:"justify"}}><b>Off Set:</b> The Company will be entitled to offset any amounts due to it (under any agreement) against any amount payable to the Customer under this Agreement.</p>
-<p style={{fontSize:9,margin:"6px 0",textAlign:"justify"}}><b>Offset Arrangements:</b> {f.offsetArrangements||"The Company reserves the right to offset any amounts due to it (under any agreement) against any amounts payable to the Customer under this Agreement. Furthermore, this Agreement provides the Company the option to specifically offset payments received from Customer's subscription services against any due payments to the Company and its affiliates, as part of the settlement process."}</p>
+<p style={{fontSize:9,margin:"6px 0",textAlign:"justify"}}><b>Offset Arrangements:</b> The Company reserves the right to offset any amounts due to it (under any agreement) against any amounts payable to the Customer under this Agreement. Furthermore, this Agreement provides the Company the option to specifically offset payments received from Customer's subscription services against any due payments to the Company and its affiliates, as part of the settlement process.</p>
 {isBundle&&(<div style={{margin:"10px 0"}}><p style={{fontSize:9,textAlign:"justify",marginBottom:6}}><b>12GO Borne Fees:</b> Notwithstanding anything to the contrary in this Order, all fees shall be borne by {f.twelveGoEntity} ("12GO"), an affiliate of the Company (the "12GO Borne Fees"), for as long as the Travel Supply Services Supplier Agreement, attached to this Order as Schedule D (the "Travel Supplier Services Agreement"), remains in full force and effect.</p><p style={{fontSize:9,textAlign:"justify",marginBottom:6}}>Upon expiration or termination of the Travel Supplier Services Agreement for any reason, 12GO shall no longer bear the 12GO Borne Fees, and the Customer shall be responsible for paying the applicable fees specified in this Order from the effective date of such termination or expiration.</p><p style={{fontSize:9,textAlign:"justify"}}>In the event of any conflict between this Order and the Special Deal Agreement terms and conditions, the terms and conditions of this Order shall prevail with respect to this Order.</p></div>)}
 <div style={{fontWeight:700,fontSize:10,margin:"12px 0 4px"}}>SPECIAL TERMS</div>
 <table style={pg.tbl}><tbody><tr><td style={{...pg.tdB,width:"22%",fontStyle:"italic",verticalAlign:"top"}}>Special Terms</td><td style={{...pg.td,fontSize:9}}>{f.specialTerms.filter(t=>t.trim()).map((t,i)=><p key={i} style={{margin:i<f.specialTerms.length-1?"0 0 6px":"0"}}>• {t}</p>)}</td></tr></tbody></table>
