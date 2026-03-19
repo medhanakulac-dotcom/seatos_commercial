@@ -14,6 +14,7 @@ const DEF_PRICING={
 const DEF_COMPANY={name:"BOOKAWAY LTD.",signName:"Liam Hutchinson",signTitle:"General Manager (SeatOS)",address:"6 HaTa'as St., Ramat Gan, 5251247",email:"chris@seatos.com",phone:"092 845 1000",billingContact:"Chris Medhanakula",billingEmail:"chris@seatos.com",billingPhone:"0928451000"};
 const CURRENCIES=["THB","USD","PHP","IDR","VND"];
 const COUNTRIES=["Thailand","Indonesia","Philippines","Vietnam","Singapore","Malaysia","Cambodia","Myanmar","Laos","India","Japan","South Korea","Taiwan","Hong Kong","China","Australia","New Zealand","United States","United Kingdom","Germany","France","Netherlands","Israel","United Arab Emirates","Saudi Arabia","Brazil","Mexico","Colombia","Peru","Chile","Argentina","South Africa","Nigeria","Kenya","Egypt","Turkey","Sri Lanka","Bangladesh","Nepal","Maldives"];
+const COUNTRY_CUR={Thailand:"THB",Indonesia:"IDR",Philippines:"PHP",Vietnam:"VND",Singapore:"USD",Malaysia:"USD",Cambodia:"USD",Myanmar:"USD",Laos:"USD",India:"USD",Japan:"USD","South Korea":"USD",Taiwan:"USD","Hong Kong":"USD",China:"USD",Australia:"USD","New Zealand":"USD","United States":"USD","United Kingdom":"USD",Germany:"USD",France:"USD",Netherlands:"USD",Israel:"USD","United Arab Emirates":"USD","Saudi Arabia":"USD",Brazil:"USD",Mexico:"USD",Colombia:"USD",Peru:"USD",Chile:"USD",Argentina:"USD","South Africa":"USD",Nigeria:"USD",Kenya:"USD",Egypt:"USD",Turkey:"USD","Sri Lanka":"USD",Bangladesh:"USD",Nepal:"USD",Maldives:"USD"};
 const TERMS=[{l:"1 Year",m:12},{l:"2 Years",m:24},{l:"3 Years",m:36},{l:"4 Years",m:48},{l:"5 Years",m:60}];
 const TGO=["12Go (Thailand) Co., Ltd.","12Go Asia PTE. LTD."];
 const fN=(n,c)=>{if(!n&&n!==0)return"";const d=["IDR","VND"].includes(c)?0:2;return Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d})};
@@ -26,6 +27,25 @@ const pg={page:{width:794,background:"#fff",padding:"48px 56px 40px",boxSizing:"
 /* Components */
 const Inp=({label,value,onChange,type="text",ph="",style={},disabled=false})=>(<div style={style}><label style={ui.lb}>{label}</label><input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={ph} disabled={disabled} style={{...ui.inp,...(disabled?{background:"#f7f5f2",color:"#999",border:"2px solid #e8e4df"}:{})}} onFocus={e=>{if(!disabled){e.target.style.borderColor=CI.orange;e.target.style.boxShadow="0 0 0 3px rgba(245,166,35,.15)"}}} onBlur={e=>{e.target.style.borderColor="#e8e4df";e.target.style.boxShadow="none"}}/></div>);
 const Sel=({label,value,onChange,opts,style={}})=>(<div style={style}><label style={ui.lb}>{label}</label><select value={value} onChange={e=>onChange(e.target.value)} style={ui.sel} onFocus={e=>{e.target.style.borderColor=CI.orange}} onBlur={e=>{e.target.style.borderColor="#e8e4df"}}>{opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}</select></div>);
+const SearchSel=({label,value,onChange,opts,style={},ph=""})=>{
+  const[open,setOpen]=useState(false);const[q,setQ]=useState("");
+  const ref={current:null};
+  const filtered=q?opts.filter(o=>o.l.toLowerCase().includes(q.toLowerCase())):opts;
+  const display=opts.find(o=>o.v===value);
+  return(<div style={{...style,position:"relative"}} ref={el=>{ref.current=el}}><label style={ui.lb}>{label}</label>
+    <div style={{...ui.inp,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fff"}} onClick={()=>{setOpen(!open);setQ("")}}>
+      <span style={{color:value?"#222":"#aaa",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{display?display.l:(ph||"Select...")}</span><span style={{fontSize:10,color:"#aaa"}}>▼</span>
+    </div>
+    {open&&<div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:50,background:"#fff",border:"2px solid #e8e4df",borderRadius:12,marginTop:4,boxShadow:"0 8px 24px rgba(0,0,0,.12)",maxHeight:280,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+      <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Type to search..." style={{...ui.inp,border:"none",borderBottom:"1px solid #eee",borderRadius:0,fontSize:13,padding:"10px 12px"}} onKeyDown={e=>{if(e.key==="Escape")setOpen(false)}} onClick={e=>e.stopPropagation()}/>
+      <div style={{overflowY:"auto",maxHeight:220}}>
+        {filtered.length===0&&<div style={{padding:"10px 12px",color:"#aaa",fontSize:13}}>No results</div>}
+        {filtered.map(o=><div key={o.v} onClick={e=>{e.stopPropagation();onChange(o.v);setOpen(false);setQ("")}} style={{padding:"8px 12px",cursor:"pointer",fontSize:13,background:o.v===value?"#FFF8F0":"#fff",fontWeight:o.v===value?700:400,color:o.v===value?CI.orange:"#333"}} onMouseEnter={e=>{e.target.style.background="#f5f0eb"}} onMouseLeave={e=>{e.target.style.background=o.v===value?"#FFF8F0":"#fff"}}>{o.l}</div>)}
+      </div>
+    </div>}
+    {open&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:49}} onClick={()=>setOpen(false)}/>}
+  </div>);
+};
 const Tog=({label,value,onChange})=>(<div style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:14,fontWeight:700,color:CI.dark}} onClick={()=>onChange(!value)}><div style={{width:48,height:26,borderRadius:13,background:value?CI.green:"#ccc",position:"relative",flexShrink:0,transition:"background .2s"}}><div style={{width:22,height:22,borderRadius:11,background:"#fff",position:"absolute",top:2,left:value?24:2,transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.2)"}}/></div><span>{label}</span></div>);
 const Chk=({label,value,onChange})=>(<div style={{display:"flex",alignItems:"center",cursor:"pointer",gap:8}} onClick={()=>onChange(!value)}><span style={{width:22,height:22,borderRadius:6,border:value?`2px solid ${CI.green}`:"2px solid #d0ccc7",background:value?CI.green:"#fff",color:"#fff",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,flexShrink:0,transition:"all .15s"}}>{value?"✓":""}</span><span style={{fontSize:14,fontWeight:600,color:CI.dark}}>{label}</span></div>);
 const Waive=({on,set})=>(<span style={{display:"inline-flex",alignItems:"center",gap:5,cursor:"pointer",fontSize:11,color:on?CI.pink:"#bbb",fontWeight:700,marginLeft:8}} onClick={()=>set(!on)}><span style={{width:18,height:18,borderRadius:4,border:on?`2px solid ${CI.pink}`:"2px solid #d0ccc7",background:on?CI.pink:"#fff",color:"#fff",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,flexShrink:0}}>{on?"✕":""}</span>Waive</span>);
@@ -136,8 +156,8 @@ export default function App(){
       {/* Country & Currency */}
       <div style={ui.card}><div style={ui.ct}><span>🌏 Country &amp; Currency</span></div>
         <div style={ui.g3}>
-          <Sel label="Country *" value={form.country} onChange={up("country")} opts={COUNTRIES.map(c=>({v:c,l:c}))}/>
-          <Sel label="Currency *" value={form.currency} onChange={up("currency")} opts={CURRENCIES.map(c=>({v:c,l:c+" — "+pricing[c].name}))}/>
+          <SearchSel label="Country *" value={form.country} onChange={v=>{up("country")(v);if(COUNTRY_CUR[v])up("currency")(COUNTRY_CUR[v])}} opts={COUNTRIES.map(c=>({v:c,l:c}))}/>
+          <SearchSel label="Currency *" value={form.currency} onChange={up("currency")} opts={CURRENCIES.map(c=>({v:c,l:c+" — "+pricing[c].name}))}/>
           <div><label style={ui.lb}>Rate</label><div style={{padding:"10px 12px",background:"#FFF8F0",borderRadius:14,border:`2px solid ${CI.orange}`,fontWeight:800,color:CI.orange,fontSize:14}}>{isBundle?"Bundle":"Regular"} ({cur})</div></div>
         </div>
       </div>
