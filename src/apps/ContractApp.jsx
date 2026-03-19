@@ -51,7 +51,6 @@ export default function App(){
     includeAmendment:true,twelveGoEntity:TGO[0]
   });
   const[view,setView]=useState("form");
-  const[downloading,setDownloading]=useState(false);
   const up=k=>v=>setForm(p=>({...p,[k]:v}));
   const cur=form.currency;const pr=pricing[cur];const isBundle=form.orderType==="bundle";
 
@@ -246,41 +245,52 @@ export default function App(){
   const f=form;const co=company;const curL=cur+" "+pr.name;
   let pn=0;const pgN=()=>++pn;
 
-  const handleDownload=async()=>{
-    setDownloading(true);
-    try{
-      /* Load html2canvas and jsPDF separately for more control */
-      const loadJS=src=>new Promise((r,j)=>{if(document.querySelector('script[src="'+src+'"]'))return r();const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=j;document.head.appendChild(s)});
-      await loadJS('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-      await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js');
-      
-      const pages=[...document.querySelectorAll('.a4')];
-      if(!pages.length){setDownloading(false);return;}
-      
-      const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-      const pw=210;const ph=297; /* A4 mm */
-      
-      for(let i=0;i<pages.length;i++){
-        if(i>0)pdf.addPage();
-        const canvas=await window.html2canvas(pages[i],{
-          scale:2,useCORS:true,backgroundColor:'#ffffff',
-          width:794,windowWidth:794,scrollY:-window.scrollY
-        });
-        const imgData=canvas.toDataURL('image/jpeg',0.95);
-        /* Scale image to fit A4 exactly */
-        const imgW=canvas.width;const imgH=canvas.height;
-        const ratio=Math.min(pw/(imgW/2),ph/(imgH/2));
-        const w=imgW/2*ratio;const h=imgH/2*ratio;
-        pdf.addImage(imgData,'JPEG',0,0,w,h);
-      }
-      
-      const name=f.customerName||'Contract';
-      pdf.save(`SeatOS_${name.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`);
-    }catch(e){
-      console.error('PDF error:',e);
-      window.print();
+  const handleDownload=()=>{
+    const pages=[...document.querySelectorAll('.a4')];
+    if(!pages.length)return;
+    const name=f.customerName||'Contract';
+    const fn=`SeatOS_${name.replace(/[^a-zA-Z0-9]/g,'_')}`;
+    /* Build standalone HTML with all styles inline */
+    const pagesHtml=pages.map(p=>{
+      const el=p.cloneNode(true);
+      el.style.boxShadow='none';el.style.margin='0 auto';el.style.marginBottom='0';
+      return el.outerHTML;
+    }).join('\n');
+    const html=`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${fn}</title>
+<style>
+@page{size:A4;margin:0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fff;width:794px;margin:0 auto}
+.a4{width:794px;min-height:1123px;background:#fff;padding:48px 56px 40px;box-sizing:border-box;
+position:relative;page-break-after:always;font-family:Arial,Helvetica,sans-serif;
+font-size:10px;line-height:1.5;color:#222;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.a4:last-child{page-break-after:auto}
+table{border-collapse:collapse;width:100%}
+img{max-width:150px;height:auto}
+@media screen{body{padding:20px;background:#eee}.a4{box-shadow:0 2px 8px rgba(0,0,0,.15);margin-bottom:20px}}
+</style>
+</head><body>
+${pagesHtml}
+<script>
+// Auto-trigger print after a short delay
+window.onload=function(){
+  document.title="${fn}";
+  setTimeout(function(){window.print()},500);
+};
+<\/script>
+</body></html>`;
+    /* Try opening in new window first */
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const win=window.open(url,'_blank');
+    if(!win){
+      /* Popup blocked - download as HTML file instead */
+      const a=document.createElement('a');
+      a.href=url;a.download=fn+'.html';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      alert('File downloaded as HTML.\\nOpen it in Chrome and press Ctrl+P (or Cmd+P) to save as PDF.\\n\\nTip: In Chrome print dialog, set "Destination" to "Save as PDF".');
     }
-    setDownloading(false);
   };
 
   return(
@@ -288,7 +298,7 @@ export default function App(){
       <style>{`@media print{body,html{margin:0;padding:0;background:#fff!important}.no-print{display:none!important}.a4{box-shadow:none!important;margin:0!important;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.a4:last-child{page-break-after:auto}@page{size:A4;margin:0}}`}</style>
       <div className="no-print" style={{position:"sticky",top:0,zIndex:100,background:"rgba(245,240,235,.95)",backdropFilter:"blur(8px)",padding:"12px 24px",display:"flex",justifyContent:"center",gap:16,borderBottom:"1px solid #e0d8d0"}}>
         <button style={{...ui.btn,...ui.sec2,padding:"10px 24px",fontSize:14}} onClick={()=>setView("form")}>← Back to Edit</button>
-        <button style={{...ui.btn,...ui.pri,padding:"10px 24px",fontSize:14,opacity:downloading?0.6:1}} onClick={handleDownload} disabled={downloading}>{downloading?"Generating PDF...":"Download PDF"}</button>
+        <button style={{...ui.btn,...ui.pri,padding:"10px 24px",fontSize:14}} onClick={handleDownload}>Download PDF</button>
       </div>
       <div id="contract-pages" style={{maxWidth:840,margin:"24px auto",padding:"0 16px 80px"}}>
 
