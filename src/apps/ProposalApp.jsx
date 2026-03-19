@@ -136,13 +136,13 @@ export default function App() {
   const hBP = (v) => { const p = parseFloat(v); setBd(x => ({ ...x, pct: v, amt: (!isNaN(p) && sub > 0) ? String(Math.round(p / 100 * sub * 100) / 100) : "" })); };
   const hBA = (v) => { const a = parseFloat(v); setBd(x => ({ ...x, amt: v, pct: (!isNaN(a) && sub > 0) ? String(Math.round(a / sub * 10000) / 100) : "" })); };
 
-  if (ld) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: B.bg }}><SeatLogo h={40} /></div>;
+  if (ld) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: B.bg }}><span style={{ fontSize: 16, color: B.gray }}>Loading...</span></div>;
 
   /* ═══ SETTINGS ═══ */
   if (pg === "set") return (
     <div style={{ fontFamily: "'Segoe UI',sans-serif", minHeight: "100vh", background: B.bg }}>
       <div style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: "14px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}><SeatLogo h={28} /><b style={{ fontSize: 16 }}>Settings</b></div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}><b style={{ fontSize: 16 }}>Settings</b></div>
         <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 22px", fontSize: 13 }}>← Builder</button>
       </div>
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px" }}>
@@ -297,7 +297,6 @@ export default function App() {
       <div style={{ fontFamily: "'Segoe UI',sans-serif", minHeight: "100vh", background: B.bg }}>
         <div style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: "14px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99, flexWrap: "wrap", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <SeatLogo h={28} />
             <div><b style={{ fontSize: 16, display: "block" }}>Proposal Builder</b><span style={{ fontSize: 11, color: B.gray }}>SeatOS</span></div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -467,7 +466,7 @@ export default function App() {
           <div style={{ position: "absolute", bottom: -20, right: 80, width: 80, height: 80, borderRadius: 40, background: B.green + "20" }} />
           <div style={{ position: "absolute", top: 10, right: 180, width: 50, height: 50, borderRadius: 25, background: B.pink + "20" }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20, position: "relative", zIndex: 1 }}>
-            <div><SeatLogo h={160} /></div>
+            <div><SeatLogo h={240} /></div>
             <div style={{ textAlign: "right" }}>
               <div style={{ color: B.orange, fontSize: 30, fontWeight: 800, fontFamily: "Georgia,serif" }}>PROPOSAL</div>
               <div style={{ color: B.gray, fontSize: 12, marginTop: 4 }}>{today}</div>
