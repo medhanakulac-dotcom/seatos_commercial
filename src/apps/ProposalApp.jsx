@@ -452,135 +452,179 @@ export default function App() {
     return <b>{fmtp(b, cur)}</b>;
   };
 
+
+  // Generate standalone HTML blob and open in new tab with auto-print
+  const dlPrint = () => {
+    const el = ref.current;
+    if (!el) return;
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>SeatOS Proposal – ${cu.name || "Customer"}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI','Helvetica Neue',sans-serif;background:#fff}
+@page{size:A4;margin:0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
+</head><body>${el.outerHTML}<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>`;
+    const blob = new Blob([html], { type: "text/html" });
+    window.open(URL.createObjectURL(blob), "_blank");
+  };
+
+  const A4W = 794, A4H = 1123;
+  const anyDW = active.some(it => { const d = sel[it.id]; return d && ((d.hd && (parseFloat(d.da)||0) > 0) || (d.hw && d.wt)); });
+
   return (
     <div style={{ fontFamily: "'Segoe UI',sans-serif", background: B.bg, minHeight: "100vh" }}>
-      <div className="np" style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: "12px 24px", display: "flex", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 99 }}>
+      <div className="np" style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99 }}>
         <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 18px", fontSize: 13 }}>← Editor</button>
-        <button onClick={() => window.print()} style={{ ...sBtn, background: B.dark, color: "#fff", padding: "8px 22px", fontSize: 13 }}>Print / PDF</button>
+        <button onClick={dlPrint} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 24px", fontSize: 13 }}>⬇ Download / Print</button>
       </div>
 
-      <div ref={ref} style={{ maxWidth: 780, margin: "24px auto", background: B.card, borderRadius: 24, boxShadow: "0 4px 24px rgba(0,0,0,.06)", overflow: "hidden" }}>
-        {/* Header */}
-        <div style={{ background: B.bg, padding: "40px 56px 32px", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -30, right: -30, width: 140, height: 140, borderRadius: 70, background: B.orange + "25" }} />
-          <div style={{ position: "absolute", bottom: -20, right: 80, width: 80, height: 80, borderRadius: 40, background: B.green + "20" }} />
-          <div style={{ position: "absolute", top: 10, right: 180, width: 50, height: 50, borderRadius: 25, background: B.pink + "20" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20, position: "relative", zIndex: 1 }}>
-            <div><SeatLogo h={240} /></div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ color: B.orange, fontSize: 30, fontWeight: 800, fontFamily: "Georgia,serif" }}>PROPOSAL</div>
-              <div style={{ color: B.gray, fontSize: 12, marginTop: 4 }}>{today}</div>
-              <div style={{ color: B.gray, fontSize: 12 }}>{cur} · {ft === "b" ? "Bundle" : "Regular"}</div>
-              <div style={{ color: B.gray, fontSize: 11, marginTop: 2 }}>Operated by Bookaway Ltd.</div>
-            </div>
-          </div>
-        </div>
+      <div style={{ display: "flex", justifyContent: "center", padding: "24px 16px", overflow: "auto" }}>
+        <div ref={ref} style={{ width: "100%", maxWidth: A4W, background: "#fff", boxShadow: "0 4px 30px rgba(0,0,0,.12)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
 
-        <div style={{ padding: "32px 56px 48px" }}>
-          {/* Prepared For / By */}
-          <div style={{ display: "flex", gap: 40, marginBottom: 28, flexWrap: "wrap" }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".1em", color: B.orange, marginBottom: 8 }}>Prepared For</div>
-              <b style={{ fontSize: 17, display: "block", marginBottom: 4 }}>{cu.name || "—"}</b>
-              <div style={{ fontSize: 12, color: B.gray, lineHeight: 1.6 }}>
-                {cu.addr && <div>{cu.addr}</div>}
-                {cu.country && <div>{cu.country}</div>}
-                {cu.inc && cu.inc !== cu.country && <div>Incorporated in {cu.inc}</div>}
-                {cu.email && <div>{cu.email}</div>}
-              </div>
-            </div>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".1em", color: B.orange, marginBottom: 8 }}>Prepared By</div>
-              <b style={{ fontSize: 17, display: "block", marginBottom: 4 }}>SeatOS (Bookaway Ltd.)</b>
-              <div style={{ fontSize: 12, color: B.gray, lineHeight: 1.6 }}>
-                <div>6 HaTa'as St., Ramat Gan, 5251247</div>
-                {sp && <div style={{ marginTop: 4, fontWeight: 700, color: B.dark }}>{sp.name}</div>}
-                {sp?.email && <div>{sp.email}</div>}
-                {sp?.phone && <div>{sp.phone}</div>}
+          {/* ── Header ── */}
+          <div style={{ background: "#F5F0EB", padding: "20px 36px 16px", position: "relative", overflow: "hidden", flexShrink: 0 }}>
+            <div style={{ position: "absolute", top: -16, right: -16, width: 80, height: 80, borderRadius: 40, background: B.orange + "20" }} />
+            <div style={{ position: "absolute", bottom: -10, right: 50, width: 44, height: 44, borderRadius: 22, background: B.green + "18" }} />
+            <div style={{ position: "absolute", top: 4, right: 100, width: 28, height: 28, borderRadius: 14, background: B.pink + "18" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 1 }}>
+              <div><SeatLogo h={156} /></div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ color: B.orange, fontSize: 20, fontWeight: 800, fontFamily: "Georgia,serif" }}>PROPOSAL</div>
+                <div style={{ color: "#888", fontSize: 9, marginTop: 1 }}>{today} · {cur} · {ft === "b" ? "Bundle" : "Regular"}</div>
+                <div style={{ color: "#aaa", fontSize: 8 }}>Operated by Bookaway Ltd.</div>
               </div>
             </div>
           </div>
 
-          {/* Dates */}
-          {(cu.s || cu.e) && (
-            <div style={{ background: B.bg, borderRadius: 14, padding: "14px 20px", marginBottom: 28, display: "flex", gap: 28, flexWrap: "wrap" }}>
-              <div><span style={{ fontSize: 11, color: B.gray }}>Start</span><b style={{ display: "block", fontSize: 14 }}>{cu.s || "—"}</b></div>
-              <div><span style={{ fontSize: 11, color: B.gray }}>End</span><b style={{ display: "block", fontSize: 14 }}>{cu.e || "—"}</b></div>
-              <div><span style={{ fontSize: 11, color: B.gray }}>Software</span><b style={{ display: "block", fontSize: 14 }}>SeatOS TMS</b></div>
-            </div>
-          )}
+          {/* ── Body (flex-grow to fill remaining space) ── */}
+          <div style={{ padding: "14px 36px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
 
-          {/* Pricing table */}
-          <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".1em", color: B.orange, marginBottom: 10 }}>Pricing Breakdown</div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 24 }}>
-            <thead><tr><th style={{ ...thS, width: 30 }}>#</th><th style={thS}>Item</th><th style={thS}>Billing</th><th style={{ ...thS, textAlign: "right" }}>Fee ({cur})</th></tr></thead>
-            <tbody>
-              {active.map(it => {
-                num++;
-                const d = sel[it.id];
-                const ct = it.mode === "flex" && d ? ((d.ct || "amount") === "percent" ? "Per %" : "Per amount") : null;
-                return (
+            {/* Prepared For / By */}
+            <div style={{ display: "flex", gap: 24, marginBottom: 10, flexShrink: 0 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>Prepared For</div>
+                <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 1 }}>{cu.name || "—"}</div>
+                <div style={{ fontSize: 8, color: "#777", lineHeight: 1.4 }}>
+                  {cu.addr && <div>{cu.addr}</div>}
+                  {cu.country && <div>{cu.country}</div>}
+                  {cu.inc && cu.inc !== cu.country && <div>Inc. {cu.inc}</div>}
+                  {cu.email && <div>{cu.email}</div>}
+                </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>Prepared By</div>
+                <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 1 }}>SeatOS (Bookaway Ltd.)</div>
+                <div style={{ fontSize: 8, color: "#777", lineHeight: 1.4 }}>
+                  <div>6 HaTa'as St., Ramat Gan, 5251247</div>
+                  {sp && <div style={{ fontWeight: 700, color: "#333" }}>{sp.name}</div>}
+                  {sp?.email && <div>{sp.email}</div>}
+                  {sp?.phone && <div>{sp.phone}</div>}
+                </div>
+              </div>
+            </div>
+
+            {/* Dates */}
+            {(cu.s || cu.e) && (
+              <div style={{ background: "#F5F0EB", borderRadius: 6, padding: "6px 12px", marginBottom: 8, display: "flex", gap: 20, flexShrink: 0 }}>
+                <div><span style={{ fontSize: 7, color: "#999" }}>Start</span><div style={{ fontSize: 9, fontWeight: 700 }}>{cu.s || "—"}</div></div>
+                <div><span style={{ fontSize: 7, color: "#999" }}>End</span><div style={{ fontSize: 9, fontWeight: 700 }}>{cu.e || "—"}</div></div>
+                <div><span style={{ fontSize: 7, color: "#999" }}>Software</span><div style={{ fontSize: 9, fontWeight: 700 }}>SeatOS TMS</div></div>
+              </div>
+            )}
+
+            {/* Pricing Breakdown */}
+            <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 4, flexShrink: 0 }}>Pricing Breakdown</div>
+            <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 8, flexShrink: 0 }}>
+              <thead><tr>
+                <th style={{ ...thS, fontSize: 7, padding: "4px 6px", width: 18 }}>#</th>
+                <th style={{ ...thS, fontSize: 7, padding: "4px 6px" }}>Item</th>
+                <th style={{ ...thS, fontSize: 7, padding: "4px 6px" }}>Billing</th>
+                <th style={{ ...thS, fontSize: 7, padding: "4px 6px", textAlign: "right" }}>Fee ({cur})</th>
+              </tr></thead>
+              <tbody>
+                {active.map(it => { num++; const d = sel[it.id]; const ct = it.mode === "flex" && d ? ((d.ct || "amount") === "percent" ? "Per %" : "Per amount") : null; return (
                   <tr key={it.id}>
-                    <td style={{ ...tdS, color: B.gray }}>{num}</td>
-                    <td style={tdS}>
-                      <b>{it.name}</b>
-                      {it.desc && <div style={{ fontSize: 11, color: B.gray }}>{it.desc}</div>}
-                      {ct && <div style={{ fontSize: 11, color: it.clr, fontWeight: 700 }}>{ct}</div>}
-                      {d?.qty > 1 && <div style={{ fontSize: 11, color: B.gray }}>Qty: {d.qty}</div>}
+                    <td style={{ padding: "3px 6px", borderBottom: "1px solid #eee", color: "#aaa", fontSize: 8 }}>{num}</td>
+                    <td style={{ padding: "3px 6px", borderBottom: "1px solid #eee" }}>
+                      <span style={{ fontSize: 8, fontWeight: 700 }}>{it.name}</span>
+                      {it.desc && <span style={{ fontSize: 7, color: "#999", marginLeft: 4 }}>{it.desc}</span>}
+                      {ct && <span style={{ fontSize: 7, color: it.clr, fontWeight: 700, marginLeft: 4 }}>{ct}</span>}
+                      {d?.qty > 1 && <span style={{ fontSize: 7, color: "#999", marginLeft: 4 }}>×{d.qty}</span>}
                       {bdg(d)}
                     </td>
-                    <td style={tdS}>{it.inv || "—"}</td>
-                    <td style={{ ...tdS, textAlign: "right" }}>{fc(it)}</td>
+                    <td style={{ padding: "3px 6px", borderBottom: "1px solid #eee", fontSize: 8 }}>{it.inv || "—"}</td>
+                    <td style={{ padding: "3px 6px", borderBottom: "1px solid #eee", textAlign: "right", fontSize: 8 }}>{fc(it)}</td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                ); })}
+              </tbody>
+            </table>
 
-          {/* Totals */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 28 }}>
-            <div style={{ minWidth: 320, borderRadius: 16, overflow: "hidden", border: "2px solid " + B.dark }}>
-              {tots.ot > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "11px 20px", borderBottom: "1px solid " + B.light }}><span style={{ color: B.gray, fontWeight: 600 }}>One-Time</span><b>{fmtp(tots.ot, cur)}</b></div>}
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "11px 20px", borderBottom: "1px solid " + B.light }}><span style={{ color: B.gray, fontWeight: 600 }}>Monthly</span><b>{fmtp(tots.mo, cur)}</b></div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "11px 20px", borderBottom: "1px solid " + B.light }}><span style={{ color: B.gray, fontWeight: 600 }}>Subtotal</span><b>{fmtp(sub, cur)}</b></div>
-              {bda > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "11px 20px", borderBottom: "1px solid " + B.light, background: B.purple + "08" }}><span style={{ color: B.purple, fontWeight: 600 }}>Discount ({fmt(bdp, cur)}%)</span><b style={{ color: B.purple }}>-{fmtp(bda, cur)}</b></div>}
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "14px 20px", background: B.orange }}><b style={{ color: "#fff" }}>Grand Total</b><b style={{ color: "#fff", fontSize: 17 }}>{fmtp(grand, cur)}</b></div>
-            </div>
-          </div>
-
-          <div style={{ fontSize: 11, color: B.gray, lineHeight: 1.6, borderTop: "1px solid " + B.light, paddingTop: 14, marginBottom: 20 }}>All fees in {cur}. Valid 30 days. {ft === "b" ? "Bundle" : "Regular"} pricing.</div>
-
-          {stOn && stTxt && (
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".1em", color: B.orange, marginBottom: 6 }}>Notes</div>
-              <div style={{ background: B.bg, borderRadius: 12, padding: "14px 20px", fontSize: 12, lineHeight: 1.7, color: "#4B5563" }}>{stTxt}</div>
-            </div>
-          )}
-
-          {/* Acceptance */}
-          <div style={{ borderTop: "2px solid " + B.dark, paddingTop: 22 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".1em", color: B.orange, marginBottom: 14 }}>Acceptance</div>
-            <div style={{ display: "flex", gap: 40, flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ fontSize: 12, color: B.gray, marginBottom: 24 }}>Customer</div>
-                <div style={{ borderBottom: "1.5px solid " + B.dark, height: 24, marginBottom: 4 }} />
-                <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 11, color: B.gray }}>Name & Title</span><span style={{ fontSize: 11, color: B.gray }}>Date</span></div>
-              </div>
-              <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ fontSize: 12, color: B.gray, marginBottom: 24 }}>SeatOS</div>
-                <div style={{ borderBottom: "1.5px solid " + B.dark, height: 24, marginBottom: 4 }} />
-                <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 11, color: B.gray }}>{sp ? sp.name : "—"}</span><span style={{ fontSize: 11, color: B.gray }}>Date</span></div>
+            {/* Totals */}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8, flexShrink: 0 }}>
+              <div style={{ minWidth: 220, borderRadius: 6, overflow: "hidden", border: "1.5px solid #222" }}>
+                {tots.ot > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>One-Time</span><b>{fmtp(tots.ot, cur)}</b></div>}
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>Monthly</span><b>{fmtp(tots.mo, cur)}</b></div>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>Subtotal</span><b>{fmtp(sub, cur)}</b></div>
+                {bda > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9, background: B.purple + "0d" }}><span style={{ color: B.purple }}>Discount ({fmtn(bdp, cur)}%)</span><b style={{ color: B.purple }}>-{fmtp(bda, cur)}</b></div>}
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 12px", background: B.orange }}><b style={{ color: "#fff", fontSize: 9 }}>Grand Total</b><b style={{ color: "#fff", fontSize: 11 }}>{fmtp(grand, cur)}</b></div>
               </div>
             </div>
-          </div>
 
-          <div style={{ marginTop: 32, textAlign: "center", fontSize: 10, color: B.muted }}>
-            SeatOS · Bookaway Ltd. · 6 HaTa'as St., Ramat Gan{sp?.email ? " · " + sp.email : ""}{sp?.phone ? " · " + sp.phone : ""}
+            {/* Discounts & Waivers */}
+            {anyDW && (
+              <div style={{ marginBottom: 6, flexShrink: 0 }}>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>Discounts & Waivers</div>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead><tr>{["Item","Original","Discount","Final","Waiver"].map(h => <th key={h} style={{ fontSize: 6, padding: "2px 4px", textAlign: "left", color: "#999", borderBottom: "1px solid #ddd" }}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {active.map(it => { const d = sel[it.id]; if (!d || (!(d.hd && (parseFloat(d.da)||0) > 0) && !(d.hw && d.wt))) return null; const b = bf(it.id), f = ff(it.id), p = parseFloat(d.dp)||0, a = parseFloat(d.da)||0; return (
+                      <tr key={it.id}>{[
+                        <td key="n" style={{ padding: "2px 4px", fontSize: 7, fontWeight: 600, borderBottom: "1px solid #eee" }}>{it.name}</td>,
+                        <td key="o" style={{ padding: "2px 4px", fontSize: 7, borderBottom: "1px solid #eee" }}>{fmtp(b, cur)}</td>,
+                        <td key="d" style={{ padding: "2px 4px", fontSize: 7, borderBottom: "1px solid #eee", color: B.purple }}>{d.hd && a > 0 ? `${p}% = ${fmtp(a, cur)}` : "—"}</td>,
+                        <td key="f" style={{ padding: "2px 4px", fontSize: 7, fontWeight: 700, borderBottom: "1px solid #eee" }}>{d.hd && a > 0 ? fmtp(f, cur) : fmtp(b, cur)}</td>,
+                        <td key="w" style={{ padding: "2px 4px", fontSize: 7, borderBottom: "1px solid #eee", color: B.pink }}>{d.hw && d.wt ? d.wt : "—"}</td>
+                      ]}</tr>
+                    ); })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Notes */}
+            <div style={{ fontSize: 7, color: "#aaa", lineHeight: 1.4, borderTop: "1px solid #eee", paddingTop: 6, marginBottom: 6, flexShrink: 0 }}>All fees in {cur}. Valid 30 days. {ft === "b" ? "Bundle" : "Regular"} pricing.</div>
+
+            {stOn && stTxt && (
+              <div style={{ marginBottom: 6, flexShrink: 0 }}>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>Notes</div>
+                <div style={{ background: "#F5F0EB", borderRadius: 6, padding: "6px 12px", fontSize: 7, lineHeight: 1.5, color: "#555" }}>{stTxt}</div>
+              </div>
+            )}
+
+            {/* Spacer to push acceptance to bottom */}
+            <div style={{ flex: 1 }} />
+
+            {/* Acceptance */}
+            <div style={{ borderTop: "1.5px solid #222", paddingTop: 10, flexShrink: 0 }}>
+              <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 8 }}>Acceptance</div>
+              <div style={{ display: "flex", gap: 24 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 8, color: "#888", marginBottom: 14 }}>Customer</div>
+                  <div style={{ borderBottom: "1px solid #222", height: 14, marginBottom: 2 }} />
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 7, color: "#aaa" }}>Name & Title</span><span style={{ fontSize: 7, color: "#aaa" }}>Date</span></div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 8, color: "#888", marginBottom: 14 }}>SeatOS</div>
+                  <div style={{ borderBottom: "1px solid #222", height: 14, marginBottom: 2 }} />
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 7, color: "#aaa" }}>{sp ? sp.name : "—"}</span><span style={{ fontSize: 7, color: "#aaa" }}>Date</span></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ marginTop: 8, textAlign: "center", fontSize: 6, color: "#ccc", flexShrink: 0 }}>
+              SeatOS · Bookaway Ltd. · 6 HaTa'as St., Ramat Gan{sp?.email ? " · " + sp.email : ""}{sp?.phone ? " · " + sp.phone : ""}
+            </div>
           </div>
         </div>
       </div>
-
-      <style>{`@media print{.np{display:none!important}body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}`}</style>
     </div>
   );
 }
