@@ -34,8 +34,8 @@ const IconContract = () => (
 );
 
 const TABS = [
-  { id: "proposal", label: "Proposal Builder", icon: IconProposal, color: C.orange },
   { id: "calculator", label: "Deal Calculator", icon: IconCalculator, color: C.purple },
+  { id: "proposal", label: "Proposal Builder", icon: IconProposal, color: C.orange },
   { id: "contract", label: "Contract Builder", icon: IconContract, color: C.green },
 ];
 
