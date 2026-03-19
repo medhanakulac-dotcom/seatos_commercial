@@ -249,7 +249,6 @@ export default function App(){
   const handleDownload=async()=>{
     setDownloading(true);
     try{
-      /* Load html2pdf.js if not loaded */
       if(!window.html2pdf){
         await new Promise((res,rej)=>{
           const s=document.createElement('script');
@@ -257,21 +256,26 @@ export default function App(){
           s.onload=res;s.onerror=rej;document.head.appendChild(s);
         });
       }
-      const el=document.getElementById('contract-pages');
-      if(!el){setDownloading(false);return;}
+      const pages=document.querySelectorAll('.a4');
+      if(!pages.length){setDownloading(false);return;}
+      /* Clone pages into a temp container with exact A4 width */
+      const tmp=document.createElement('div');
+      tmp.style.cssText='position:absolute;left:-9999px;top:0;width:794px;background:#fff;';
+      pages.forEach(p=>{const c=p.cloneNode(true);c.style.boxShadow='none';c.style.margin='0';c.style.width='794px';tmp.appendChild(c)});
+      document.body.appendChild(tmp);
       const name=f.customerName||'Contract';
       const fn=`SeatOS_${name.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`;
-      await window.html2pdf(el,{
-        margin:[0,0,0,0],
-        filename:fn,
-        image:{type:'jpeg',quality:0.95},
-        html2canvas:{scale:2,useCORS:true,scrollY:0,windowWidth:794},
+      await window.html2pdf(tmp,{
+        margin:0,filename:fn,
+        image:{type:'jpeg',quality:0.98},
+        html2canvas:{scale:2,useCORS:true,width:794,windowWidth:794},
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
         pagebreak:{mode:['css'],before:'.a4'}
       });
+      document.body.removeChild(tmp);
     }catch(e){
       console.error('PDF error:',e);
-      try{window.print()}catch(e2){alert('PDF download failed. Please use Ctrl+P / Cmd+P to print.')}
+      try{window.print()}catch(e2){alert('Please use Ctrl+P / Cmd+P to print.')}
     }
     setDownloading(false);
   };
@@ -451,5 +455,7 @@ export default function App(){
 
       </div>
     </div>
+  )
+}
   )
 }
