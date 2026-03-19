@@ -14,7 +14,8 @@ const C = {
   gray: "#8E8E93",
 };
 
-const LOGO_URL = "https://res.cloudinary.com/dkwj2iikl/image/upload/v1773914487/Screenshot_2026-03-19_at_5.00.59_PM_aqryg1.png";
+const LOGO_THUMB = "https://res.cloudinary.com/dkwj2iikl/image/upload/v1773201660/216db52f-36bd-4673-ade2-725c4beba594_thumb_zt4ub4.jpg";
+const LOGO_TEXT = "https://res.cloudinary.com/dkwj2iikl/image/upload/v1773914487/Screenshot_2026-03-19_at_5.00.59_PM_aqryg1.png";
 
 const IconProposal = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -39,7 +40,7 @@ const TABS = [
 ];
 
 export default function App() {
-  const [active, setActive] = useState("proposal");
+  const [active, setActive] = useState("calculator");
   const [open, setOpen] = useState(true);
 
   return (
@@ -64,25 +65,39 @@ export default function App() {
           zIndex: 100,
           overflow: "hidden",
         }}>
+          {/* Logo */}
           <div style={{
-            padding: open ? "24px 20px" : "24px 10px",
+            padding: open ? "20px 18px" : "20px 12px",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: open ? "flex-start" : "center",
+            gap: 12,
             borderBottom: "1px solid rgba(255,255,255,0.08)",
-            minHeight: 80,
+            minHeight: 76,
           }}>
             <img
-              src={LOGO_URL}
+              src={LOGO_THUMB}
               alt="seatOS"
+              crossOrigin="anonymous"
               style={{
-                height: open ? 32 : 28,
-                width: "auto",
-                objectFit: "contain",
-                filter: "brightness(0) invert(1)",
-                transition: "height 0.25s ease",
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                objectFit: "cover",
+                flexShrink: 0,
+                border: "2px solid rgba(255,255,255,0.1)",
               }}
             />
+            {open && (
+              <div style={{ overflow: "hidden", whiteSpace: "nowrap" }}>
+                <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: -0.3, color: "#fff" }}>
+                  seat<span style={{ color: C.orange }}>O</span>S
+                </div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 1 }}>
+                  Internal Tools
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{
