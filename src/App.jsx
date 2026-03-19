@@ -39,9 +39,112 @@ const TABS = [
   { id: "contract", label: "Contract Builder", icon: IconContract, color: C.green },
 ];
 
+// ─── Simple password gate ─────────────────────────────────────
+// Change this password to whatever you want
+const ACCESS_PASSWORD = "seatos2025";
+
+function LoginScreen({ onLogin }) {
+  const [pw, setPw] = useState("");
+  const [error, setError] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (pw === ACCESS_PASSWORD) {
+      sessionStorage.setItem("seatos_auth", "1");
+      onLogin();
+    } else {
+      setError(true);
+      setTimeout(() => setError(false), 2000);
+    }
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: C.dark,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontFamily: "'Segoe UI',-apple-system,sans-serif",
+    }}>
+      <div style={{
+        background: "#fff",
+        borderRadius: 24,
+        padding: "48px 40px",
+        width: 380,
+        maxWidth: "90vw",
+        boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+        textAlign: "center",
+      }}>
+        <img
+          src={LOGO_THUMB}
+          alt="seatOS"
+          style={{ width: 64, height: 64, borderRadius: 16, objectFit: "cover", marginBottom: 20 }}
+        />
+        <div style={{ fontWeight: 800, fontSize: 24, color: C.dark, marginBottom: 4 }}>
+          seat<span style={{ color: C.orange }}>O</span>S Hub
+        </div>
+        <div style={{ fontSize: 13, color: C.gray, marginBottom: 32 }}>
+          Internal Tools — Enter password to continue
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <input
+            type="password"
+            value={pw}
+            onChange={e => { setPw(e.target.value); setError(false); }}
+            placeholder="Password"
+            autoFocus
+            style={{
+              width: "100%",
+              padding: "14px 18px",
+              borderRadius: 14,
+              border: error ? "2px solid #e11d48" : "2px solid #e4e4e7",
+              fontSize: 16,
+              outline: "none",
+              boxSizing: "border-box",
+              marginBottom: 16,
+              textAlign: "center",
+              letterSpacing: 4,
+              transition: "border-color 0.2s",
+            }}
+          />
+          {error && (
+            <div style={{ color: "#e11d48", fontSize: 13, fontWeight: 600, marginBottom: 12 }}>
+              Wrong password
+            </div>
+          )}
+          <button
+            type="submit"
+            style={{
+              width: "100%",
+              padding: "14px",
+              borderRadius: 14,
+              border: "none",
+              background: C.orange,
+              color: "#fff",
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "opacity 0.2s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
+            Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  const [authed, setAuthed] = useState(() => sessionStorage.getItem("seatos_auth") === "1");
   const [active, setActive] = useState("calculator");
   const [open, setOpen] = useState(true);
+
+  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />;
 
   return (
     <>
@@ -163,15 +266,41 @@ export default function App() {
             })}
           </nav>
 
-          {open && (
-            <div style={{
-              padding: "18px 20px",
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              fontSize: 10, color: "rgba(255,255,255,0.2)", textAlign: "center",
-            }}>
-              Bookaway Ltd.
-            </div>
-          )}
+          {/* Footer with logout */}
+          <div style={{
+            padding: open ? "14px 16px" : "14px 8px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+          }}>
+            <button
+              onClick={() => { sessionStorage.removeItem("seatos_auth"); setAuthed(false); }}
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "none",
+                color: "rgba(255,255,255,0.4)",
+                padding: open ? "8px 16px" : "8px",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: 600,
+                width: open ? "100%" : "auto",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(231,76,60,0.15)"; e.currentTarget.style.color = "#e74c3c"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              {open && "Sign Out"}
+            </button>
+            {open && <div style={{ fontSize: 10, color: "rgba(255,255,255,0.15)" }}>Bookaway Ltd.</div>}
+          </div>
         </aside>
 
         <main style={{
