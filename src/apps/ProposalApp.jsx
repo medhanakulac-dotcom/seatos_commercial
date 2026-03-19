@@ -54,6 +54,57 @@ const sBtn = { borderRadius: 50, fontWeight: 700, border: "none", cursor: "point
 const sCard = { background: B.card, borderRadius: 20, padding: 24, marginBottom: 20, boxShadow: "0 2px 12px rgba(0,0,0,.04)" };
 const sInp = { width: "100%", padding: "11px 16px", border: "2px solid " + B.light, borderRadius: 14, fontSize: 14, outline: "none", boxSizing: "border-box", background: "#fff", fontFamily: "inherit" };
 
+const COUNTRIES = [
+  "Thailand","Indonesia","Vietnam","Philippines","Malaysia","Singapore","Cambodia","Laos","Myanmar",
+  "Japan","South Korea","Taiwan","Hong Kong","China","India","Sri Lanka","Bangladesh","Nepal",
+  "Australia","New Zealand","United States","United Kingdom","Canada","Germany","France","Italy",
+  "Spain","Netherlands","Switzerland","Sweden","Norway","Denmark","Finland","Belgium","Austria",
+  "Portugal","Ireland","Poland","Czech Republic","Greece","Turkey","Russia","Brazil","Mexico",
+  "Argentina","Colombia","Chile","Peru","South Africa","Nigeria","Kenya","Egypt","Saudi Arabia",
+  "United Arab Emirates","Qatar","Kuwait","Bahrain","Oman","Israel","Jordan","Other"
+];
+
+function SearchDrop({ label, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef(null);
+  const filtered = COUNTRIES.filter(c => c.toLowerCase().includes(q.toLowerCase()));
+
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  return (
+    <div style={{ flex: 1, position: "relative" }} ref={ref}>
+      <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>{label}</label>
+      <div onClick={() => { setOpen(!open); setQ(""); }} style={{ ...sInp, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span>{value || "Select..."}</span>
+        <span style={{ fontSize: 10, color: B.gray }}>{open ? "▲" : "▼"}</span>
+      </div>
+      {open && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "2px solid " + B.light, borderRadius: 14, marginTop: 4, zIndex: 50, boxShadow: "0 8px 24px rgba(0,0,0,.12)", maxHeight: 240, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "8px 12px", borderBottom: "1px solid " + B.light }}>
+            <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Search..." style={{ ...sInp, padding: "8px 12px", border: "1.5px solid " + B.light, borderRadius: 10, fontSize: 13 }} />
+          </div>
+          <div style={{ overflow: "auto", flex: 1 }}>
+            {filtered.length === 0 && <div style={{ padding: "12px 16px", color: B.gray, fontSize: 13 }}>No results</div>}
+            {filtered.map(c => (
+              <div key={c} onClick={() => { onChange(c); setOpen(false); setQ(""); }}
+                style={{ padding: "10px 16px", cursor: "pointer", fontSize: 13, background: c === value ? B.orange + "15" : "transparent", fontWeight: c === value ? 700 : 400, color: c === value ? B.orange : B.dark, borderBottom: "1px solid " + B.light + "80" }}
+                onMouseEnter={e => e.target.style.background = B.orange + "10"}
+                onMouseLeave={e => e.target.style.background = c === value ? B.orange + "15" : "transparent"}>
+                {c}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Tog({ on, set }) {
   return (
     <button onClick={e => { e.stopPropagation(); set(!on); }}
@@ -92,7 +143,7 @@ export default function App() {
   const [cur, setCur] = useState("USD");
   const [ft, setFt] = useState("r");
   const [spId, setSpId] = useState(null);
-  const [cu, setCu] = useState({ name: "", inc: "", addr: "", email: "", s: "", e: "", country: "Thailand" });
+  const [cu, setCu] = useState({ name: "", inc: "Thailand", addr: "", email: "", s: "", e: "", country: "Thailand" });
   const [sel, setSel] = useState({});
   const [stOn, setStOn] = useState(false);
   const [stTxt, setStTxt] = useState("Customer undertakes to process all ticket bookings using seatOS.");
@@ -337,18 +388,8 @@ export default function App() {
               </div>
             ))}
             <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>Country</label>
-                <select value={cu.country} onChange={e => setCu(p => ({ ...p, country: e.target.value }))} style={{ ...sInp, appearance: "auto" }}>
-                  {["Thailand", "Indonesia", "Vietnam", "Philippines", "Malaysia", "Singapore", "Cambodia", "Laos", "Myanmar", "Japan", "South Korea", "Taiwan", "Hong Kong", "China", "India", "Australia", "New Zealand", "United States", "United Kingdom", "Other"].map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>Incorporation</label>
-                <input value={cu.inc} onChange={e => setCu(p => ({ ...p, inc: e.target.value }))} placeholder="Thailand" style={sInp} />
-              </div>
+              <SearchDrop label="Country" value={cu.country} onChange={v => setCu(p => ({ ...p, country: v, inc: (p.inc === "" || p.inc === p.country) ? v : p.inc }))} />
+              <SearchDrop label="Incorporation" value={cu.inc || cu.country} onChange={v => setCu(p => ({ ...p, inc: v }))} />
             </div>
             <div style={{ display: "flex", gap: 12 }}>
               {[{ k: "s", l: "Start Date" }, { k: "e", l: "End Date" }].map(f => (
