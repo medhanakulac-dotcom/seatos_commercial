@@ -51,6 +51,7 @@ export default function App(){
     includeAmendment:true,twelveGoEntity:TGO[0]
   });
   const[view,setView]=useState("form");
+  const[downloading,setDownloading]=useState(false);
   const up=k=>v=>setForm(p=>({...p,[k]:v}));
   const cur=form.currency;const pr=pricing[cur];const isBundle=form.orderType==="bundle";
 
@@ -245,38 +246,32 @@ export default function App(){
   const f=form;const co=company;const curL=cur+" "+pr.name;
   let pn=0;const pgN=()=>++pn;
 
-  const [downloading, setDownloading] = useState(false);
-
-  const loadScript=(src)=>new Promise((res,rej)=>{
-    if(window.html2pdf)return res();
-    const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);
-  });
-
   const handleDownload=async()=>{
     setDownloading(true);
     try{
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js');
-      const pages=document.querySelectorAll('.a4');
-      if(!pages.length){setDownloading(false);return;}
-      const customerName=f.customerName||'Contract';
-      const filename=`SeatOS_${customerName.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`;
-      
-      /* Generate PDF page-by-page */
-      let worker=window.html2pdf().set({
-        margin:0,filename,
-        image:{type:'jpeg',quality:0.95},
-        html2canvas:{scale:2,useCORS:true,width:794,scrollY:0},
-        jsPDF:{unit:'px',format:[794,1123],orientation:'portrait',hotfixes:['px_scaling']},
-      });
-      worker=worker.from(pages[0]).toContainer().toCanvas().toPdf();
-      for(let i=1;i<pages.length;i++){
-        worker=worker.get('pdf').then(pdf=>{pdf.addPage()});
-        worker=worker.from(pages[i]).toContainer().toCanvas().toPdf();
+      /* Load html2pdf.js if not loaded */
+      if(!window.html2pdf){
+        await new Promise((res,rej)=>{
+          const s=document.createElement('script');
+          s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
+          s.onload=res;s.onerror=rej;document.head.appendChild(s);
+        });
       }
-      await worker.save();
+      const el=document.getElementById('contract-pages');
+      if(!el){setDownloading(false);return;}
+      const name=f.customerName||'Contract';
+      const fn=`SeatOS_${name.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`;
+      await window.html2pdf(el,{
+        margin:[0,0,0,0],
+        filename:fn,
+        image:{type:'jpeg',quality:0.95},
+        html2canvas:{scale:2,useCORS:true,scrollY:0,windowWidth:794},
+        jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+        pagebreak:{mode:['css'],before:'.a4'}
+      });
     }catch(e){
-      console.error('PDF failed, using print:',e);
-      window.print();
+      console.error('PDF error:',e);
+      try{window.print()}catch(e2){alert('PDF download failed. Please use Ctrl+P / Cmd+P to print.')}
     }
     setDownloading(false);
   };
