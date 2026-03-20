@@ -95,13 +95,19 @@ export default function App(){
     const upC=(k,v)=>setCompany(p=>({...p,[k]:v}));
     return(
     <div style={ui.app}>
-      <div style={{background:`linear-gradient(135deg,${CI.purple},${CI.cyan})`,padding:"24px 0 20px"}}>
-        <div style={{maxWidth:880,margin:"0 auto",padding:"0 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <style>{`
+        .sg2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .sg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+        @media(max-width:768px){.sg2,.sg3{grid-template-columns:1fr!important;gap:10px!important}.scard{padding:16px!important;border-radius:16px!important}.settings-wrap{padding:16px 12px 60px!important}.settings-hdr{flex-direction:column!important;gap:10px!important}.settings-hdr button{width:100%!important}}
+        @media(min-width:769px) and (max-width:1024px){.sg3{grid-template-columns:1fr 1fr!important}}
+      `}</style>
+      <div style={{background:CI.orange,padding:"20px 0"}}>
+        <div className="settings-hdr" style={{maxWidth:880,margin:"0 auto",padding:"0 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <h1 style={{fontSize:26,fontWeight:900,color:"#fff",margin:0}}>⚙️ Settings</h1>
           <button style={{...ui.btn,background:"rgba(255,255,255,.2)",color:"#fff",padding:"10px 22px",fontSize:13,border:"1.5px solid rgba(255,255,255,.3)"}} onClick={()=>setShowSettings(false)}>← Back to Builder</button>
         </div>
       </div>
-      <div style={ui.wrap}>
+      <div className="settings-wrap" style={ui.wrap}>
 
       <div className="scard" style={ui.card}><div style={ui.ct}><span>🏢 Company (SeatOS) Details</span></div>
         <div className="sg2">
@@ -141,16 +147,20 @@ export default function App(){
       .sg2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
       .sg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
       @media(max-width:768px){
-        .sg2,.sg3{grid-template-columns:1fr!important}
-        .scard{padding:18px 14px!important;border-radius:16px!important}
-        .sheader{flex-direction:column!important;gap:12px!important}
-        .sheader h1{font-size:24px!important}
-        .scta{width:100%!important;padding:14px!important}
-        .sorderbtns{flex-direction:column!important}
+        .sg2,.sg3{grid-template-columns:1fr!important;gap:10px!important}
+        .scard{padding:16px!important;border-radius:16px!important;margin-bottom:14px!important}
+        .sheader{flex-direction:column!important;gap:10px!important}
+        .sheader h1{font-size:22px!important}
+        .scta{width:100%!important;padding:14px 24px!important;font-size:15px!important}
+        .sorderbtns{flex-direction:column!important;gap:8px!important}
         .sorderbtns button{width:100%!important}
+        .r-wrap{padding:16px 12px 60px!important;max-width:100%!important}
+        .sct{font-size:13px!important;flex-wrap:wrap!important;gap:6px!important}
+        .sbtn-settings{width:100%!important;text-align:center!important}
       }
       @media(min-width:769px) and (max-width:1024px){
         .sg3{grid-template-columns:1fr 1fr!important}
+        .r-wrap{padding:24px 16px 60px!important}
       }
     `}</style>
     <div className="r-wrap" style={ui.wrap}>
@@ -159,18 +169,18 @@ export default function App(){
           <h1 style={{fontSize:30,fontWeight:900,color:CI.dark,margin:0,letterSpacing:"-0.5px"}}>Contract Builder</h1>
           <p style={{fontSize:14,color:"#999",margin:"4px 0 0"}}>SeatOS Software Subscription &amp; Services Agreement</p>
         </div>
-        <button style={{...ui.btn,background:"#fff",color:"#777",padding:"10px 22px",fontSize:13,border:"2px solid #e8e4df"}} onClick={()=>setShowSettings(true)}>⚙️ Settings</button>
+        <button className="sbtn-settings" style={{...ui.btn,background:"#fff",color:"#777",padding:"10px 22px",fontSize:13,border:"2px solid #e8e4df"}} onClick={()=>setShowSettings(true)}>⚙️ Settings</button>
       </div>
 
       {/* Order Type */}
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>📋 Order Type</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>📋 Order Type</span></div>
         <div className="sorderbtns" style={{display:"flex",gap:12}}>
           {["regular","bundle"].map(v=>(<button key={v} onClick={()=>up("orderType")(v)} style={{flex:1,padding:"16px",borderRadius:20,border:form.orderType===v?`3px solid ${CI.orange}`:"3px solid transparent",background:form.orderType===v?"#FFF8F0":"#fff",fontWeight:800,fontSize:15,cursor:"pointer",color:form.orderType===v?CI.orange:"#bbb",boxShadow:form.orderType===v?"0 4px 16px rgba(245,166,35,.2)":"none",transition:"all .2s"}}>{v==="regular"?"📄 Regular":"📦 Bundle"}</button>))}
         </div>
       </div>
 
       {/* Country & Currency */}
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>🌏 Country &amp; Currency</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>🌏 Country &amp; Currency</span></div>
         <div className="sg3">
           <SearchSel label="Country *" value={form.country} onChange={v=>{up("country")(v);if(COUNTRY_CUR[v])up("currency")(COUNTRY_CUR[v])}} opts={COUNTRIES.map(c=>({v:c,l:c}))}/>
           <SearchSel label="Currency *" value={form.currency} onChange={up("currency")} opts={CURRENCIES.map(c=>({v:c,l:c+" — "+pricing[c].name}))}/>
@@ -179,7 +189,7 @@ export default function App(){
       </div>
 
       {/* Company Info */}
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>🏢 Company Information</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>🏢 Company Information</span></div>
         <div className="sg2">
           <Inp label="Customer Name *" value={form.customerName} onChange={up("customerName")} ph="e.g. Acme Travel Co., Ltd."/>
           <Inp label="Registration No." value={form.custRegNum} onChange={up("custRegNum")}/>
@@ -190,7 +200,7 @@ export default function App(){
       </div>
 
       {/* Subscription */}
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>📅 Subscription Term</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>📅 Subscription Term</span></div>
         <div className="sg3">
           <Inp label="Start Date *" value={form.subStartDate} onChange={up("subStartDate")} type="date"/>
           <Sel label="Duration *" value={form.termMonths} onChange={v=>up("termMonths")(Number(v))} opts={TERMS.map(x=>({v:x.m,l:x.l}))}/>
@@ -199,7 +209,7 @@ export default function App(){
       </div>
 
       {/* Fees */}
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>💰 Licenses &amp; Fees</span><span style={ui.badge}>{cur}</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>💰 Licenses &amp; Fees</span><span style={ui.badge}>{cur}</span></div>
         {/* Online */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Online Convenience Fee</b><Waive on={form.wOnline} set={up("wOnline")}/></div>
           {!form.wOnline&&<div className="sg3"><Sel label="Mode" value={form.onlineFeeMode} onChange={up("onlineFeeMode")} opts={[{v:"percent",l:"% of transaction"},{v:"flat",l:"Flat "+cur}]}/>{form.onlineFeeMode==="percent"?<Inp label="%" value={form.onlineFeePercent} onChange={up("onlineFeePercent")} ph="3"/>:<Inp label={cur} value={form.onlineFeeFlat} onChange={up("onlineFeeFlat")} ph={String(pr.online)}/>}<div style={{fontSize:12,color:"#888",paddingTop:22}}>Ref: {fN(pr.online,cur)} {cur}/txn</div></div>}
@@ -226,7 +236,7 @@ export default function App(){
       </div>
 
       {/* Hardware */}
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>🖥️ Hardware</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>🖥️ Hardware</span></div>
         <p style={{fontSize:12,color:"#888",marginBottom:12}}>Set quantity to 0 to exclude from the contract.</p>
         <div className="sg2">
           <div><label style={ui.lb}>POS Quantity (@ {fN(pr.pos,cur)} {cur}/unit/month)</label><input type="number" min="0" value={form.posQty} onChange={e=>up("posQty")(Math.max(0,Number(e.target.value)))} style={ui.inp}/></div>
@@ -235,7 +245,7 @@ export default function App(){
       </div>
 
       {/* Summary */}
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>📊 Summary</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>📊 Summary</span></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:"6px 20px",fontSize:14,marginBottom:12}}>
           <span style={{color:"#555"}}>Online Conv.</span><span style={{fontWeight:600,textAlign:"right"}}>{onD}{form.onlineFeeMode==="flat"&&!form.wOnline?" "+cur:""}</span>
           <span style={{color:"#555"}}>Offline Conv.</span><span style={{fontWeight:600,textAlign:"right"}}>{offD}{form.offlineFeeMode==="flat"&&!form.wOffline?" "+cur:""}</span>
@@ -250,7 +260,7 @@ export default function App(){
       </div>
 
       {/* Signatory */}
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>✍️ Customer Signatory &amp; Billing</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>✍️ Customer Signatory &amp; Billing</span></div>
         <div className="sg2">
           <Inp label="Name *" value={form.custSignName} onChange={up("custSignName")}/>
           <Inp label="Title" value={form.custSignTitle} onChange={up("custSignTitle")}/>
@@ -264,7 +274,7 @@ export default function App(){
       </div>
 
       {/* Special Terms — dynamic list */}
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>📝 Special Terms</span><button style={{background:"none",border:`2px solid ${CI.green}`,color:CI.green,borderRadius:50,padding:"4px 14px",fontSize:13,fontWeight:800,cursor:"pointer"}} onClick={()=>setForm(p=>({...p,specialTerms:[...p.specialTerms,""]}))}>+ Add Term</button></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>📝 Special Terms</span><button style={{background:"none",border:`2px solid ${CI.green}`,color:CI.green,borderRadius:50,padding:"4px 14px",fontSize:13,fontWeight:800,cursor:"pointer"}} onClick={()=>setForm(p=>({...p,specialTerms:[...p.specialTerms,""]}))}>+ Add Term</button></div>
         {form.specialTerms.map((t,i)=>(
           <div key={i} style={{display:"flex",gap:8,marginBottom:10,alignItems:"flex-start"}}>
             <span style={{fontSize:12,fontWeight:700,color:"#999",paddingTop:12,flexShrink:0}}>{i+1}.</span>
@@ -274,9 +284,9 @@ export default function App(){
         ))}
       </div>
 
-      {isBundle&&<div className="scard" style={ui.card}><div style={ui.ct}><span>📦 Bundle: 12GO</span></div><Sel label="12GO Entity" value={form.twelveGoEntity} onChange={up("twelveGoEntity")} opts={TGO.map(e=>({v:e,l:e}))}/></div>}
+      {isBundle&&<div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>📦 Bundle: 12GO</span></div><Sel label="12GO Entity" value={form.twelveGoEntity} onChange={up("twelveGoEntity")} opts={TGO.map(e=>({v:e,l:e}))}/></div>}
 
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>⚙️ Options</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>⚙️ Options</span></div>
         <Tog label="Include Amendment page" value={form.includeAmendment} onChange={up("includeAmendment")}/>
       </div>
 
