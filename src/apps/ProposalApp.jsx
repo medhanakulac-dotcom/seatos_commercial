@@ -95,7 +95,7 @@ function SeatLogo({ h }) {
 }
 
 const sBtn = { borderRadius: 50, fontWeight: 700, border: "none", cursor: "pointer" };
-const sCard = { background: B.card, borderRadius: 20, padding: 24, marginBottom: 20, boxShadow: "0 2px 12px rgba(0,0,0,.04)" };
+const _sCard = { background: B.card, borderRadius: 20, marginBottom: 20, boxShadow: "0 2px 12px rgba(0,0,0,.04)" };
 const sInp = { width: "100%", padding: "11px 16px", border: "2px solid " + B.light, borderRadius: 14, fontSize: 14, outline: "none", boxSizing: "border-box", background: "#fff", fontFamily: "inherit" };
 
 const COUNTRIES = [
@@ -284,6 +284,7 @@ export default function App() {
   const hPx = isMobile ? "10px 14px" : "14px 24px"; // header padding
   const prevPx = isMobile ? "16px 16px" : isTablet ? "28px 32px" : "48px 56px"; // preview header
   const prevBPx = isMobile ? "12px 16px" : "20px 40px"; // preview body
+  const sCard = { ..._sCard, padding: isMobile ? 16 : 24 };
 
   if (ld) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: B.bg }}><span style={{ fontSize: 16, color: B.gray }}>Loading...</span></div>;
 
@@ -428,7 +429,7 @@ export default function App() {
       const hDP = v => { const pp = parseFloat(v); upd(it.id, { dp: v, da: (!isNaN(pp) && base > 0) ? String(Math.round(pp / 100 * base * 100) / 100) : "" }); };
       const hDA = v => { const a = parseFloat(v); upd(it.id, { da: v, dp: (!isNaN(a) && base > 0) ? String(Math.round(a / base * 10000) / 100) : "" }); };
       return (
-        <div key={it.id} onClick={() => toggle(it.id)} style={{ border: on ? "2px solid " + it.clr : "2px solid " + B.light, borderRadius: 20, padding: 20, marginBottom: 14, background: on ? it.clr + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden" }}>
+        <div key={it.id} onClick={() => toggle(it.id)} style={{ border: on ? "2px solid " + it.clr : "2px solid " + B.light, borderRadius: isMobile ? 16 : 20, padding: isMobile ? 14 : 20, marginBottom: isMobile ? 10 : 14, background: on ? it.clr + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden" }}>
           {on && <div style={{ position: "absolute", left: 0, top: 0, width: 5, height: "100%", background: it.clr }} />}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <div style={{ flex: 1, paddingLeft: on ? 8 : 0 }}>
@@ -529,16 +530,16 @@ export default function App() {
           <Sec label="Document Type" n={0} color={B.dark} />
           <div style={sCard}>
             <div style={{ display: "flex", gap: 0, borderRadius: 14, overflow: "hidden", border: "2px solid " + B.light }}>
-              {[{ k: "proposal", l: "Proposal", desc: "Challenge-based consulting document", clr: B.cyan },
-                { k: "quotation", l: "Quotation", desc: "Pricing & subscription quotation", clr: B.orange }
+              {[{ k: "proposal", l: "Proposal", desc: "Challenge-based consulting", clr: B.cyan },
+                { k: "quotation", l: "Quotation", desc: "Pricing & subscription", clr: B.orange }
               ].map(dt => (
                 <button key={dt.k} onClick={() => setDocType(dt.k)} style={{
-                  flex: 1, padding: "16px 12px", border: "none", cursor: "pointer", textAlign: "center",
+                  flex: 1, padding: isMobile ? "12px 8px" : "16px 12px", border: "none", cursor: "pointer", textAlign: "center",
                   background: docType === dt.k ? dt.clr : "#fff", color: docType === dt.k ? "#fff" : B.gray,
                   transition: "all .2s"
                 }}>
-                  <b style={{ fontSize: 15, display: "block" }}>{dt.l}</b>
-                  <span style={{ fontSize: 11, opacity: 0.8 }}>{dt.desc}</span>
+                  <b style={{ fontSize: isMobile ? 13 : 15, display: "block" }}>{dt.l}</b>
+                  {!isMobile && <span style={{ fontSize: 11, opacity: 0.8 }}>{dt.desc}</span>}
                 </button>
               ))}
             </div>
@@ -566,11 +567,11 @@ export default function App() {
                 <input value={cu[f.k]} onChange={e => setCu(p => ({ ...p, [f.k]: e.target.value }))} placeholder={f.p} style={sInp} />
               </div>
             ))}
-            <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 12, marginBottom: 12, flexDirection: isMobile ? "column" : "row" }}>
               <SearchDrop label="Country" value={cu.country} onChange={v => setCu(p => ({ ...p, country: v, inc: (p.inc === "" || p.inc === p.country) ? v : p.inc }))} />
               <SearchDrop label="Incorporation" value={cu.inc || cu.country} onChange={v => setCu(p => ({ ...p, inc: v }))} />
             </div>
-            <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ display: "flex", gap: 12, flexDirection: isMobile ? "column" : "row" }}>
               {[{ k: "s", l: "Start Date" }, { k: "e", l: "End Date" }].map(f => (
                 <div key={f.k} style={{ flex: 1 }}>
                   <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>{f.l}</label>
@@ -589,7 +590,7 @@ export default function App() {
                 const isSuggested = suggestedIds.includes(ch.id);
                 return (
                   <div key={ch.id} onClick={() => setSelCh(p => on ? p.filter(x => x !== ch.id) : [...p, ch.id])}
-                    style={{ border: on ? "2px solid " + B.cyan : isSuggested ? "2px dashed " + B.orange : "2px solid " + B.light, borderRadius: 20, padding: "16px 20px", marginBottom: 10, background: on ? B.cyan + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden" }}>
+                    style={{ border: on ? "2px solid " + B.cyan : isSuggested ? "2px dashed " + B.orange : "2px solid " + B.light, borderRadius: isMobile ? 16 : 20, padding: isMobile ? "12px 14px" : "16px 20px", marginBottom: 10, background: on ? B.cyan + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden" }}>
                     {on && <div style={{ position: "absolute", left: 0, top: 0, width: 5, height: "100%", background: B.cyan }} />}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, paddingLeft: on ? 8 : 0 }}>
                       <div style={{ flex: 1 }}>
@@ -609,11 +610,11 @@ export default function App() {
               })}
 
               {/* Proposal summary bar */}
-              <div style={{ background: B.dark, borderRadius: 20, padding: "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 16, marginTop: 16 }}>
-                <div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "flex-end" }}>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Challenges</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{selCh.length}</div></div>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Features</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{proposalFeatures.length}</div></div>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Impacts</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{proposalImpacts.length}</div></div>
+              <div style={{ background: B.dark, borderRadius: isMobile ? 16 : 20, padding: isMobile ? "16px 18px" : "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 12, marginTop: 16 }}>
+                <div style={{ display: "flex", gap: isMobile ? 16 : 28, flexWrap: "wrap", alignItems: "flex-end" }}>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Challenges</div><div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, lineHeight: 1 }}>{selCh.length}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Features</div><div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, lineHeight: 1 }}>{proposalFeatures.length}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Impacts</div><div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, lineHeight: 1 }}>{proposalImpacts.length}</div></div>
                 </div>
                 <button onClick={goPreview} disabled={selCh.length === 0} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: selCh.length > 0 ? 1 : 0.5 }}>Preview Proposal →</button>
               </div>
@@ -663,14 +664,14 @@ export default function App() {
               </div>
 
               {/* Quotation summary bar (RENAMED from "Proposal") */}
-              <div style={{ background: B.dark, borderRadius: 20, padding: "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 16 }}>
-                <div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "flex-end" }}>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>One-Time</div><div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.ot, cur)}</div></div>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Monthly</div><div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.mo, cur)}</div></div>
-                  {bda > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Discount</div><div style={{ fontSize: 18, fontWeight: 700, color: B.cyan, lineHeight: 1 }}>-{fmtp(bda, cur)}</div></div>}
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, color: B.orange, marginBottom: 4 }}>Grand</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{fmtp(grand, cur)}</div></div>
+              <div style={{ background: B.dark, borderRadius: isMobile ? 16 : 20, padding: isMobile ? "16px 18px" : "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 12 }}>
+                <div style={{ display: "flex", gap: isMobile ? 14 : 28, flexWrap: "wrap", alignItems: "flex-end" }}>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>One-Time</div><div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.ot, cur)}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Monthly</div><div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.mo, cur)}</div></div>
+                  {bda > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Discount</div><div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 700, color: B.cyan, lineHeight: 1 }}>-{fmtp(bda, cur)}</div></div>}
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, color: B.orange, marginBottom: 4 }}>Grand</div><div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, lineHeight: 1 }}>{fmtp(grand, cur)}</div></div>
                 </div>
-                <button onClick={() => setPg("preview")} disabled={cnt === 0} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: cnt > 0 ? 1 : 0.5 }}>Quotation →</button>
+                <button onClick={() => setPg("preview")} disabled={cnt === 0} style={{ ...sBtn, background: B.orange, color: "#fff", padding: isMobile ? "10px 20px" : "14px 32px", fontSize: isMobile ? 13 : 15, opacity: cnt > 0 ? 1 : 0.5 }}>Quotation →</button>
               </div>
             </>
           )}
