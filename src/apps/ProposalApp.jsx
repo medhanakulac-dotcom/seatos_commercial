@@ -39,43 +39,65 @@ const DEFAULT_CHALLENGES = [
   { id: "CH001", title: "Manual Booking Process", description: "Operators still rely on phone calls, paper logs, or spreadsheets to manage reservations — causing delays and human error.",
     features: ["Online Booking Engine", "Bookings Management", "Agent Portal"],
     feature_mapping: [{ feature: "Online Booking Engine", how: "Self-service booking 24/7 — eliminates phone/email dependency" }, { feature: "Bookings Management", how: "Centralized dashboard for all reservations with real-time status" }, { feature: "Agent Portal", how: "Enables travel agents to book directly without operator intervention" }],
-    business_impact: ["Reduce manual workload by up to 70%", "Faster booking turnaround time", "Lower labor cost per booking"] },
+    business_impact: ["Reduce manual workload by up to 70%", "Faster booking turnaround time", "Lower labor cost per booking"],
+    i18n: {
+      th: { title: "กระบวนการจองแบบแมนนวล", description: "ผู้ประกอบการยังพึ่งพาโทรศัพท์ กระดาษ หรือสเปรดชีตในการจัดการการจอง — ทำให้เกิดความล่าช้าและข้อผิดพลาด", feature_mapping_how: ["บริการจองด้วยตนเอง 24/7 — ไม่ต้องพึ่งโทรศัพท์/อีเมล", "แดชบอร์ดรวมศูนย์สำหรับการจองทั้งหมดพร้อมสถานะเรียลไทม์", "ช่วยให้ตัวแทนท่องเที่ยวจองได้โดยตรง"], business_impact: ["ลดภาระงานแมนนวลถึง 70%", "เวลาจองเร็วขึ้น", "ต้นทุนแรงงานต่อการจองลดลง"] },
+      vi: { title: "Quy trình đặt chỗ thủ công", description: "Nhà vận hành vẫn dựa vào điện thoại, sổ giấy hoặc bảng tính để quản lý đặt chỗ — gây chậm trễ và lỗi.", feature_mapping_how: ["Đặt chỗ tự phục vụ 24/7 — loại bỏ phụ thuộc điện thoại/email", "Bảng điều khiển tập trung cho tất cả đặt chỗ với trạng thái thời gian thực", "Cho phép đại lý du lịch đặt trực tiếp"], business_impact: ["Giảm khối lượng công việc thủ công lên đến 70%", "Thời gian đặt chỗ nhanh hơn", "Chi phí nhân công mỗi lượt đặt thấp hơn"] },
+      id: { title: "Proses Pemesanan Manual", description: "Operator masih mengandalkan telepon, catatan kertas, atau spreadsheet untuk mengelola reservasi — menyebabkan keterlambatan dan kesalahan.", feature_mapping_how: ["Pemesanan mandiri 24/7 — menghilangkan ketergantungan telepon/email", "Dasbor terpusat untuk semua reservasi dengan status real-time", "Memungkinkan agen perjalanan memesan langsung"], business_impact: ["Kurangi beban kerja manual hingga 70%", "Waktu pemesanan lebih cepat", "Biaya tenaga kerja per pemesanan lebih rendah"] }
+    } },
   { id: "CH002", title: "No Real-Time Availability", description: "Seat/trip availability is not visible in real time, leading to double bookings and lost revenue.",
     features: ["Trip List", "Real-Time Inventory", "Bookings Management"],
     feature_mapping: [{ feature: "Trip List", how: "Live seat map with real-time capacity across all trips" }, { feature: "Real-Time Inventory", how: "Instant sync across all sales channels" }, { feature: "Bookings Management", how: "Automatic status updates — no manual reconciliation" }],
-    business_impact: ["Eliminate double-booking incidents", "Maximize seat utilization", "Improve customer trust and satisfaction"] },
+    business_impact: ["Eliminate double-booking incidents", "Maximize seat utilization", "Improve customer trust and satisfaction"],
+    i18n: {
+      th: { title: "ไม่มีข้อมูลที่นั่งว่างแบบเรียลไทม์", description: "จำนวนที่นั่ง/ทริปที่ว่างไม่แสดงแบบเรียลไทม์ ทำให้เกิดการจองซ้ำและสูญเสียรายได้", feature_mapping_how: ["แผนที่ที่นั่งแบบเรียลไทม์พร้อมความจุทุกทริป", "ซิงค์ทันทีทุกช่องทางขาย", "อัปเดตสถานะอัตโนมัติ — ไม่ต้องกระทบยอดเอง"], business_impact: ["ขจัดปัญหาจองซ้ำ", "ใช้ที่นั่งได้เต็มประสิทธิภาพ", "เพิ่มความเชื่อมั่นของลูกค้า"] },
+      vi: { title: "Không có tình trạng chỗ thời gian thực", description: "Tình trạng ghế/chuyến không hiển thị thời gian thực, dẫn đến đặt trùng và mất doanh thu.", feature_mapping_how: ["Bản đồ ghế thời gian thực với sức chứa mọi chuyến", "Đồng bộ tức thì trên tất cả kênh bán", "Cập nhật trạng thái tự động — không cần đối chiếu thủ công"], business_impact: ["Loại bỏ sự cố đặt trùng", "Tối đa hóa sử dụng ghế", "Cải thiện niềm tin khách hàng"] },
+      id: { title: "Tidak Ada Ketersediaan Real-Time", description: "Ketersediaan kursi/perjalanan tidak terlihat secara real-time, menyebabkan pemesanan ganda dan kehilangan pendapatan.", feature_mapping_how: ["Peta kursi real-time dengan kapasitas semua perjalanan", "Sinkronisasi instan di semua saluran penjualan", "Pembaruan status otomatis — tanpa rekonsiliasi manual"], business_impact: ["Hilangkan insiden pemesanan ganda", "Maksimalkan pemanfaatan kursi", "Tingkatkan kepercayaan pelanggan"] }
+    } },
   { id: "CH003", title: "Multi-Channel Inconsistency", description: "Selling through OTAs, website, counter, and agents — but inventory is not synchronized across channels.",
     features: ["Channel Manager", "API Integration", "Real-Time Inventory"],
     feature_mapping: [{ feature: "Channel Manager", how: "Single control panel to manage all distribution channels" }, { feature: "API Integration", how: "Automated sync with OTAs (Bookaway, 12Go, GetYourGuide, etc.)" }, { feature: "Real-Time Inventory", how: "One source of truth for availability across all touchpoints" }],
-    business_impact: ["Prevent overselling across channels", "Expand distribution without operational overhead", "Increase revenue from online channels"] },
+    business_impact: ["Prevent overselling across channels", "Expand distribution without operational overhead", "Increase revenue from online channels"],
+    i18n: {
+      th: { title: "ช่องทางขายไม่ซิงค์กัน", description: "ขายผ่าน OTA, เว็บไซต์, เคาน์เตอร์ และตัวแทน — แต่สต็อกไม่ซิงค์", feature_mapping_how: ["แผงควบคุมเดียวจัดการทุกช่องทาง", "ซิงค์อัตโนมัติกับ OTA", "แหล่งข้อมูลเดียวสำหรับที่ว่างทุกจุดขาย"], business_impact: ["ป้องกันการขายเกินทุกช่องทาง", "ขยายการจัดจำหน่ายโดยไม่เพิ่มภาระงาน", "เพิ่มรายได้จากช่องทางออนไลน์"] },
+      vi: { title: "Kênh bán không đồng bộ", description: "Bán qua OTA, website, quầy và đại lý — nhưng tồn kho không đồng bộ.", feature_mapping_how: ["Bảng điều khiển duy nhất quản lý tất cả kênh", "Đồng bộ tự động với OTA", "Một nguồn dữ liệu duy nhất cho tình trạng chỗ"], business_impact: ["Ngăn bán quá số lượng trên các kênh", "Mở rộng phân phối không tăng chi phí vận hành", "Tăng doanh thu từ kênh trực tuyến"] },
+      id: { title: "Ketidakkonsistenan Multi-Kanal", description: "Menjual melalui OTA, website, konter, dan agen — tetapi inventaris tidak tersinkronisasi.", feature_mapping_how: ["Satu panel kontrol untuk mengelola semua saluran", "Sinkronisasi otomatis dengan OTA", "Satu sumber kebenaran untuk ketersediaan"], business_impact: ["Cegah penjualan berlebihan di semua saluran", "Perluas distribusi tanpa beban operasional", "Tingkatkan pendapatan dari saluran online"] }
+    } },
   { id: "CH004", title: "Overbooking & Revenue Leakage", description: "Lack of real-time inventory sync leads to overbooking, refunds, and compensation costs.",
     features: ["Trip List", "Bookings Management", "Real-Time Inventory"],
     feature_mapping: [{ feature: "Trip List", how: "Real-time seat availability visibility per departure" }, { feature: "Bookings Management", how: "Automatic conflict detection and alerts" }, { feature: "Real-Time Inventory", how: "Centralized capacity management prevents overselling" }],
-    business_impact: ["Reduce overbooking incidents by 90%+", "Lower compensation and refund costs", "Improve brand reputation"] },
+    business_impact: ["Reduce overbooking incidents by 90%+", "Lower compensation and refund costs", "Improve brand reputation"],
+    i18n: { th: { title: "จองเกิน 0026 รายได้รั่วไหล", description: "สต็อกไม่ซิงค์แบบเรียลไทม์ทำให้จองเกินและต้องจ่ายค่าชดเชย", feature_mapping_how: ["มองเห็นที่นั่งว่างแบบเรียลไทม์ต่อเที่ยว","ตรวจจับความขัดแย้งอัตโนมัติ","จัดการความจุรวมศูนย์ป้องกันขายเกิน"], business_impact: ["ลดการจองเกิน 90%+","ลดค่าชดเชยและคืนเงิน","เพิ่มชื่อเสียงแบรนด์"] }, vi: { title: "Đặt quá chỗ 0026 Thất thoát doanh thu", description: "Thiếu đồng bộ tồn kho thời gian thực dẫn đến đặt quá chỗ và chi phí bồi thường.", feature_mapping_how: ["Hiển thị ghế trống thời gian thực mỗi chuyến","Phát hiện xung đột tự động","Quản lý sức chứa tập trung ngăn bán quá"], business_impact: ["Giảm 90%+ sự cố đặt quá chỗ","Giảm chi phí bồi thường và hoàn tiền","Cải thiện uy tín thương hiệu"] }, id: { title: "Overbooking 0026 Kebocoran Pendapatan", description: "Kurangnya sinkronisasi inventaris real-time menyebabkan overbooking dan biaya kompensasi.", feature_mapping_how: ["Visibilitas kursi real-time per keberangkatan","Deteksi konflik otomatis","Manajemen kapasitas terpusat mencegah overselling"], business_impact: ["Kurangi insiden overbooking 90%+","Turunkan biaya kompensasi dan refund","Tingkatkan reputasi merek"] } } },
   { id: "CH005", title: "No Online Presence", description: "No website or booking engine — losing direct customers to OTAs with high commission fees.",
     features: ["Online Booking Engine", "White-Label Website", "Payment Gateway"],
     feature_mapping: [{ feature: "Online Booking Engine", how: "Branded booking widget embeddable on any website" }, { feature: "White-Label Website", how: "Ready-to-use operator website with booking capability" }, { feature: "Payment Gateway", how: "Accept online payments (cards, e-wallets, bank transfer)" }],
-    business_impact: ["Increase direct bookings (reduce OTA dependency)", "Save 15-25% on OTA commissions", "Own the customer relationship and data"] },
+    business_impact: ["Increase direct bookings (reduce OTA dependency)", "Save 15-25% on OTA commissions", "Own the customer relationship and data"],
+    i18n: { th: { title: "ไม่มีช่องทางออนไลน์", description: "ไม่มีเว็บไซต์หรือระบบจอง — สูญเสียลูกค้าตรงให้ OTA ที่คิดค่าคอมมิชชั่นสูง", feature_mapping_how: ["วิดเจ็ตจองแบรนด์ฝังได้ทุกเว็บไซต์","เว็บไซต์สำเร็จรูปพร้อมระบบจอง","รับชำระเงินออนไลน์ (บัตร, อีวอลเล็ต, โอน)"], business_impact: ["เพิ่มการจองตรง (ลดการพึ่ง OTA)","ประหยัดค่าคอมมิชชั่น OTA 15-25%","เป็นเจ้าของข้อมูลลูกค้า"] }, vi: { title: "Không có kênh trực tuyến", description: "Không có website hoặc hệ thống đặt chỗ — mất khách hàng trực tiếp cho OTA.", feature_mapping_how: ["Widget đặt chỗ có thương hiệu nhúng trên website","Website có sẵn với khả năng đặt chỗ","Chấp nhận thanh toán trực tuyến"], business_impact: ["Tăng đặt chỗ trực tiếp","Tiết kiệm 15-25% hoa hồng OTA","Sở hữu mối quan hệ khách hàng"] }, id: { title: "Tidak Ada Kehadiran Online", description: "Tidak ada website atau booking engine — kehilangan pelanggan langsung ke OTA.", feature_mapping_how: ["Widget pemesanan bermerek yang bisa ditanamkan","Website siap pakai dengan kemampuan booking","Terima pembayaran online"], business_impact: ["Tingkatkan pemesanan langsung","Hemat 15-25% komisi OTA","Miliki hubungan pelanggan"] } } },
   { id: "CH006", title: "Paper-Based Operations", description: "Manifests, boarding passes, and reports still handled on paper — slow, error-prone, and not scalable.",
     features: ["E-Ticket / QR Code", "Digital Manifest", "Reporting Dashboard"],
     feature_mapping: [{ feature: "E-Ticket / QR Code", how: "Digital tickets with QR scan for boarding" }, { feature: "Digital Manifest", how: "Auto-generated passenger list per trip" }, { feature: "Reporting Dashboard", how: "Real-time analytics replacing manual reports" }],
-    business_impact: ["Go paperless — reduce printing costs", "Faster boarding and check-in process", "Accurate data for decision making"] },
+    business_impact: ["Go paperless — reduce printing costs", "Faster boarding and check-in process", "Accurate data for decision making"],
+    i18n: { th: { title: "การดำเนินงานแบบกระดาษ", description: "รายชื่อผู้โดยสาร บอร์ดดิ้งพาส และรายงานยังใช้กระดาษ — ช้า ผิดพลาด และขยายตัวยาก", feature_mapping_how: ["ตั๋วดิจิทัลพร้อม QR สำหรับขึ้นรถ","รายชื่อผู้โดยสารสร้างอัตโนมัติ","วิเคราะห์เรียลไทม์แทนรายงานแมนนวล"], business_impact: ["ไร้กระดาษ — ลดต้นทุนพิมพ์","ขึ้นรถเร็วขึ้น","ข้อมูลแม่นยำสำหรับตัดสินใจ"] }, vi: { title: "Vận hành giấy tờ", description: "Danh sách khách, vé và báo cáo vẫn dùng giấy — chậm, dễ sai và khó mở rộng.", feature_mapping_how: ["Vé điện tử QR cho lên xe","Danh sách khách tự động","Phân tích thời gian thực thay báo cáo thủ công"], business_impact: ["Không giấy tờ — giảm chi phí in","Lên xe nhanh hơn","Dữ liệu chính xác cho quyết định"] }, id: { title: "Operasi Berbasis Kertas", description: "Manifes, boarding pass, dan laporan masih pakai kertas — lambat dan sulit berkembang.", feature_mapping_how: ["E-tiket QR untuk boarding","Manifes penumpang otomatis","Analitik real-time menggantikan laporan manual"], business_impact: ["Tanpa kertas — kurangi biaya cetak","Boarding lebih cepat","Data akurat untuk keputusan"] } } },
   { id: "CH007", title: "Poor Financial Visibility", description: "No clear view of revenue, commissions, or agent settlements — relying on end-of-month reconciliation.",
     features: ["Reporting Dashboard", "Agent Settlement", "Payment Reconciliation"],
     feature_mapping: [{ feature: "Reporting Dashboard", how: "Real-time revenue, bookings, and performance metrics" }, { feature: "Agent Settlement", how: "Automated commission calculation and payout tracking" }, { feature: "Payment Reconciliation", how: "Match payments to bookings automatically" }],
-    business_impact: ["Real-time financial visibility", "Reduce reconciliation time from days to minutes", "Prevent commission disputes with agents"] },
+    business_impact: ["Real-time financial visibility", "Reduce reconciliation time from days to minutes", "Prevent commission disputes with agents"],
+    i18n: { th: { title: "มองไม่เห็นสถานะการเงิน", description: "ไม่มีภาพรวมรายได้ คอมมิชชั่น หรือการชำระเงิน — พึ่งพาการกระทบยอดสิ้นเดือน", feature_mapping_how: ["ดูรายได้ การจอง และประสิทธิภาพแบบเรียลไทม์","คำนวณคอมมิชชั่นและติดตามการจ่ายอัตโนมัติ","จับคู่การชำระเงินกับการจองอัตโนมัติ"], business_impact: ["มองเห็นการเงินแบบเรียลไทม์","ลดเวลากระทบยอดจากวันเหลือนาที","ป้องกันข้อพิพาทคอมมิชชั่น"] }, vi: { title: "Thiếu tầm nhìn tài chính", description: "Không có cái nhìn rõ ràng về doanh thu, hoa hồng hoặc thanh toán.", feature_mapping_how: ["Chỉ số doanh thu và hiệu suất thời gian thực","Tính hoa hồng và theo dõi thanh toán tự động","Đối chiếu thanh toán với đặt chỗ tự động"], business_impact: ["Tầm nhìn tài chính thời gian thực","Giảm thời gian đối chiếu từ ngày xuống phút","Ngăn tranh chấp hoa hồng"] }, id: { title: "Visibilitas Keuangan Buruk", description: "Tidak ada pandangan jelas tentang pendapatan, komisi, atau penyelesaian agen.", feature_mapping_how: ["Metrik pendapatan dan kinerja real-time","Perhitungan komisi dan pelacakan pembayaran otomatis","Cocokkan pembayaran dengan pemesanan otomatis"], business_impact: ["Visibilitas keuangan real-time","Kurangi waktu rekonsiliasi dari hari jadi menit","Cegah sengketa komisi"] } } },
   { id: "CH008", title: "Scaling Difficulties", description: "Adding new routes, vehicles, or seasons requires manual setup and cannot be done quickly.",
     features: ["Trip Management", "Fleet Management", "Season & Pricing Rules"],
     feature_mapping: [{ feature: "Trip Management", how: "Create and clone trips/routes in minutes" }, { feature: "Fleet Management", how: "Assign vehicles to trips with capacity management" }, { feature: "Season & Pricing Rules", how: "Dynamic pricing by season, day, or demand" }],
-    business_impact: ["Launch new routes in hours, not weeks", "Scale operations without proportional staff increase", "Optimize pricing for revenue maximization"] },
+    business_impact: ["Launch new routes in hours, not weeks", "Scale operations without proportional staff increase", "Optimize pricing for revenue maximization"],
+    i18n: { th: { title: "ยากต่อการขยายตัว", description: "การเพิ่มเส้นทาง รถ หรือฤดูกาลใหม่ต้องตั้งค่าเอง ทำได้ช้า", feature_mapping_how: ["สร้างและโคลนทริป/เส้นทางในไม่กี่นาที","กำหนดรถให้ทริปพร้อมจัดการความจุ","ราคาไดนามิกตามฤดูกาล วัน หรืออุปสงค์"], business_impact: ["เปิดเส้นทางใหม่ในชั่วโมง ไม่ใช่สัปดาห์","ขยายงานไม่ต้องเพิ่มพนักงานตามสัดส่วน","ปรับราคาเพื่อเพิ่มรายได้สูงสุด"] }, vi: { title: "Khó mở rộng", description: "Thêm tuyến, xe hoặc mùa mới cần thiết lập thủ công và không thể làm nhanh.", feature_mapping_how: ["Tạo và nhân bản chuyến/tuyến trong vài phút","Phân xe cho chuyến với quản lý sức chứa","Giá linh hoạt theo mùa, ngày hoặc nhu cầu"], business_impact: ["Ra mắt tuyến mới trong giờ, không phải tuần","Mở rộng vận hành không tăng nhân sự tương ứng","Tối ưu giá để tối đa doanh thu"] }, id: { title: "Kesulitan Penskalaan", description: "Menambah rute, kendaraan, atau musim baru memerlukan setup manual dan lambat.", feature_mapping_how: ["Buat dan klon trip/rute dalam menit","Tetapkan kendaraan ke trip dengan manajemen kapasitas","Harga dinamis berdasarkan musim, hari, atau permintaan"], business_impact: ["Luncurkan rute baru dalam jam, bukan minggu","Skalakan operasi tanpa penambahan staf proporsional","Optimalkan harga untuk maksimalisasi pendapatan"] } } },
   { id: "CH009", title: "Customer Communication Gaps", description: "No automated confirmations, reminders, or updates — leading to no-shows and support overhead.",
     features: ["SMS Notification", "Email Automation", "Passenger App"],
     feature_mapping: [{ feature: "SMS Notification", how: "Automated booking confirmation and trip reminders" }, { feature: "Email Automation", how: "Triggered emails for confirmation, changes, and promotions" }, { feature: "Passenger App", how: "Self-service trip info, e-ticket, and real-time updates" }],
-    business_impact: ["Reduce no-show rate by 30-50%", "Lower customer support volume", "Improve passenger experience and reviews"] },
+    business_impact: ["Reduce no-show rate by 30-50%", "Lower customer support volume", "Improve passenger experience and reviews"],
+    i18n: { th: { title: "ช่องว่างการสื่อสารกับลูกค้า", description: "ไม่มีการยืนยัน แจ้งเตือน หรืออัปเดตอัตโนมัติ — ทำให้ลูกค้าไม่มาและภาระงานซัพพอร์ต", feature_mapping_how: ["ยืนยันการจองและแจ้งเตือนทริปอัตโนมัติ","อีเมลอัตโนมัติสำหรับยืนยัน เปลี่ยนแปลง โปรโมชั่น","ข้อมูลทริป ตั๋ว และอัปเดตเรียลไทม์"], business_impact: ["ลดอัตราไม่มา 30-50%","ลดปริมาณงานซัพพอร์ต","ปรับปรุงประสบการณ์ผู้โดยสาร"] }, vi: { title: "Thiếu giao tiếp khách hàng", description: "Không có xác nhận, nhắc nhở hay cập nhật tự động — dẫn đến vắng mặt.", feature_mapping_how: ["Xác nhận đặt chỗ và nhắc chuyến tự động","Email tự động cho xác nhận, thay đổi, khuyến mãi","Thông tin chuyến, vé và cập nhật thời gian thực"], business_impact: ["Giảm tỷ lệ vắng mặt 30-50%","Giảm khối lượng hỗ trợ khách hàng","Cải thiện trải nghiệm hành khách"] }, id: { title: "Kesenjangan Komunikasi Pelanggan", description: "Tidak ada konfirmasi, pengingat, atau pembaruan otomatis — menyebabkan no-show.", feature_mapping_how: ["Konfirmasi pemesanan dan pengingat perjalanan otomatis","Email otomatis untuk konfirmasi, perubahan, promosi","Info perjalanan, e-tiket, dan pembaruan real-time"], business_impact: ["Kurangi tingkat no-show 30-50%","Kurangi volume dukungan pelanggan","Tingkatkan pengalaman penumpang"] } } },
   { id: "CH010", title: "Lack of Data-Driven Decisions", description: "No analytics on route performance, peak times, or customer behavior — operating on gut feeling.",
     features: ["Reporting Dashboard", "Analytics & BI", "Demand Forecasting"],
     feature_mapping: [{ feature: "Reporting Dashboard", how: "Comprehensive KPIs: load factor, revenue per seat, booking trends" }, { feature: "Analytics & BI", how: "Deep-dive analysis by route, channel, and time period" }, { feature: "Demand Forecasting", how: "Predict demand patterns for capacity planning" }],
-    business_impact: ["Data-driven route and pricing decisions", "Identify underperforming routes early", "Optimize fleet allocation based on demand"] }
+    business_impact: ["Data-driven route and pricing decisions", "Identify underperforming routes early", "Optimize fleet allocation based on demand"],
+    i18n: { th: { title: "ขาดการตัดสินใจจากข้อมูล", description: "ไม่มีการวิเคราะห์ประสิทธิภาพเส้นทาง ช่วงพีค หรือพฤติกรรมลูกค้า — ตัดสินใจจากสัญชาตญาณ", feature_mapping_how: ["KPI ครอบคลุม: load factor, รายได้ต่อที่นั่ง, แนวโน้มการจอง","วิเคราะห์เชิงลึกตามเส้นทาง ช่องทาง และช่วงเวลา","คาดการณ์ความต้องการเพื่อวางแผนความจุ"], business_impact: ["ตัดสินใจเส้นทางและราคาจากข้อมูล","ค้นพบเส้นทางที่ทำผลงานต่ำได้เร็ว","จัดสรรรถตามอุปสงค์"] }, vi: { title: "Thiếu quyết định dựa trên dữ liệu", description: "Không có phân tích hiệu suất tuyến, giờ cao điểm hay hành vi khách — vận hành theo cảm tính.", feature_mapping_how: ["KPI toàn diện: hệ số tải, doanh thu/ghế, xu hướng đặt chỗ","Phân tích sâu theo tuyến, kênh và khoảng thời gian","Dự báo nhu cầu để lập kế hoạch sức chứa"], business_impact: ["Quyết định tuyến và giá dựa trên dữ liệu","Phát hiện tuyến kém hiệu quả sớm","Tối ưu phân bổ đội xe theo nhu cầu"] }, id: { title: "Kurang Keputusan Berbasis Data", description: "Tidak ada analitik performa rute, waktu puncak, atau perilaku pelanggan — operasi berdasarkan firasat.", feature_mapping_how: ["KPI komprehensif: load factor, pendapatan/kursi, tren booking","Analisis mendalam per rute, saluran, dan periode","Prakiraan permintaan untuk perencanaan kapasitas"], business_impact: ["Keputusan rute dan harga berbasis data","Identifikasi rute berkinerja rendah lebih awal","Optimasi alokasi armada berdasarkan permintaan"] } } }
 ];
 
 
@@ -192,6 +214,86 @@ const DEFAULT_TRANSLATIONS = {
     proposalBtn: "ดูข้อเสนอ →", quotationBtn: "ใบเสนอราคา →",
     previewProposal: "ดูข้อเสนอ", previewQuotation: "ดูใบเสนอราคา",
     search: "ค้นหา...", noResults: "ไม่พบผลลัพธ์", select: "เลือก...",
+  },
+  vi: {
+    settings: "Cài đặt", builder: "← Quay lại", salesTeam: "Đội bán hàng", pricing: "Bảng giá",
+    save: "Lưu", reset: "Đặt lại", remove: "Xóa", edit: "Sửa", del: "Xóa", cancel: "Hủy",
+    challengeModules: "Mô-đun thách thức", newChallenge: "Thêm thách thức", editChallenge: "Sửa thách thức",
+    title: "Tiêu đề", description: "Mô tả", features: "Tính năng", featureMapping: "Ánh xạ tính năng (Tính năng | Cách giải quyết)",
+    businessImpact: "Tác động kinh doanh", saveChanges: "Lưu thay đổi", addChallenge: "+ Thêm thách thức",
+    resetDefaults: "Đặt lại mặc định", translations: "Ngôn ngữ",
+    docType: "Loại tài liệu", proposal: "Đề xuất", quotation: "Báo giá",
+    proposalDesc: "Tài liệu tư vấn", quotationDesc: "Báo giá đăng ký",
+    docBuilder: "SeatOS Tạo tài liệu", docBuilderSub: "Tạo Đề xuất & Báo giá",
+    salesPerson: "Nhân viên bán hàng", customer: "Khách hàng", customerName: "Tên khách hàng",
+    address: "Địa chỉ", email: "Email", country: "Quốc gia", incorporation: "Đăng ký kinh doanh",
+    startDate: "Ngày bắt đầu", endDate: "Ngày kết thúc", selectChallenges: "Chọn thách thức",
+    suggested: "Gợi ý", challenges: "Thách thức", impacts: "Tác động",
+    licensesComm: "Giấy phép & Hoa hồng", services: "Dịch vụ", ancillary: "Phụ trợ",
+    billDiscount: "Giảm giá hóa đơn", discountBill: "Giảm giá toàn bộ hóa đơn",
+    specialTerms: "Điều khoản đặc biệt", discount: "Giảm giá", waiver: "Miễn trừ",
+    oneTime: "Một lần", monthly: "Hàng tháng", grand: "Tổng",
+    regular: "Thường", bundle: "Gói",
+    perAmount: "Theo số tiền", perPercent: "Theo % vé",
+    noSales: "Chưa có.", addInSettings: "Thêm trong Cài đặt",
+    editor: "← Chỉnh sửa", download: "⬇ Tải / In", copyText: "Sao chép",
+    preparedFor: "Chuẩn bị cho", preparedBy: "Chuẩn bị bởi",
+    operatedBy: "Vận hành bởi Bookaway Ltd.",
+    sec1: "Phần 1 — Thách thức đã xác định", sec2: "Phần 2 — Ánh xạ giải pháp",
+    sec2desc: "Tính năng SeatOS giải quyết từng thách thức như thế nào:",
+    feature: "Tính năng", addresses: "Giải quyết", howItSolves: "Cách giải quyết",
+    sec3: "Phần 3 — Tác động kinh doanh dự kiến",
+    addFeature: "+ Thêm tính năng", add: "+ Thêm",
+    pricingBreakdown: "Chi tiết giá", billing: "Thanh toán", fee: "Phí",
+    subtotal: "Tổng phụ", grandTotal: "Tổng cộng",
+    discountsWaivers: "Giảm giá & Miễn trừ",
+    item: "Hạng mục", original: "Giá gốc", final: "Giá cuối",
+    notes: "Ghi chú", acceptance: "Chấp nhận",
+    nameTitle: "Tên & Chức danh", date: "Ngày",
+    allFees: "Tất cả phí bằng", valid30: "Có hiệu lực 30 ngày.",
+    proposalBtn: "Xem đề xuất →", quotationBtn: "Báo giá →",
+    previewProposal: "Xem đề xuất", previewQuotation: "Xem báo giá",
+    search: "Tìm kiếm...", noResults: "Không có kết quả", select: "Chọn...",
+  },
+  id: {
+    settings: "Pengaturan", builder: "← Kembali", salesTeam: "Tim Penjualan", pricing: "Harga",
+    save: "Simpan", reset: "Reset", remove: "Hapus", edit: "Edit", del: "Hapus", cancel: "Batal",
+    challengeModules: "Modul Tantangan", newChallenge: "Tambah Tantangan", editChallenge: "Edit Tantangan",
+    title: "Judul", description: "Deskripsi", features: "Fitur", featureMapping: "Pemetaan Fitur (Fitur | Cara mengatasi)",
+    businessImpact: "Dampak Bisnis", saveChanges: "Simpan Perubahan", addChallenge: "+ Tambah Tantangan",
+    resetDefaults: "Reset ke Default", translations: "Bahasa",
+    docType: "Jenis Dokumen", proposal: "Proposal", quotation: "Penawaran",
+    proposalDesc: "Dokumen konsultasi", quotationDesc: "Penawaran langganan",
+    docBuilder: "SeatOS Pembuat Dokumen", docBuilderSub: "Buat Proposal & Penawaran",
+    salesPerson: "Staf Penjualan", customer: "Pelanggan", customerName: "Nama Pelanggan",
+    address: "Alamat", email: "Email", country: "Negara", incorporation: "Pendirian",
+    startDate: "Tanggal Mulai", endDate: "Tanggal Berakhir", selectChallenges: "Pilih Tantangan",
+    suggested: "Disarankan", challenges: "Tantangan", impacts: "Dampak",
+    licensesComm: "Lisensi & Komisi", services: "Layanan", ancillary: "Tambahan",
+    billDiscount: "Diskon Tagihan", discountBill: "Diskon Seluruh Tagihan",
+    specialTerms: "Ketentuan Khusus", discount: "Diskon", waiver: "Pengabaian",
+    oneTime: "Satu Kali", monthly: "Bulanan", grand: "Total",
+    regular: "Reguler", bundle: "Bundel",
+    perAmount: "Per Jumlah", perPercent: "Per % Tiket",
+    noSales: "Belum ada.", addInSettings: "Tambah di Pengaturan",
+    editor: "← Editor", download: "⬇ Unduh / Cetak", copyText: "Salin",
+    preparedFor: "Disiapkan Untuk", preparedBy: "Disiapkan Oleh",
+    operatedBy: "Dioperasikan oleh Bookaway Ltd.",
+    sec1: "Bagian 1 — Tantangan yang Teridentifikasi", sec2: "Bagian 2 — Pemetaan Solusi",
+    sec2desc: "Bagaimana fitur SeatOS mengatasi setiap tantangan:",
+    feature: "Fitur", addresses: "Mengatasi", howItSolves: "Cara Mengatasi",
+    sec3: "Bagian 3 — Dampak Bisnis yang Diharapkan",
+    addFeature: "+ Tambah Fitur", add: "+ Tambah",
+    pricingBreakdown: "Rincian Harga", billing: "Penagihan", fee: "Biaya",
+    subtotal: "Subtotal", grandTotal: "Total Keseluruhan",
+    discountsWaivers: "Diskon & Pengabaian",
+    item: "Item", original: "Harga Asli", final: "Harga Akhir",
+    notes: "Catatan", acceptance: "Persetujuan",
+    nameTitle: "Nama & Jabatan", date: "Tanggal",
+    allFees: "Semua biaya dalam", valid30: "Berlaku 30 hari.",
+    proposalBtn: "Lihat Proposal →", quotationBtn: "Penawaran →",
+    previewProposal: "Lihat Proposal", previewQuotation: "Lihat Penawaran",
+    search: "Cari...", noResults: "Tidak ada hasil", select: "Pilih...",
   }
 };
 
@@ -287,6 +389,7 @@ export default function App() {
 
   /* ── NEW: Document Type + Challenge State ── */
   const [docType, setDocType] = useState("proposal"); // "proposal" | "quotation"
+  const [outLang, setOutLang] = useState("en"); // output language: en, th, vi, id
   const [challenges, setChallenges] = useState(DEFAULT_CHALLENGES);
   const [selCh, setSelCh] = useState([]); // selected challenge IDs
   const [editCh, setEditCh] = useState(null); // challenge being edited (full object or null)
@@ -343,17 +446,29 @@ export default function App() {
 
   /* ── NEW: Proposal Generation Logic ── */
   const selectedChallenges = challenges.filter(c => selCh.includes(c.id));
+
+  /* ── Output Translation Helpers ── */
+  // ot = output translate label (from translations), otc = output translate challenge content
+  const ot = (key) => {
+    const tr = translations[outLang] || translations.en || DEFAULT_TRANSLATIONS.en;
+    return tr[key] || (DEFAULT_TRANSLATIONS.en || {})[key] || key;
+  };
+  const otcTitle = (ch) => (outLang !== "en" && ch.i18n?.[outLang]?.title) || ch.title;
+  const otcDesc = (ch) => (outLang !== "en" && ch.i18n?.[outLang]?.description) || ch.description;
+  const otcHow = (ch, idx) => (outLang !== "en" && ch.i18n?.[outLang]?.feature_mapping_how?.[idx]) || ch.feature_mapping?.[idx]?.how || "";
+  const otcImpacts = (ch) => (outLang !== "en" && ch.i18n?.[outLang]?.business_impact) || ch.business_impact || [];
+
   const proposalFeatures = (() => {
     const map = {};
     selectedChallenges.forEach(ch => {
-      (ch.feature_mapping || []).forEach(fm => {
+      (ch.feature_mapping || []).forEach((fm, idx) => {
         if (!map[fm.feature]) map[fm.feature] = [];
-        map[fm.feature].push({ challenge: ch.title, how: fm.how });
+        map[fm.feature].push({ challenge: otcTitle(ch), how: otcHow(ch, idx) });
       });
     });
     return Object.entries(map).map(([feature, mappings]) => ({ feature, mappings }));
   })();
-  const proposalImpacts = [...new Set(selectedChallenges.flatMap(ch => ch.business_impact || []))];
+  const proposalImpacts = [...new Set(selectedChallenges.flatMap(ch => otcImpacts(ch)))];
 
   /* ── NEW: Smart Suggest — related challenges ── */
   const suggestedIds = (() => {
@@ -457,6 +572,36 @@ export default function App() {
               <div style={{ marginBottom: 14 }}>
                 <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>Business Impact (one per line)</label>
                 <textarea value={(editCh.business_impact || []).join("\n")} onChange={e => setEditCh(p => ({ ...p, business_impact: e.target.value.split("\n").filter(Boolean) }))} rows={3} style={{ ...sInp, resize: "vertical" }} placeholder={"Reduce overbooking incidents\nLower compensation cost"} />
+              </div>
+
+              {/* ── i18n Translations per language ── */}
+              <div style={{ borderTop: "2px solid " + B.light, paddingTop: 14, marginBottom: 14 }}>
+                <label style={{ fontSize: 13, color: B.purple, fontWeight: 800, display: "block", marginBottom: 10 }}>Translations</label>
+                {[{ k: "th", l: "🇹🇭 Thai", fl: "ไทย" }, { k: "vi", l: "🇻🇳 Vietnamese", fl: "Tiếng Việt" }, { k: "id", l: "🇮🇩 Indonesian", fl: "Bahasa" }].map(lg => {
+                  const ldata = editCh.i18n?.[lg.k] || {};
+                  const setI18n = (field, val) => setEditCh(p => ({ ...p, i18n: { ...(p.i18n || {}), [lg.k]: { ...(p.i18n?.[lg.k] || {}), [field]: val } } }));
+                  return (
+                    <div key={lg.k} style={{ background: B.bg, borderRadius: 14, padding: 14, marginBottom: 10 }}>
+                      <b style={{ fontSize: 12, color: B.dark, display: "block", marginBottom: 8 }}>{lg.l}</b>
+                      <div style={{ marginBottom: 6 }}>
+                        <label style={{ fontSize: 10, color: B.gray }}>Title</label>
+                        <input value={ldata.title || ""} onChange={e => setI18n("title", e.target.value)} style={{ ...sInp, padding: "7px 12px", fontSize: 12 }} placeholder={editCh.title || "Title..."} />
+                      </div>
+                      <div style={{ marginBottom: 6 }}>
+                        <label style={{ fontSize: 10, color: B.gray }}>Description</label>
+                        <textarea value={ldata.description || ""} onChange={e => setI18n("description", e.target.value)} rows={2} style={{ ...sInp, padding: "7px 12px", fontSize: 12, resize: "vertical" }} placeholder={editCh.description || "Description..."} />
+                      </div>
+                      <div style={{ marginBottom: 6 }}>
+                        <label style={{ fontSize: 10, color: B.gray }}>Feature How (one per line, same order as English)</label>
+                        <textarea value={(ldata.feature_mapping_how || []).join("\n")} onChange={e => setI18n("feature_mapping_how", e.target.value.split("\n"))} rows={2} style={{ ...sInp, padding: "7px 12px", fontSize: 11, resize: "vertical", fontFamily: "monospace" }} placeholder={(editCh.feature_mapping || []).map(m => m.how).join("\n")} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 10, color: B.gray }}>Business Impact (one per line)</label>
+                        <textarea value={(ldata.business_impact || []).join("\n")} onChange={e => setI18n("business_impact", e.target.value.split("\n").filter(Boolean))} rows={2} style={{ ...sInp, padding: "7px 12px", fontSize: 11, resize: "vertical" }} placeholder={(editCh.business_impact || []).join("\n")} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               <button onClick={() => {
                 if (!editCh.title?.trim()) return;
@@ -662,6 +807,27 @@ export default function App() {
             </div>
           </div>
 
+          {/* ═══ Output Language Toggle ═══ */}
+          <Sec label="Output Language" n={0} color={B.purple} />
+          <div style={sCard}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {[{ k: "en", l: "English", flag: "🇬🇧" }, { k: "th", l: "ไทย", flag: "🇹🇭" }, { k: "vi", l: "Tiếng Việt", flag: "🇻🇳" }, { k: "id", l: "Bahasa", flag: "🇮🇩" }].map(lg => (
+                <button key={lg.k} onClick={() => setOutLang(lg.k)} style={{
+                  ...sBtn, padding: isMobile ? "8px 14px" : "10px 20px", borderRadius: 14,
+                  border: outLang === lg.k ? "2px solid " + B.purple : "2px solid " + B.light,
+                  background: outLang === lg.k ? B.purple + "10" : "#fff",
+                  color: outLang === lg.k ? B.purple : B.gray
+                }}>
+                  <span style={{ fontSize: 16, marginRight: 6 }}>{lg.flag}</span>
+                  <span style={{ fontSize: 13 }}>{lg.l}</span>
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: B.muted, marginTop: 8 }}>
+              {outLang === "en" ? "Output will be generated in English" : outLang === "th" ? "ผลลัพธ์จะถูกสร้างเป็นภาษาไทย" : outLang === "vi" ? "Kết quả sẽ được tạo bằng tiếng Việt" : "Output akan dibuat dalam Bahasa Indonesia"}
+            </div>
+          </div>
+
           {/* ═══ Common: Sales Person ═══ */}
           <Sec label={t.salesPerson} n={sp ? 1 : 0} color={B.cyan} />
           <div style={sCard}>
@@ -841,13 +1007,13 @@ export default function App() {
                 <div style={{ textAlign: "right" }}>
                   <div style={{ color: B.cyan, fontSize: 22, fontWeight: 800, fontFamily: "Georgia,serif" }}>{t.proposal.toUpperCase()}</div>
                   <div style={{ color: "rgba(255,255,255,.5)", fontSize: 9, marginTop: 2 }}>{today}</div>
-                  <div style={{ color: "rgba(255,255,255,.35)", fontSize: 8 }}>{t.operatedBy}</div>
+                  <div style={{ color: "rgba(255,255,255,.35)", fontSize: 8 }}>{ot("operatedBy")}</div>
                 </div>
               </div>
               {/* Prepared For/By in header */}
               <div style={{ display: "flex", gap: 24, marginTop: 20, borderTop: "1px solid rgba(255,255,255,.1)", paddingTop: 16 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ ...secLabel, color: B.cyan }}>{t.preparedFor}</div>
+                  <div style={{ ...secLabel, color: B.cyan }}>{ot("preparedFor")}</div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>{cu.name || "—"}</div>
                   <div style={{ fontSize: 8, color: "rgba(255,255,255,.5)", lineHeight: 1.5 }}>
                     {cu.addr && <div>{cu.addr}</div>}
@@ -856,7 +1022,7 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ ...secLabel, color: B.cyan }}>{t.preparedBy}</div>
+                  <div style={{ ...secLabel, color: B.cyan }}>{ot("preparedBy")}</div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>SeatOS (Bookaway Ltd.)</div>
                   <div style={{ fontSize: 8, color: "rgba(255,255,255,.5)", lineHeight: 1.5 }}>
                     {sp && <div style={{ color: "rgba(255,255,255,.7)" }}>{sp.name}</div>}
@@ -869,29 +1035,29 @@ export default function App() {
             {/* ── Body ── */}
             <div style={{ padding: "20px 40px 28px" }}>
 
-              {/* Section 1: Challenges */}
-              <div style={{ ...secLabel, color: B.cyan, fontSize: 10, marginBottom: 10 }}>{t.sec1}</div>
+              {/* Section 1: Challenges — rendered in output language */}
+              <div style={{ ...secLabel, color: B.cyan, fontSize: 10, marginBottom: 10 }}>{ot("sec1")}</div>
               {selectedChallenges.map((ch, i) => (
                 <div key={ch.id} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: i < selectedChallenges.length - 1 ? "1px solid #eee" : "none" }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
                     <span style={{ fontSize: 9, fontWeight: 800, color: B.cyan, minWidth: 20 }}>{i + 1}.</span>
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: B.dark }}>{ch.title}</div>
-                      <div style={{ fontSize: 9, color: "#666", marginTop: 2, lineHeight: 1.5 }}>{ch.description}</div>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: B.dark }}>{otcTitle(ch)}</div>
+                      <div style={{ fontSize: 9, color: "#666", marginTop: 2, lineHeight: 1.5 }}>{otcDesc(ch)}</div>
                     </div>
                   </div>
                 </div>
               ))}
 
-              {/* Section 2: Solution Mapping */}
-              <div style={{ ...secLabel, color: B.orange, fontSize: 10, marginTop: 20, marginBottom: 10 }}>{t.sec2}</div>
-              <div style={{ fontSize: 8, color: "#888", marginBottom: 10 }}>{t.sec2desc}</div>
+              {/* Section 2: Solution Mapping — rendered in output language */}
+              <div style={{ ...secLabel, color: B.orange, fontSize: 10, marginTop: 20, marginBottom: 10 }}>{ot("sec2")}</div>
+              <div style={{ fontSize: 8, color: "#888", marginBottom: 10 }}>{ot("sec2desc")}</div>
               <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 16 }}>
                 <thead>
                   <tr>
-                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{t.feature}</th>
-                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{t.addresses}</th>
-                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{t.howItSolves}</th>
+                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{ot("feature")}</th>
+                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{ot("addresses")}</th>
+                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{ot("howItSolves")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -907,8 +1073,8 @@ export default function App() {
                 </tbody>
               </table>
 
-              {/* Section 3: Business Impact */}
-              <div style={{ ...secLabel, color: B.green, fontSize: 10, marginTop: 16, marginBottom: 10 }}>{t.sec3}</div>
+              {/* Section 3: Business Impact — rendered in output language */}
+              <div style={{ ...secLabel, color: B.green, fontSize: 10, marginTop: 16, marginBottom: 10 }}>{ot("sec3")}</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                 {proposalImpacts.map((imp, i) => (
                   <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", padding: "5px 10px", background: i % 2 === 0 ? B.green + "08" : "#fff", borderRadius: 6 }}>
@@ -992,7 +1158,7 @@ export default function App() {
               <div style={{ textAlign: "right" }}>
                 <div style={{ color: B.orange, fontSize: 20, fontWeight: 800, fontFamily: "Georgia,serif" }}>{t.quotation.toUpperCase()}</div>
                 <div style={{ color: "#888", fontSize: 9, marginTop: 1 }}>{today} · {cur} · {ft === "b" ? t.bundle : t.regular}</div>
-                <div style={{ color: "#aaa", fontSize: 8 }}>{t.operatedBy}</div>
+                <div style={{ color: "#aaa", fontSize: 8 }}>{ot("operatedBy")}</div>
               </div>
             </div>
           </div>
@@ -1001,7 +1167,7 @@ export default function App() {
           <div style={{ padding: "14px 36px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", gap: 24, marginBottom: 10, flexShrink: 0 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{t.preparedFor}</div>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{ot("preparedFor")}</div>
                 <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 1 }}>{cu.name || "—"}</div>
                 <div style={{ fontSize: 8, color: "#777", lineHeight: 1.4 }}>
                   {cu.addr && <div>{cu.addr}</div>}
@@ -1011,7 +1177,7 @@ export default function App() {
                 </div>
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{t.preparedBy}</div>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{ot("preparedBy")}</div>
                 <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 1 }}>SeatOS (Bookaway Ltd.)</div>
                 <div style={{ fontSize: 8, color: "#777", lineHeight: 1.4 }}>
                   <div>6 HaTa'as St., Ramat Gan, 5251247</div>
@@ -1030,12 +1196,12 @@ export default function App() {
               </div>
             )}
 
-            <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 4, flexShrink: 0 }}>{t.pricingBreakdown}</div>
+            <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 4, flexShrink: 0 }}>{ot("pricingBreakdown")}</div>
             <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 8, flexShrink: 0 }}>
               <thead><tr>
                 <th style={{ ...thS, fontSize: 7, padding: "4px 6px", width: 18 }}>#</th>
                 <th style={{ ...thS, fontSize: 7, padding: "4px 6px" }}>Item</th>
-                <th style={{ ...thS, fontSize: 7, padding: "4px 6px" }}>{t.billing}</th>
+                <th style={{ ...thS, fontSize: 7, padding: "4px 6px" }}>{ot("billing")}</th>
                 <th style={{ ...thS, fontSize: 7, padding: "4px 6px", textAlign: "right" }}>Fee ({cur})</th>
               </tr></thead>
               <tbody>
@@ -1060,15 +1226,15 @@ export default function App() {
               <div style={{ minWidth: 220, borderRadius: 6, overflow: "hidden", border: "1.5px solid #222" }}>
                 {tots.ot > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>One-Time</span><b>{fmtp(tots.ot, cur)}</b></div>}
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>Monthly</span><b>{fmtp(tots.mo, cur)}</b></div>
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>{t.subtotal}</span><b>{fmtp(sub, cur)}</b></div>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>{ot("subtotal")}</span><b>{fmtp(sub, cur)}</b></div>
                 {bda > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9, background: B.purple + "0d" }}><span style={{ color: B.purple }}>Discount ({fmt(bdp, cur)}%)</span><b style={{ color: B.purple }}>-{fmtp(bda, cur)}</b></div>}
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 12px", background: B.orange }}><b style={{ color: "#fff", fontSize: 9 }}>{t.grandTotal}</b><b style={{ color: "#fff", fontSize: 11 }}>{fmtp(grand, cur)}</b></div>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 12px", background: B.orange }}><b style={{ color: "#fff", fontSize: 9 }}>{ot("grandTotal")}</b><b style={{ color: "#fff", fontSize: 11 }}>{fmtp(grand, cur)}</b></div>
               </div>
             </div>
 
             {anyDW && (
               <div style={{ marginBottom: 6, flexShrink: 0 }}>
-                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{t.discountsWaivers}</div>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{ot("discountsWaivers")}</div>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead><tr>{[t.item,t.original,t.discount,t.final,t.waiver].map(h => <th key={h} style={{ fontSize: 6, padding: "2px 4px", textAlign: "left", color: "#999", borderBottom: "1px solid #ddd" }}>{h}</th>)}</tr></thead>
                   <tbody>
@@ -1086,11 +1252,11 @@ export default function App() {
               </div>
             )}
 
-            <div style={{ fontSize: 7, color: "#aaa", lineHeight: 1.4, borderTop: "1px solid #eee", paddingTop: 6, marginBottom: 6, flexShrink: 0 }}>{t.allFees} {cur}. {t.valid30} {ft === "b" ? t.bundle : t.regular} pricing.</div>
+            <div style={{ fontSize: 7, color: "#aaa", lineHeight: 1.4, borderTop: "1px solid #eee", paddingTop: 6, marginBottom: 6, flexShrink: 0 }}>{ot("allFees")} {cur}. {ot("valid30")} {ft === "b" ? t.bundle : t.regular} pricing.</div>
 
             {stOn && stTxt && (
               <div style={{ marginBottom: 6, flexShrink: 0 }}>
-                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{t.notes}</div>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{ot("notes")}</div>
                 <div style={{ background: "#F5F0EB", borderRadius: 6, padding: "6px 12px", fontSize: 7, lineHeight: 1.5, color: "#555" }}>{stTxt}</div>
               </div>
             )}
@@ -1098,17 +1264,17 @@ export default function App() {
             <div style={{ flex: 1 }} />
 
             <div style={{ borderTop: "1.5px solid #222", paddingTop: 10, flexShrink: 0 }}>
-              <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 8 }}>{t.acceptance}</div>
+              <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 8 }}>{ot("acceptance")}</div>
               <div style={{ display: "flex", gap: 24 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 8, color: "#888", marginBottom: 14 }}>Customer</div>
                   <div style={{ borderBottom: "1px solid #222", height: 14, marginBottom: 2 }} />
-                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 7, color: "#aaa" }}>{t.nameTitle}</span><span style={{ fontSize: 7, color: "#aaa" }}>{t.date}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 7, color: "#aaa" }}>{ot("nameTitle")}</span><span style={{ fontSize: 7, color: "#aaa" }}>{ot("date")}</span></div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 8, color: "#888", marginBottom: 14 }}>SeatOS</div>
                   <div style={{ borderBottom: "1px solid #222", height: 14, marginBottom: 2 }} />
-                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 7, color: "#aaa" }}>{sp ? sp.name : "—"}</span><span style={{ fontSize: 7, color: "#aaa" }}>{t.date}</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 7, color: "#aaa" }}>{sp ? sp.name : "—"}</span><span style={{ fontSize: 7, color: "#aaa" }}>{ot("date")}</span></div>
                 </div>
               </div>
             </div>
