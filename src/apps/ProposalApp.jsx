@@ -362,6 +362,12 @@ export default function App() {
     return challenges.filter(c => !selCh.includes(c.id) && (c.features || []).some(f => selFeatures.has(f))).map(c => c.id);
   })();
 
+  /* ── Responsive ── */
+  const [winW, setWinW] = useState(typeof window !== "undefined" ? window.innerWidth : 800);
+  useEffect(() => { const h = () => setWinW(window.innerWidth); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h); }, []);
+  const isMobile = winW < 640;
+  const sCard = { ..._sCard, padding: isMobile ? 16 : 24 };
+
   if (ld) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: B.bg }}><span style={{ fontSize: 16, color: B.gray }}>Loading...</span></div>;
 
   /* ═══ SETTINGS (EXTENDED with Challenge Admin) ═══ */
