@@ -393,6 +393,9 @@ export default function App() {
   const [challenges, setChallenges] = useState(DEFAULT_CHALLENGES);
   const [selCh, setSelCh] = useState([]); // selected challenge IDs
   const [editCh, setEditCh] = useState(null); // challenge being edited (full object or null)
+  const [edtCh, setEdtCh] = useState(null);   // editable challenge list for preview
+  const [edtFt, setEdtFt] = useState(null);    // editable feature mappings for preview
+  const [edtImp, setEdtImp] = useState(null);  // editable impacts for preview
 
   /* ── Language & Translations (editable via Settings) ── */
   const [lang, setLang] = useState("en");
@@ -484,7 +487,7 @@ export default function App() {
   const isTablet = winW >= 640 && winW < 1024;
   const px = isMobile ? "12px 14px" : "24px 16px";
   const hPx = isMobile ? "10px 14px" : "14px 24px";
-  const prevPx = isMobile ? "16px 16px" : isTablet ? "28px 32px" : "48px 56px";
+  const prevPx = isMobile ? "16px 16px" : isTablet ? "24px 28px" : "28px 48px";
   const prevBPx = isMobile ? "12px 16px" : "20px 40px";
   const sCard = { ..._sCard, padding: isMobile ? 16 : 24 };
 
@@ -777,6 +780,14 @@ export default function App() {
     /* ── Determine preview readiness ── */
     const canPreview = docType === "proposal" ? selCh.length > 0 : cnt > 0;
     const previewLabel = docType === "proposal" ? `${t.previewProposal} (${selCh.length})` : `${t.previewQuotation} (${cnt})`;
+    const goPreview = () => {
+      if (docType === "proposal") {
+        setEdtCh(selectedChallenges.map(c => ({ id: c.id, title: otcTitle(c), description: otcDesc(c) })));
+        setEdtFt(proposalFeatures.map(pf => ({ feature: pf.feature, mappings: pf.mappings.map(m => ({ ...m })) })));
+        setEdtImp([...proposalImpacts]);
+      }
+      setPg("preview");
+    };
 
     return (
       <div style={{ fontFamily: "'Segoe UI',sans-serif", minHeight: "100vh", background: B.bg }}>
@@ -787,7 +798,7 @@ export default function App() {
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <button onClick={() => setPg("set")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 18px", fontSize: 13 }}>⚙ Settings</button>
-            <button onClick={() => setPg("preview")} disabled={!canPreview} style={{ ...sBtn, background: canPreview ? B.orange : B.light, color: "#fff", padding: "8px 24px", fontSize: 13, opacity: canPreview ? 1 : 0.5 }}>{previewLabel}</button>
+            <button onClick={goPreview} disabled={!canPreview} style={{ ...sBtn, background: canPreview ? B.orange : B.light, color: "#fff", padding: "8px 24px", fontSize: 13, opacity: canPreview ? 1 : 0.5 }}>{previewLabel}</button>
           </div>
         </div>
 
@@ -904,7 +915,7 @@ export default function App() {
                   <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>{t.features}</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{proposalFeatures.length}</div></div>
                   <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>{t.impacts}</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{proposalImpacts.length}</div></div>
                 </div>
-                <button onClick={() => setPg("preview")} disabled={selCh.length === 0} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: selCh.length > 0 ? 1 : 0.5 }}>{t.proposalBtn}</button>
+                <button onClick={goPreview} disabled={selCh.length === 0} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: selCh.length > 0 ? 1 : 0.5 }}>{t.proposalBtn}</button>
               </div>
             </>
           )}
@@ -971,14 +982,22 @@ export default function App() {
   /* ═══ PREVIEW — ROUTES TO PROPOSAL OR QUOTATION ═══ */
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
-  // Shared download function
+  // Shared download function — cleans edit buttons and converts inputs to text for PDF
   const dlPrint = (title) => {
     const el = ref.current;
     if (!el) return;
+    const clone = el.cloneNode(true);
+    clone.querySelectorAll(".np").forEach(e => e.remove());
+    clone.querySelectorAll("input, textarea").forEach(e => {
+      const span = document.createElement("span");
+      span.style.cssText = e.style.cssText;
+      span.textContent = e.value;
+      e.replaceWith(span);
+    });
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>SeatOS ${title} – ${cu.name || "Customer"}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI','Helvetica Neue',sans-serif;background:#fff}
 @page{size:A4;margin:0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
-</head><body>${el.outerHTML}<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>`;
+</head><body>${clone.outerHTML}<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>`;
     const blob = new Blob([html], { type: "text/html" });
     window.open(URL.createObjectURL(blob), "_blank");
   };
@@ -1042,51 +1061,73 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Section 1: Challenges — rendered in output language */}
-              <div style={{ ...secLabel, color: B.cyan, fontSize: 10, marginBottom: 10 }}>{ot("sec1")}</div>
-              {selectedChallenges.map((ch, i) => (
-                <div key={ch.id} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: i < selectedChallenges.length - 1 ? "1px solid #eee" : "none" }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                    <span style={{ fontSize: 9, fontWeight: 800, color: B.cyan, minWidth: 20 }}>{i + 1}.</span>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: B.dark }}>{otcTitle(ch)}</div>
-                      <div style={{ fontSize: 9, color: "#666", marginTop: 2, lineHeight: 1.5 }}>{otcDesc(ch)}</div>
+              {/* Section 1: Challenges — EDITABLE */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ ...secLabel, color: B.cyan, fontSize: 10, marginBottom: 0 }}>{ot("sec1")}</div>
+                <button className="np" onClick={() => setEdtCh(p => [...(p||[]), { id: "NEW" + Date.now(), title: "", description: "" }])} style={{ ...sBtn, background: B.cyan + "15", color: B.cyan, padding: "3px 12px", fontSize: 10 }}>+ Add</button>
+              </div>
+              {(edtCh || []).map((ch, i) => (
+                <div key={ch.id} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: i < (edtCh||[]).length - 1 ? "1px solid #eee" : "none" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: B.cyan, minWidth: 20, paddingTop: 4 }}>{i + 1}.</span>
+                    <div style={{ flex: 1 }}>
+                      <input value={ch.title} onChange={e => setEdtCh(p => p.map((c, j) => j === i ? { ...c, title: e.target.value } : c))} placeholder="Challenge title..." style={{ border: "none", outline: "none", fontSize: 12, fontWeight: 800, color: B.dark, width: "100%", background: "transparent", padding: "2px 0" }} />
+                      <textarea value={ch.description} onChange={e => setEdtCh(p => p.map((c, j) => j === i ? { ...c, description: e.target.value } : c))} placeholder="Description..." rows={2} style={{ border: "none", outline: "none", fontSize: 10, color: "#333", fontWeight: 500, width: "100%", background: "transparent", resize: "vertical", lineHeight: 1.5, padding: "2px 0", fontFamily: "inherit" }} />
                     </div>
+                    <button className="np" onClick={() => setEdtCh(p => p.filter((_, j) => j !== i))} style={{ ...sBtn, background: "none", color: "#ccc", fontSize: 14, padding: "0 4px", lineHeight: 1 }}>×</button>
                   </div>
                 </div>
               ))}
 
-              {/* Section 2: Solution Mapping — rendered in output language */}
-              <div style={{ ...secLabel, color: B.orange, fontSize: 10, marginTop: 20, marginBottom: 10 }}>{ot("sec2")}</div>
-              <div style={{ fontSize: 8, color: "#888", marginBottom: 10 }}>{ot("sec2desc")}</div>
-              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 16 }}>
+              {/* Section 2: Solution Mapping — EDITABLE */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, marginBottom: 8 }}>
+                <div style={{ ...secLabel, color: B.orange, fontSize: 10, marginBottom: 0 }}>{ot("sec2")}</div>
+                <button className="np" onClick={() => setEdtFt(p => [...(p||[]), { feature: "", mappings: [{ challenge: "", how: "" }] }])} style={{ ...sBtn, background: B.orange + "15", color: B.orange, padding: "3px 12px", fontSize: 10 }}>+ Add</button>
+              </div>
+              <div style={{ fontSize: 8, color: "#888", marginBottom: 8 }}>{ot("sec2desc")}</div>
+              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
                 <thead>
                   <tr>
-                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{ot("feature")}</th>
-                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{ot("addresses")}</th>
-                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{ot("howItSolves")}</th>
+                    <th style={{ fontSize: 8, padding: "6px 8px", textAlign: "left", fontWeight: 800, color: "#666", borderBottom: "2px solid " + B.orange, textTransform: "uppercase", width: "22%" }}>{ot("feature")}</th>
+                    <th style={{ fontSize: 8, padding: "6px 8px", textAlign: "left", fontWeight: 800, color: "#666", borderBottom: "2px solid " + B.orange, textTransform: "uppercase", width: "22%" }}>{ot("addresses")}</th>
+                    <th style={{ fontSize: 8, padding: "6px 8px", textAlign: "left", fontWeight: 800, color: "#666", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{ot("howItSolves")}</th>
+                    <th className="np" style={{ fontSize: 7, padding: "5px 4px", borderBottom: "2px solid " + B.orange, width: 20 }}></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {proposalFeatures.map((pf, i) => (
+                  {(edtFt || []).map((pf, i) => (
                     pf.mappings.map((m, j) => (
-                      <tr key={pf.feature + j}>
-                        {j === 0 && <td rowSpan={pf.mappings.length} style={{ padding: "5px 8px", borderBottom: "1px solid #eee", fontSize: 9, fontWeight: 700, color: B.dark, verticalAlign: "top", background: i % 2 === 0 ? "#fafafa" : "#fff" }}>{pf.feature}</td>}
-                        <td style={{ padding: "5px 8px", borderBottom: "1px solid #eee", fontSize: 8, color: B.cyan, fontWeight: 600 }}>{m.challenge}</td>
-                        <td style={{ padding: "5px 8px", borderBottom: "1px solid #eee", fontSize: 8, color: "#555" }}>{m.how}</td>
+                      <tr key={i + "-" + j}>
+                        {j === 0 && <td rowSpan={pf.mappings.length} style={{ padding: "4px 8px", borderBottom: "1px solid #eee", verticalAlign: "top", background: i % 2 === 0 ? "#fafafa" : "#fff" }}>
+                          <input value={pf.feature} onChange={e => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, feature: e.target.value } : f))} style={{ border: "none", outline: "none", fontSize: 10, fontWeight: 800, color: B.dark, width: "100%", background: "transparent" }} placeholder="Feature" />
+                        </td>}
+                        <td style={{ padding: "4px 8px", borderBottom: "1px solid #eee" }}>
+                          <input value={m.challenge} onChange={e => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, mappings: f.mappings.map((mm, mj) => mj === j ? { ...mm, challenge: e.target.value } : mm) } : f))} style={{ border: "none", outline: "none", fontSize: 9, color: B.dark, fontWeight: 700, width: "100%", background: "transparent" }} placeholder="Challenge" />
+                        </td>
+                        <td style={{ padding: "4px 8px", borderBottom: "1px solid #eee" }}>
+                          <input value={m.how} onChange={e => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, mappings: f.mappings.map((mm, mj) => mj === j ? { ...mm, how: e.target.value } : mm) } : f))} style={{ border: "none", outline: "none", fontSize: 9, color: "#333", fontWeight: 500, width: "100%", background: "transparent" }} placeholder="How it solves..." />
+                        </td>
+                        {j === 0 && <td rowSpan={pf.mappings.length} className="np" style={{ padding: "2px", borderBottom: "1px solid #eee", verticalAlign: "top", textAlign: "center" }}>
+                          <button onClick={() => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, mappings: [...f.mappings, { challenge: "", how: "" }] } : f))} style={{ border: "none", background: "none", color: B.orange, cursor: "pointer", fontSize: 10, fontWeight: 800 }}>+</button>
+                          <button onClick={() => setEdtFt(p => p.filter((_, fi) => fi !== i))} style={{ border: "none", background: "none", color: "#ccc", cursor: "pointer", fontSize: 12 }}>×</button>
+                        </td>}
                       </tr>
                     ))
                   ))}
                 </tbody>
               </table>
 
-              {/* Section 3: Business Impact — rendered in output language */}
-              <div style={{ ...secLabel, color: B.green, fontSize: 10, marginTop: 16, marginBottom: 10 }}>{ot("sec3")}</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                {proposalImpacts.map((imp, i) => (
-                  <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", padding: "5px 10px", background: i % 2 === 0 ? B.green + "08" : "#fff", borderRadius: 6 }}>
-                    <span style={{ color: B.green, fontWeight: 800, fontSize: 10, marginTop: 1 }}>✓</span>
-                    <span style={{ fontSize: 8, color: "#444", lineHeight: 1.5 }}>{imp}</span>
+              {/* Section 3: Business Impact — EDITABLE */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, marginBottom: 8 }}>
+                <div style={{ ...secLabel, color: B.green, fontSize: 10, marginBottom: 0 }}>{ot("sec3")}</div>
+                <button className="np" onClick={() => setEdtImp(p => [...(p||[]), ""])} style={{ ...sBtn, background: B.green + "15", color: B.green, padding: "3px 12px", fontSize: 10 }}>+ Add</button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 5 }}>
+                {(edtImp || []).map((imp, i) => (
+                  <div key={i} style={{ display: "flex", gap: 5, alignItems: "flex-start", padding: "4px 8px", background: i % 2 === 0 ? B.green + "08" : "#fff", borderRadius: 6 }}>
+                    <span style={{ color: B.green, fontWeight: 800, fontSize: 10, marginTop: 2 }}>✓</span>
+                    <input value={imp} onChange={e => setEdtImp(p => p.map((v, j) => j === i ? e.target.value : v))} style={{ border: "none", outline: "none", fontSize: 9, color: "#333", fontWeight: 500, flex: 1, background: "transparent", lineHeight: 1.5 }} placeholder="Impact..." />
+                    <button className="np" onClick={() => setEdtImp(p => p.filter((_, j) => j !== i))} style={{ border: "none", background: "none", color: "#ccc", cursor: "pointer", fontSize: 11, lineHeight: 1 }}>×</button>
                   </div>
                 ))}
               </div>
