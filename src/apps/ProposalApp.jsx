@@ -481,6 +481,11 @@ export default function App() {
   const [winW, setWinW] = useState(typeof window !== "undefined" ? window.innerWidth : 800);
   useEffect(() => { const h = () => setWinW(window.innerWidth); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h); }, []);
   const isMobile = winW < 640;
+  const isTablet = winW >= 640 && winW < 1024;
+  const px = isMobile ? "12px 14px" : "24px 16px";
+  const hPx = isMobile ? "10px 14px" : "14px 24px";
+  const prevPx = isMobile ? "16px 16px" : isTablet ? "28px 32px" : "48px 56px";
+  const prevBPx = isMobile ? "12px 16px" : "20px 40px";
   const sCard = { ..._sCard, padding: isMobile ? 16 : 24 };
 
   if (ld) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: B.bg }}><span style={{ fontSize: 16, color: B.gray }}>Loading...</span></div>;
@@ -899,7 +904,7 @@ export default function App() {
                   <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>{t.features}</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{proposalFeatures.length}</div></div>
                   <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>{t.impacts}</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{proposalImpacts.length}</div></div>
                 </div>
-                <button onClick={() => setPg("preview")} disabled={selCh.length === 0} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: selCh.length > 0 ? 1 : 0.5 }}>{t.proposalBtn}</button>
+                <button onClick={goPreview} disabled={selCh.length === 0} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: selCh.length > 0 ? 1 : 0.5 }}>{t.proposalBtn}</button>
               </div>
             </>
           )}
@@ -1150,17 +1155,17 @@ export default function App() {
       <div style={{ display: "flex", justifyContent: "center", padding: "24px 16px", overflow: "auto" }}>
         <div ref={ref} style={{ width: "100%", maxWidth: A4W, background: "#fff", boxShadow: "0 4px 30px rgba(0,0,0,.12)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
 
-          {/* Header — RENAMED to QUOTATION */}
-          <div style={{ background: "#F5F0EB", padding: "20px 36px 16px", position: "relative", overflow: "hidden", flexShrink: 0 }}>
-            <div style={{ position: "absolute", top: -16, right: -16, width: 80, height: 80, borderRadius: 40, background: B.orange + "20" }} />
-            <div style={{ position: "absolute", bottom: -10, right: 50, width: 44, height: 44, borderRadius: 22, background: B.green + "18" }} />
-            <div style={{ position: "absolute", top: 4, right: 100, width: 28, height: 28, borderRadius: 14, background: B.pink + "18" }} />
+          {/* Header — same style as Proposal */}
+          <div style={{ background: "#F5F0EB", padding: prevPx, position: "relative", overflow: "hidden", flexShrink: 0 }}>
+            <div style={{ position: "absolute", top: -30, right: -30, width: isMobile ? 80 : 140, height: isMobile ? 80 : 140, borderRadius: "50%", background: B.orange + "22" }} />
+            <div style={{ position: "absolute", bottom: -24, right: 60, width: isMobile ? 50 : 90, height: isMobile ? 50 : 90, borderRadius: "50%", background: B.green + "15" }} />
+            <div style={{ position: "absolute", top: 10, right: isMobile ? 100 : 180, width: 48, height: 48, borderRadius: 24, background: B.pink + "18" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 1 }}>
               <div><SeatLogo h={isMobile ? 48 : 156} /></div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ color: B.orange, fontSize: 20, fontWeight: 800, fontFamily: "Georgia,serif" }}>{t.quotation.toUpperCase()}</div>
-                <div style={{ color: "#888", fontSize: 9, marginTop: 1 }}>{today} · {cur} · {ft === "b" ? t.bundle : t.regular}</div>
-                <div style={{ color: "#aaa", fontSize: 8 }}>{ot("operatedBy")}</div>
+                <div style={{ color: B.orange, fontSize: isMobile ? 18 : 28, fontWeight: 800, fontFamily: "Georgia,serif", letterSpacing: 1 }}>{ot("quotation").toUpperCase()}</div>
+                <div style={{ color: "#aaa", fontSize: 11, marginTop: 4 }}>{today} · {cur} · {ft === "b" ? t.bundle : t.regular}</div>
+                <div style={{ color: "#c8c2b9", fontSize: 10, marginTop: 2 }}>{ot("operatedBy")}</div>
               </div>
             </div>
           </div>
