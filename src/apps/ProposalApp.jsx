@@ -35,6 +35,50 @@ const ITEMS = [
   { id: "kiosk", name: "Kiosk", desc: "Self-service kiosk", inv: "Monthly", pk: "kiosk", cat: "anc", clr: B.cyan }
 ];
 
+const DEFAULT_CHALLENGES = [
+  { id: "CH001", title: "Manual Booking Process", description: "Operators still rely on phone calls, paper logs, or spreadsheets to manage reservations — causing delays and human error.",
+    features: ["Online Booking Engine", "Bookings Management", "Agent Portal"],
+    feature_mapping: [{ feature: "Online Booking Engine", how: "Self-service booking 24/7 — eliminates phone/email dependency" }, { feature: "Bookings Management", how: "Centralized dashboard for all reservations with real-time status" }, { feature: "Agent Portal", how: "Enables travel agents to book directly without operator intervention" }],
+    business_impact: ["Reduce manual workload by up to 70%", "Faster booking turnaround time", "Lower labor cost per booking"] },
+  { id: "CH002", title: "No Real-Time Availability", description: "Seat/trip availability is not visible in real time, leading to double bookings and lost revenue.",
+    features: ["Trip List", "Real-Time Inventory", "Bookings Management"],
+    feature_mapping: [{ feature: "Trip List", how: "Live seat map with real-time capacity across all trips" }, { feature: "Real-Time Inventory", how: "Instant sync across all sales channels" }, { feature: "Bookings Management", how: "Automatic status updates — no manual reconciliation" }],
+    business_impact: ["Eliminate double-booking incidents", "Maximize seat utilization", "Improve customer trust and satisfaction"] },
+  { id: "CH003", title: "Multi-Channel Inconsistency", description: "Selling through OTAs, website, counter, and agents — but inventory is not synchronized across channels.",
+    features: ["Channel Manager", "API Integration", "Real-Time Inventory"],
+    feature_mapping: [{ feature: "Channel Manager", how: "Single control panel to manage all distribution channels" }, { feature: "API Integration", how: "Automated sync with OTAs (Bookaway, 12Go, GetYourGuide, etc.)" }, { feature: "Real-Time Inventory", how: "One source of truth for availability across all touchpoints" }],
+    business_impact: ["Prevent overselling across channels", "Expand distribution without operational overhead", "Increase revenue from online channels"] },
+  { id: "CH004", title: "Overbooking & Revenue Leakage", description: "Lack of real-time inventory sync leads to overbooking, refunds, and compensation costs.",
+    features: ["Trip List", "Bookings Management", "Real-Time Inventory"],
+    feature_mapping: [{ feature: "Trip List", how: "Real-time seat availability visibility per departure" }, { feature: "Bookings Management", how: "Automatic conflict detection and alerts" }, { feature: "Real-Time Inventory", how: "Centralized capacity management prevents overselling" }],
+    business_impact: ["Reduce overbooking incidents by 90%+", "Lower compensation and refund costs", "Improve brand reputation"] },
+  { id: "CH005", title: "No Online Presence", description: "No website or booking engine — losing direct customers to OTAs with high commission fees.",
+    features: ["Online Booking Engine", "White-Label Website", "Payment Gateway"],
+    feature_mapping: [{ feature: "Online Booking Engine", how: "Branded booking widget embeddable on any website" }, { feature: "White-Label Website", how: "Ready-to-use operator website with booking capability" }, { feature: "Payment Gateway", how: "Accept online payments (cards, e-wallets, bank transfer)" }],
+    business_impact: ["Increase direct bookings (reduce OTA dependency)", "Save 15-25% on OTA commissions", "Own the customer relationship and data"] },
+  { id: "CH006", title: "Paper-Based Operations", description: "Manifests, boarding passes, and reports still handled on paper — slow, error-prone, and not scalable.",
+    features: ["E-Ticket / QR Code", "Digital Manifest", "Reporting Dashboard"],
+    feature_mapping: [{ feature: "E-Ticket / QR Code", how: "Digital tickets with QR scan for boarding" }, { feature: "Digital Manifest", how: "Auto-generated passenger list per trip" }, { feature: "Reporting Dashboard", how: "Real-time analytics replacing manual reports" }],
+    business_impact: ["Go paperless — reduce printing costs", "Faster boarding and check-in process", "Accurate data for decision making"] },
+  { id: "CH007", title: "Poor Financial Visibility", description: "No clear view of revenue, commissions, or agent settlements — relying on end-of-month reconciliation.",
+    features: ["Reporting Dashboard", "Agent Settlement", "Payment Reconciliation"],
+    feature_mapping: [{ feature: "Reporting Dashboard", how: "Real-time revenue, bookings, and performance metrics" }, { feature: "Agent Settlement", how: "Automated commission calculation and payout tracking" }, { feature: "Payment Reconciliation", how: "Match payments to bookings automatically" }],
+    business_impact: ["Real-time financial visibility", "Reduce reconciliation time from days to minutes", "Prevent commission disputes with agents"] },
+  { id: "CH008", title: "Scaling Difficulties", description: "Adding new routes, vehicles, or seasons requires manual setup and cannot be done quickly.",
+    features: ["Trip Management", "Fleet Management", "Season & Pricing Rules"],
+    feature_mapping: [{ feature: "Trip Management", how: "Create and clone trips/routes in minutes" }, { feature: "Fleet Management", how: "Assign vehicles to trips with capacity management" }, { feature: "Season & Pricing Rules", how: "Dynamic pricing by season, day, or demand" }],
+    business_impact: ["Launch new routes in hours, not weeks", "Scale operations without proportional staff increase", "Optimize pricing for revenue maximization"] },
+  { id: "CH009", title: "Customer Communication Gaps", description: "No automated confirmations, reminders, or updates — leading to no-shows and support overhead.",
+    features: ["SMS Notification", "Email Automation", "Passenger App"],
+    feature_mapping: [{ feature: "SMS Notification", how: "Automated booking confirmation and trip reminders" }, { feature: "Email Automation", how: "Triggered emails for confirmation, changes, and promotions" }, { feature: "Passenger App", how: "Self-service trip info, e-ticket, and real-time updates" }],
+    business_impact: ["Reduce no-show rate by 30-50%", "Lower customer support volume", "Improve passenger experience and reviews"] },
+  { id: "CH010", title: "Lack of Data-Driven Decisions", description: "No analytics on route performance, peak times, or customer behavior — operating on gut feeling.",
+    features: ["Reporting Dashboard", "Analytics & BI", "Demand Forecasting"],
+    feature_mapping: [{ feature: "Reporting Dashboard", how: "Comprehensive KPIs: load factor, revenue per seat, booking trends" }, { feature: "Analytics & BI", how: "Deep-dive analysis by route, channel, and time period" }, { feature: "Demand Forecasting", how: "Predict demand patterns for capacity planning" }],
+    business_impact: ["Data-driven route and pricing decisions", "Identify underperforming routes early", "Optimize fleet allocation based on demand"] }
+];
+
+
 function fmt(n, c) {
   if (n == null || isNaN(n)) return "—";
   if (c === "VND" || c === "IDR") return n.toLocaleString("en-US", { maximumFractionDigits: 0 });
@@ -136,6 +180,7 @@ function Chk({ label, on, set, color }) {
 }
 
 export default function App() {
+  /* ── Existing State (UNCHANGED) ── */
   const [pg, setPg] = useState("build");
   const [ld, setLd] = useState(true);
   const [ppl, setPpl] = useState([]);
@@ -152,17 +197,35 @@ export default function App() {
   const [tP, setTP] = useState(DP);
   const ref = useRef();
 
+  /* ── NEW: Document Type + Challenge State ── */
+  const [docType, setDocType] = useState("proposal"); // "proposal" | "quotation"
+  const [challenges, setChallenges] = useState(DEFAULT_CHALLENGES);
+  const [selCh, setSelCh] = useState([]); // selected challenge IDs
+  const [editCh, setEditCh] = useState(null); // challenge being edited (full object or null)
+
+  /* ── NEW: Editable Proposal Draft (initialized on preview, then user can tweak) ── */
+  const [edtCh, setEdtCh] = useState(null);   // [{id,title,description},...] — editable challenge list
+  const [edtFt, setEdtFt] = useState(null);    // [{feature, mappings:[{challenge,how}]},...] — editable features
+  const [edtImp, setEdtImp] = useState(null);  // ["impact",...] — editable impacts
+
+  /* ── Storage Loading (EXTENDED with challenges) ── */
   useEffect(() => {
     (async () => {
       try { const r = await window.storage.get("sp"); if (r) setPpl(JSON.parse(r.value)); } catch (e) {}
       try { const r = await window.storage.get("pr"); if (r) { const p = JSON.parse(r.value); setPr(p); setTP(p); } } catch (e) {}
+      try { const r = await window.storage.get("ch"); if (r) setChallenges(JSON.parse(r.value)); } catch (e) {}
       setLd(false);
     })();
   }, []);
 
+  /* ── Existing Save Functions (UNCHANGED) ── */
   const svP = async (p) => { setPpl(p); try { await window.storage.set("sp", JSON.stringify(p)); } catch (e) {} };
   const svPr = async (p) => { setPr(p); setTP(p); try { await window.storage.set("pr", JSON.stringify(p)); } catch (e) {} };
 
+  /* ── NEW: Save Challenges ── */
+  const svCh = async (c) => { setChallenges(c); try { await window.storage.set("ch", JSON.stringify(c)); } catch (e) {} };
+
+  /* ── Existing Pricing Logic (UNCHANGED) ── */
   const ap = (pk) => pk && pr[pk]?.[cur] ? pr[pk][cur][ft] : null;
   const bf = (id) => {
     const d = sel[id]; if (!d) return 0;
@@ -187,16 +250,52 @@ export default function App() {
   const hBP = (v) => { const p = parseFloat(v); setBd(x => ({ ...x, pct: v, amt: (!isNaN(p) && sub > 0) ? String(Math.round(p / 100 * sub * 100) / 100) : "" })); };
   const hBA = (v) => { const a = parseFloat(v); setBd(x => ({ ...x, amt: v, pct: (!isNaN(a) && sub > 0) ? String(Math.round(a / sub * 10000) / 100) : "" })); };
 
+  /* ── NEW: Proposal Generation Logic ── */
+  const selectedChallenges = challenges.filter(c => selCh.includes(c.id));
+  const proposalFeatures = (() => {
+    const map = {};
+    selectedChallenges.forEach(ch => {
+      (ch.feature_mapping || []).forEach(fm => {
+        if (!map[fm.feature]) map[fm.feature] = [];
+        map[fm.feature].push({ challenge: ch.title, how: fm.how });
+      });
+    });
+    return Object.entries(map).map(([feature, mappings]) => ({ feature, mappings }));
+  })();
+  const proposalImpacts = [...new Set(selectedChallenges.flatMap(ch => ch.business_impact || []))];
+
+  /* ── NEW: Smart Suggest — related challenges ── */
+  const suggestedIds = (() => {
+    if (selCh.length === 0) return [];
+    const selFeatures = new Set(selectedChallenges.flatMap(c => c.features || []));
+    return challenges.filter(c => !selCh.includes(c.id) && (c.features || []).some(f => selFeatures.has(f))).map(c => c.id);
+  })();
+
+  /* ── Responsive: detect screen width ── */
+  const [winW, setWinW] = useState(typeof window !== "undefined" ? window.innerWidth : 800);
+  useEffect(() => {
+    const h = () => setWinW(window.innerWidth);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
+  const isMobile = winW < 640;
+  const isTablet = winW >= 640 && winW < 1024;
+  const px = isMobile ? "12px 14px" : "24px 16px"; // content padding
+  const hPx = isMobile ? "10px 14px" : "14px 24px"; // header padding
+  const prevPx = isMobile ? "16px 16px" : isTablet ? "28px 32px" : "48px 56px"; // preview header
+  const prevBPx = isMobile ? "12px 16px" : "20px 40px"; // preview body
+
   if (ld) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: B.bg }}><span style={{ fontSize: 16, color: B.gray }}>Loading...</span></div>;
 
-  /* ═══ SETTINGS ═══ */
+  /* ═══ SETTINGS (EXTENDED with Challenge Admin) ═══ */
   if (pg === "set") return (
     <div style={{ fontFamily: "'Segoe UI',sans-serif", minHeight: "100vh", background: B.bg }}>
-      <div style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: "14px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99 }}>
+      <div style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: hPx, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99, flexWrap: "wrap", gap: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}><b style={{ fontSize: 16 }}>Settings</b></div>
         <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 22px", fontSize: 13 }}>← Builder</button>
       </div>
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px" }}>
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: px }}>
+        {/* ── Sales Team (UNCHANGED) ── */}
         <Sec label="Sales Team" n={ppl.length} color={B.green} />
         <div style={sCard}>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
@@ -214,6 +313,7 @@ export default function App() {
           ))}
         </div>
 
+        {/* ── Pricing (UNCHANGED) ── */}
         <Sec label="Pricing" n={0} color={B.purple} />
         <div style={sCard}>
           {PCATS.map(cat => (
@@ -239,29 +339,96 @@ export default function App() {
             <button onClick={() => svPr(tP)} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 22px", fontSize: 13 }}>Save</button>
           </div>
         </div>
+
+        {/* ── NEW: Challenge Modules Admin ── */}
+        <Sec label="Challenge Modules" n={challenges.length} color={B.cyan} />
+        <div style={sCard}>
+          {editCh ? (
+            /* ── Edit/Add Challenge Form ── */
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <b style={{ fontSize: 15, color: B.cyan }}>{editCh.id ? "Edit Challenge" : "New Challenge"}</b>
+                <button onClick={() => setEditCh(null)} style={{ ...sBtn, background: B.light, color: B.gray, padding: "5px 14px", fontSize: 12 }}>Cancel</button>
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>Title</label>
+                <input value={editCh.title || ""} onChange={e => setEditCh(p => ({ ...p, title: e.target.value }))} style={sInp} placeholder="e.g. Overbooking" />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>Description</label>
+                <textarea value={editCh.description || ""} onChange={e => setEditCh(p => ({ ...p, description: e.target.value }))} rows={2} style={{ ...sInp, resize: "vertical" }} placeholder="Describe the business challenge..." />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>Features (comma-separated)</label>
+                <input value={(editCh.features || []).join(", ")} onChange={e => setEditCh(p => ({ ...p, features: e.target.value.split(",").map(s => s.trim()).filter(Boolean) }))} style={sInp} placeholder="Trip List, Bookings Management" />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>Feature Mapping (one per line: Feature | How it solves)</label>
+                <textarea value={(editCh.feature_mapping || []).map(m => m.feature + " | " + m.how).join("\n")} onChange={e => setEditCh(p => ({ ...p, feature_mapping: e.target.value.split("\n").filter(l => l.includes("|")).map(l => { const [f, ...h] = l.split("|"); return { feature: f.trim(), how: h.join("|").trim() }; }) }))} rows={3} style={{ ...sInp, resize: "vertical", fontSize: 12, fontFamily: "monospace" }} placeholder={"Trip List | Real-time seat availability\nBookings Management | Automatic conflict detection"} />
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>Business Impact (one per line)</label>
+                <textarea value={(editCh.business_impact || []).join("\n")} onChange={e => setEditCh(p => ({ ...p, business_impact: e.target.value.split("\n").filter(Boolean) }))} rows={3} style={{ ...sInp, resize: "vertical" }} placeholder={"Reduce overbooking incidents\nLower compensation cost"} />
+              </div>
+              <button onClick={() => {
+                if (!editCh.title?.trim()) return;
+                const isNew = !challenges.find(c => c.id === editCh.id);
+                const ch = isNew ? { ...editCh, id: "CH" + String(Date.now()).slice(-6) } : editCh;
+                const next = isNew ? [...challenges, ch] : challenges.map(c => c.id === ch.id ? ch : c);
+                svCh(next); setEditCh(null);
+              }} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "10px 24px", fontSize: 14 }}>
+                {editCh.id && challenges.find(c => c.id === editCh.id) ? "Save Changes" : "+ Add Challenge"}
+              </button>
+            </div>
+          ) : (
+            /* ── Challenge List ── */
+            <div>
+              <button onClick={() => setEditCh({ title: "", description: "", features: [], feature_mapping: [], business_impact: [] })} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "8px 20px", fontSize: 13, marginBottom: 16 }}>+ New Challenge</button>
+              {challenges.length === 0 && <p style={{ color: B.gray, textAlign: "center" }}>No challenges defined.</p>}
+              {challenges.map(ch => (
+                <div key={ch.id} style={{ background: B.bg, borderRadius: 14, padding: "12px 16px", marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                    <div style={{ flex: 1 }}>
+                      <b style={{ fontSize: 13 }}>{ch.title}</b>
+                      <div style={{ fontSize: 11, color: B.gray, marginTop: 2 }}>{ch.description}</div>
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
+                        {(ch.features || []).map(f => <span key={f} style={{ fontSize: 10, background: B.cyan + "18", color: B.cyan, padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>{f}</span>)}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                      <button onClick={() => setEditCh({ ...ch })} style={{ ...sBtn, background: B.card, border: "1.5px solid " + B.light, color: B.dark, padding: "4px 12px", fontSize: 11 }}>Edit</button>
+                      <button onClick={() => { if (confirm("Delete '" + ch.title + "'?")) svCh(challenges.filter(c => c.id !== ch.id)); }} style={{ ...sBtn, background: "#FEE2E2", color: B.pink, padding: "4px 12px", fontSize: 11 }}>Del</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 12 }}>
+                <button onClick={() => svCh(DEFAULT_CHALLENGES)} style={{ ...sBtn, background: B.light, color: B.gray, padding: "8px 18px", fontSize: 13 }}>Reset to Defaults</button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 
-  /* ═══ BUILDER ═══ */
+  /* ═══ BUILDER (EXTENDED with Document Type Selector) ═══ */
   if (pg === "build") {
+    /* ── Existing Quotation toggle/update logic (UNCHANGED) ── */
     const toggle = (id) => setSel(p => {
       if (p[id]) { const n = { ...p }; delete n[id]; return n; }
       return { ...p, [id]: { fee: "", qty: 1, ct: "amount", fp: "", hd: false, dp: "", da: "", hw: false, wt: "" } };
     });
     const upd = (id, f) => setSel(p => ({ ...p, [id]: { ...p[id], ...f } }));
 
+    /* ── Existing RI (Render Item) function — UNCHANGED ── */
     const RI = (it) => {
       const on = !!sel[it.id], d = sel[it.id] || {}, base = bf(it.id), aP = ap(it.pk);
       const dA = parseFloat(d.da) || 0, dP = parseFloat(d.dp) || 0, fin = d.hd ? Math.max(0, base - dA) : base;
-      const hDP = v => { const p = parseFloat(v); upd(it.id, { dp: v, da: (!isNaN(p) && base > 0) ? String(Math.round(p / 100 * base * 100) / 100) : "" }); };
+      const hDP = v => { const pp = parseFloat(v); upd(it.id, { dp: v, da: (!isNaN(pp) && base > 0) ? String(Math.round(pp / 100 * base * 100) / 100) : "" }); };
       const hDA = v => { const a = parseFloat(v); upd(it.id, { da: v, dp: (!isNaN(a) && base > 0) ? String(Math.round(a / base * 10000) / 100) : "" }); };
-
       return (
-        <div key={it.id} onClick={() => toggle(it.id)} style={{
-          border: on ? "2px solid " + it.clr : "2px solid " + B.light, borderRadius: 20, padding: 20, marginBottom: 14,
-          background: on ? it.clr + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden"
-        }}>
+        <div key={it.id} onClick={() => toggle(it.id)} style={{ border: on ? "2px solid " + it.clr : "2px solid " + B.light, borderRadius: 20, padding: 20, marginBottom: 14, background: on ? it.clr + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden" }}>
           {on && <div style={{ position: "absolute", left: 0, top: 0, width: 5, height: "100%", background: it.clr }} />}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <div style={{ flex: 1, paddingLeft: on ? 8 : 0 }}>
@@ -274,19 +441,13 @@ export default function App() {
             </div>
             <Tog on={on} set={() => toggle(it.id)} />
           </div>
-
           {on && (
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: "2px solid " + B.light }} onClick={e => e.stopPropagation()}>
               {it.mode === "flex" ? (
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
                     {[{ k: "amount", l: "Per Amount" }, { k: "percent", l: "Per % of Ticket" }].map(c => (
-                      <button key={c.k} onClick={() => upd(it.id, { ct: c.k })} style={{
-                        ...sBtn, padding: "6px 16px", fontSize: 12,
-                        border: (d.ct || "amount") === c.k ? "2px solid " + it.clr : "2px solid " + B.light,
-                        background: (d.ct || "amount") === c.k ? it.clr + "10" : "#fff",
-                        color: (d.ct || "amount") === c.k ? it.clr : B.gray
-                      }}>{c.l}</button>
+                      <button key={c.k} onClick={() => upd(it.id, { ct: c.k })} style={{ ...sBtn, padding: "6px 16px", fontSize: 12, border: (d.ct || "amount") === c.k ? "2px solid " + it.clr : "2px solid " + B.light, background: (d.ct || "amount") === c.k ? it.clr + "10" : "#fff", color: (d.ct || "amount") === c.k ? it.clr : B.gray }}>{c.l}</button>
                     ))}
                   </div>
                   {(d.ct || "amount") === "amount"
@@ -304,24 +465,16 @@ export default function App() {
                   </div>
                 </div>
               )}
-
               <div style={{ display: "flex", gap: 16, marginBottom: (d.hd || d.hw) ? 12 : 0 }}>
                 <Chk label="Discount" on={!!d.hd} set={v => upd(it.id, { hd: v })} color={B.purple} />
                 <Chk label="Waiver" on={!!d.hw} set={v => upd(it.id, { hw: v })} color={B.pink} />
               </div>
-
               {d.hd && (
                 <div style={{ background: B.purple + "10", border: "1px solid " + B.purple + "30", borderRadius: 14, padding: 14, marginBottom: 10 }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-                    <div style={{ minWidth: 90 }}>
-                      <label style={{ fontSize: 10, color: B.gray, fontWeight: 600 }}>%</label>
-                      <input type="number" min="0" max="100" step="0.01" value={d.dp || ""} onChange={e => hDP(e.target.value)} style={{ ...sInp, padding: "6px 10px" }} />
-                    </div>
+                    <div style={{ minWidth: 90 }}><label style={{ fontSize: 10, color: B.gray, fontWeight: 600 }}>%</label><input type="number" min="0" max="100" step="0.01" value={d.dp || ""} onChange={e => hDP(e.target.value)} style={{ ...sInp, padding: "6px 10px" }} /></div>
                     <span style={{ color: B.muted, fontWeight: 800, paddingBottom: 6 }}>=</span>
-                    <div style={{ flex: 1, minWidth: 100 }}>
-                      <label style={{ fontSize: 10, color: B.gray, fontWeight: 600 }}>Amt ({cur})</label>
-                      <input type="number" min="0" step="0.01" value={d.da || ""} onChange={e => hDA(e.target.value)} style={{ ...sInp, padding: "6px 10px" }} />
-                    </div>
+                    <div style={{ flex: 1, minWidth: 100 }}><label style={{ fontSize: 10, color: B.gray, fontWeight: 600 }}>Amt ({cur})</label><input type="number" min="0" step="0.01" value={d.da || ""} onChange={e => hDA(e.target.value)} style={{ ...sInp, padding: "6px 10px" }} /></div>
                   </div>
                   {base > 0 && dA > 0 && (
                     <div style={{ marginTop: 8, padding: "8px 12px", background: B.purple + "15", borderRadius: 10, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -332,7 +485,6 @@ export default function App() {
                   )}
                 </div>
               )}
-
               {d.hw && (
                 <div style={{ background: B.pink + "10", border: "1px solid " + B.pink + "30", borderRadius: 14, padding: 12 }}>
                   <input placeholder="e.g. Waived for 6 months" value={d.wt || ""} onChange={e => upd(it.id, { wt: e.target.value })} style={sInp} />
@@ -344,29 +496,55 @@ export default function App() {
       );
     };
 
+    /* ── Determine preview readiness ── */
+    const canPreview = docType === "proposal" ? selCh.length > 0 : cnt > 0;
+    const previewLabel = docType === "proposal" ? `Preview Proposal (${selCh.length})` : `Preview Quotation (${cnt})`;
+
+    /* ── Navigate to preview — initialize editable draft for proposal mode ── */
+    const goPreview = () => {
+      if (docType === "proposal") {
+        setEdtCh(selectedChallenges.map(c => ({ id: c.id, title: c.title, description: c.description })));
+        setEdtFt(proposalFeatures.map(pf => ({ feature: pf.feature, mappings: pf.mappings.map(m => ({ ...m })) })));
+        setEdtImp([...proposalImpacts]);
+      }
+      setPg("preview");
+    };
+
     return (
       <div style={{ fontFamily: "'Segoe UI',sans-serif", minHeight: "100vh", background: B.bg }}>
-        <div style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: "14px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99, flexWrap: "wrap", gap: 10 }}>
+        {/* ── Header Bar ── */}
+        <div style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: hPx, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99, flexWrap: "wrap", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div><b style={{ fontSize: 16, display: "block" }}>Proposal Builder</b><span style={{ fontSize: 11, color: B.gray }}>SeatOS</span></div>
+            <div><b style={{ fontSize: isMobile ? 14 : 16, display: "block" }}>SeatOS Document Builder</b>{!isMobile && <span style={{ fontSize: 11, color: B.gray }}>Generate Proposals & Quotations</span>}</div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => setPg("set")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 18px", fontSize: 13 }}>⚙ Settings</button>
-            <button onClick={() => setPg("preview")} disabled={cnt === 0} style={{ ...sBtn, background: cnt > 0 ? B.orange : B.light, color: "#fff", padding: "8px 24px", fontSize: 13, opacity: cnt > 0 ? 1 : 0.5 }}>Preview ({cnt})</button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <button onClick={() => setPg("set")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: isMobile ? "6px 12px" : "8px 18px", fontSize: 13 }}>⚙ Settings</button>
+            <button onClick={goPreview} disabled={!canPreview} style={{ ...sBtn, background: canPreview ? B.orange : B.light, color: "#fff", padding: isMobile ? "6px 14px" : "8px 24px", fontSize: 13, opacity: canPreview ? 1 : 0.5 }}>{previewLabel}</button>
           </div>
         </div>
 
-        <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px" }}>
-          <Sec label="Pricing" />
+        <div style={{ maxWidth: 700, margin: "0 auto", padding: px }}>
+
+          {/* ═══ NEW: Document Type Selector ═══ */}
+          <Sec label="Document Type" n={0} color={B.dark} />
           <div style={sCard}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-              {CUR.map(c => <button key={c} onClick={() => setCur(c)} style={{ ...sBtn, padding: "8px 16px", fontSize: 13, background: cur === c ? B.orange : "#fff", color: cur === c ? "#fff" : B.gray, border: cur === c ? "none" : "2px solid " + B.light }}>{SYM[c]} {c}</button>)}
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              {[{ k: "r", l: "Regular" }, { k: "b", l: "Bundle" }].map(x => <button key={x.k} onClick={() => setFt(x.k)} style={{ ...sBtn, padding: "8px 18px", fontSize: 13, background: ft === x.k ? B.green : "#fff", color: ft === x.k ? "#fff" : B.gray, border: ft === x.k ? "none" : "2px solid " + B.light }}>{x.l}</button>)}
+            <div style={{ display: "flex", gap: 0, borderRadius: 14, overflow: "hidden", border: "2px solid " + B.light }}>
+              {[{ k: "proposal", l: "Proposal", desc: "Challenge-based consulting document", clr: B.cyan },
+                { k: "quotation", l: "Quotation", desc: "Pricing & subscription quotation", clr: B.orange }
+              ].map(dt => (
+                <button key={dt.k} onClick={() => setDocType(dt.k)} style={{
+                  flex: 1, padding: "16px 12px", border: "none", cursor: "pointer", textAlign: "center",
+                  background: docType === dt.k ? dt.clr : "#fff", color: docType === dt.k ? "#fff" : B.gray,
+                  transition: "all .2s"
+                }}>
+                  <b style={{ fontSize: 15, display: "block" }}>{dt.l}</b>
+                  <span style={{ fontSize: 11, opacity: 0.8 }}>{dt.desc}</span>
+                </button>
+              ))}
             </div>
           </div>
 
+          {/* ═══ Common: Sales Person ═══ */}
           <Sec label="Sales Person" n={sp ? 1 : 0} color={B.cyan} />
           <div style={sCard}>
             {ppl.length === 0
@@ -379,6 +557,7 @@ export default function App() {
               ))}</div>}
           </div>
 
+          {/* ═══ Common: Customer Info ═══ */}
           <Sec label="Customer" n={0} color={B.pink} />
           <div style={sCard}>
             {[{ k: "name", l: "Customer Name", p: "Acme Co." }, { k: "addr", l: "Address", p: "123 Sukhumvit" }, { k: "email", l: "Email", p: "hi@acme.com" }].map(f => (
@@ -401,72 +580,290 @@ export default function App() {
             </div>
           </div>
 
-          <Sec label="Licenses & Commission" n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "lic").length} color={B.orange} />
-          {ITEMS.filter(i => i.cat === "lic").map(RI)}
-
-          <Sec label="Services" n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "svc").length} color={B.cyan} />
-          {ITEMS.filter(i => i.cat === "svc").map(RI)}
-
-          <Sec label="Ancillary" n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "anc").length} color={B.pink} />
-          {ITEMS.filter(i => i.cat === "anc").map(RI)}
-
-          <div style={{ height: 16 }} />
-          <Sec label="Bill Discount" n={bd.on ? 1 : 0} color={B.purple} />
-          <div onClick={() => setBd(p => ({ ...p, on: !p.on }))} style={{ border: bd.on ? "2px solid " + B.purple : "2px solid " + B.light, borderRadius: 20, padding: 20, marginBottom: 20, background: bd.on ? B.purple + "08" : B.card, cursor: "pointer" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <b style={{ fontSize: 15 }}>Discount on Entire Bill</b>
-              <Tog on={bd.on} set={v => setBd(p => ({ ...p, on: v }))} />
-            </div>
-            {bd.on && (
-              <div style={{ marginTop: 14, paddingTop: 14, borderTop: "2px solid " + B.light }} onClick={e => e.stopPropagation()}>
-                <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-                  <div style={{ minWidth: 90 }}>
-                    <label style={{ fontSize: 10, color: B.gray, fontWeight: 600 }}>%</label>
-                    <input type="number" min="0" max="100" step="0.01" value={bd.pct || ""} onChange={e => hBP(e.target.value)} style={{ ...sInp, padding: "6px 10px" }} />
+          {/* ═══ CONDITIONAL: Proposal Mode → Challenge Selection ═══ */}
+          {docType === "proposal" && (
+            <>
+              <Sec label="Select Challenges" n={selCh.length} color={B.cyan} />
+              {challenges.map(ch => {
+                const on = selCh.includes(ch.id);
+                const isSuggested = suggestedIds.includes(ch.id);
+                return (
+                  <div key={ch.id} onClick={() => setSelCh(p => on ? p.filter(x => x !== ch.id) : [...p, ch.id])}
+                    style={{ border: on ? "2px solid " + B.cyan : isSuggested ? "2px dashed " + B.orange : "2px solid " + B.light, borderRadius: 20, padding: "16px 20px", marginBottom: 10, background: on ? B.cyan + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden" }}>
+                    {on && <div style={{ position: "absolute", left: 0, top: 0, width: 5, height: "100%", background: B.cyan }} />}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, paddingLeft: on ? 8 : 0 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <b style={{ fontSize: 14 }}>{ch.title}</b>
+                          {isSuggested && !on && <span style={{ fontSize: 10, background: B.orange + "20", color: B.orange, padding: "2px 10px", borderRadius: 10, fontWeight: 700 }}>Suggested</span>}
+                        </div>
+                        <div style={{ fontSize: 12, color: B.gray, marginTop: 3 }}>{ch.description}</div>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
+                          {(ch.features || []).map(f => <span key={f} style={{ fontSize: 10, background: B.cyan + "15", color: B.cyan, padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>{f}</span>)}
+                        </div>
+                      </div>
+                      <Tog on={on} set={() => setSelCh(p => on ? p.filter(x => x !== ch.id) : [...p, ch.id])} />
+                    </div>
                   </div>
-                  <span style={{ color: B.muted, fontWeight: 800, paddingBottom: 6 }}>=</span>
-                  <div style={{ flex: 1, minWidth: 100 }}>
-                    <label style={{ fontSize: 10, color: B.gray, fontWeight: 600 }}>Amt ({cur})</label>
-                    <input type="number" min="0" step="0.01" value={bd.amt || ""} onChange={e => hBA(e.target.value)} style={{ ...sInp, padding: "6px 10px" }} />
+                );
+              })}
+
+              {/* Proposal summary bar */}
+              <div style={{ background: B.dark, borderRadius: 20, padding: "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 16, marginTop: 16 }}>
+                <div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "flex-end" }}>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Challenges</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{selCh.length}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Features</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{proposalFeatures.length}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Impacts</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{proposalImpacts.length}</div></div>
+                </div>
+                <button onClick={goPreview} disabled={selCh.length === 0} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: selCh.length > 0 ? 1 : 0.5 }}>Preview Proposal →</button>
+              </div>
+            </>
+          )}
+
+          {/* ═══ CONDITIONAL: Quotation Mode → Existing Item Selection (RENAMED) ═══ */}
+          {docType === "quotation" && (
+            <>
+              <Sec label="Pricing" />
+              <div style={sCard}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                  {CUR.map(c => <button key={c} onClick={() => setCur(c)} style={{ ...sBtn, padding: "8px 16px", fontSize: 13, background: cur === c ? B.orange : "#fff", color: cur === c ? "#fff" : B.gray, border: cur === c ? "none" : "2px solid " + B.light }}>{SYM[c]} {c}</button>)}
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {[{ k: "r", l: "Regular" }, { k: "b", l: "Bundle" }].map(x => <button key={x.k} onClick={() => setFt(x.k)} style={{ ...sBtn, padding: "8px 18px", fontSize: 13, background: ft === x.k ? B.green : "#fff", color: ft === x.k ? "#fff" : B.gray, border: ft === x.k ? "none" : "2px solid " + B.light }}>{x.l}</button>)}
+                </div>
+              </div>
+
+              <Sec label="Licenses & Commission" n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "lic").length} color={B.orange} />
+              {ITEMS.filter(i => i.cat === "lic").map(RI)}
+              <Sec label="Services" n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "svc").length} color={B.cyan} />
+              {ITEMS.filter(i => i.cat === "svc").map(RI)}
+              <Sec label="Ancillary" n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "anc").length} color={B.pink} />
+              {ITEMS.filter(i => i.cat === "anc").map(RI)}
+
+              <div style={{ height: 16 }} />
+              <Sec label="Bill Discount" n={bd.on ? 1 : 0} color={B.purple} />
+              <div onClick={() => setBd(p => ({ ...p, on: !p.on }))} style={{ border: bd.on ? "2px solid " + B.purple : "2px solid " + B.light, borderRadius: 20, padding: 20, marginBottom: 20, background: bd.on ? B.purple + "08" : B.card, cursor: "pointer" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><b style={{ fontSize: 15 }}>Discount on Entire Bill</b><Tog on={bd.on} set={v => setBd(p => ({ ...p, on: v }))} /></div>
+                {bd.on && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: "2px solid " + B.light }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+                      <div style={{ minWidth: 90 }}><label style={{ fontSize: 10, color: B.gray, fontWeight: 600 }}>%</label><input type="number" min="0" max="100" step="0.01" value={bd.pct || ""} onChange={e => hBP(e.target.value)} style={{ ...sInp, padding: "6px 10px" }} /></div>
+                      <span style={{ color: B.muted, fontWeight: 800, paddingBottom: 6 }}>=</span>
+                      <div style={{ flex: 1, minWidth: 100 }}><label style={{ fontSize: 10, color: B.gray, fontWeight: 600 }}>Amt ({cur})</label><input type="number" min="0" step="0.01" value={bd.amt || ""} onChange={e => hBA(e.target.value)} style={{ ...sInp, padding: "6px 10px" }} /></div>
+                    </div>
+                    {sub > 0 && bda > 0 && <div style={{ marginTop: 8, padding: "8px 12px", background: B.purple + "15", borderRadius: 10, display: "flex", gap: 8, alignItems: "center" }}><span style={{ color: B.gray }}>Sub: {fmtp(sub, cur)}</span><b style={{ color: B.purple }}>→ {fmtp(grand, cur)}</b></div>}
+                  </div>
+                )}
+              </div>
+
+              <Sec label="Special Terms" n={stOn ? 1 : 0} color={B.green} />
+              <div onClick={() => setStOn(!stOn)} style={{ border: stOn ? "2px solid " + B.green : "2px solid " + B.light, borderRadius: 20, padding: 20, marginBottom: 24, background: stOn ? B.green + "08" : B.card, cursor: "pointer" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><b style={{ fontSize: 15 }}>Special Terms</b><Tog on={stOn} set={setStOn} /></div>
+                {stOn && <div style={{ marginTop: 14, paddingTop: 14, borderTop: "2px solid " + B.light }} onClick={e => e.stopPropagation()}><textarea value={stTxt} onChange={e => setStTxt(e.target.value)} rows={3} style={{ ...sInp, resize: "vertical" }} /></div>}
+              </div>
+
+              {/* Quotation summary bar (RENAMED from "Proposal") */}
+              <div style={{ background: B.dark, borderRadius: 20, padding: "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 16 }}>
+                <div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "flex-end" }}>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>One-Time</div><div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.ot, cur)}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Monthly</div><div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.mo, cur)}</div></div>
+                  {bda > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Discount</div><div style={{ fontSize: 18, fontWeight: 700, color: B.cyan, lineHeight: 1 }}>-{fmtp(bda, cur)}</div></div>}
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, color: B.orange, marginBottom: 4 }}>Grand</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{fmtp(grand, cur)}</div></div>
+                </div>
+                <button onClick={() => setPg("preview")} disabled={cnt === 0} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: cnt > 0 ? 1 : 0.5 }}>Quotation →</button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ═══ PREVIEW — ROUTES TO PROPOSAL OR QUOTATION ═══ */
+  const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+  // Shared download function
+  const dlPrint = (title) => {
+    const el = ref.current;
+    if (!el) return;
+    // Clone and clean: hide edit buttons, convert inputs/textareas to static text
+    const clone = el.cloneNode(true);
+    clone.querySelectorAll(".np").forEach(e => e.remove());
+    clone.querySelectorAll("input, textarea").forEach(e => {
+      const span = document.createElement("span");
+      span.style.cssText = e.style.cssText;
+      span.textContent = e.value;
+      e.replaceWith(span);
+    });
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>SeatOS ${title} – ${cu.name || "Customer"}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI','Helvetica Neue',sans-serif;background:#fff}
+@page{size:A4;margin:0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
+</head><body>${clone.outerHTML}<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>`;
+    const blob = new Blob([html], { type: "text/html" });
+    window.open(URL.createObjectURL(blob), "_blank");
+  };
+
+  const A4W = 794;
+  const secLabel = { fontSize: 8, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", marginBottom: 6 };
+
+  /* ═══════════════════════════════════════════════════════
+     PROPOSAL PREVIEW (NEW — Challenge-based)
+     ═══════════════════════════════════════════════════════ */
+  if (docType === "proposal") {
+    return (
+      <div style={{ fontFamily: "'Segoe UI',sans-serif", background: B.bg, minHeight: "100vh" }}>
+        <div className="np" style={{ background: B.card, borderBottom: "4px solid " + B.cyan, padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99 }}>
+          <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 18px", fontSize: 13 }}>← Editor</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => { const el = ref.current; if (el) { navigator.clipboard.writeText(el.innerText).then(() => alert("Copied to clipboard!")); } }} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 16px", fontSize: 12 }}>Copy Text</button>
+            <button onClick={() => dlPrint("Proposal")} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "8px 24px", fontSize: 13 }}>⬇ Download / Print</button>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "center", padding: "24px 16px", overflow: "auto" }}>
+          <div ref={ref} style={{ width: "100%", maxWidth: A4W, background: "#fff", boxShadow: "0 4px 30px rgba(0,0,0,.12)", overflow: "hidden" }}>
+
+            {/* ── Header — same layout as Quotation, cyan accent ── */}
+            <div style={{ background: "#F5F0EB", padding: prevPx, position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: -30, right: -30, width: 140, height: 140, borderRadius: 70, background: B.cyan + "22" }} />
+              <div style={{ position: "absolute", bottom: -24, right: 60, width: 90, height: 90, borderRadius: 45, background: B.orange + "15" }} />
+              <div style={{ position: "absolute", top: 10, right: 180, width: 48, height: 48, borderRadius: 24, background: B.pink + "18" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 1 }}>
+                <div><SeatLogo h={isMobile ? 48 : 120} /></div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ color: B.cyan, fontSize: isMobile ? 18 : 28, fontWeight: 800, fontFamily: "Georgia,serif", letterSpacing: 1 }}>PROPOSAL</div>
+                  <div style={{ color: "#aaa", fontSize: 11, marginTop: 4 }}>{today}</div>
+                  <div style={{ color: "#c8c2b9", fontSize: 10, marginTop: 2 }}>Operated by Bookaway Ltd.</div>
+                </div>
+              </div>
+            </div>
+            {/* ── Body ── */}
+            <div style={{ padding: prevBPx }}>
+
+              {/* Prepared For / By */}
+              <div style={{ display: "flex", gap: isMobile ? 12 : 24, marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #eee", flexWrap: isMobile ? "wrap" : "nowrap" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...secLabel, color: B.cyan }}>Prepared For</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: B.dark }}>{cu.name || "—"}</div>
+                  <div style={{ fontSize: 8, color: "#777", lineHeight: 1.5 }}>
+                    {cu.addr && <div>{cu.addr}</div>}
+                    {cu.country && <div>{cu.country}</div>}
+                    {cu.email && <div>{cu.email}</div>}
                   </div>
                 </div>
-                {sub > 0 && bda > 0 && <div style={{ marginTop: 8, padding: "8px 12px", background: B.purple + "15", borderRadius: 10, display: "flex", gap: 8, alignItems: "center" }}><span style={{ color: B.gray }}>Sub: {fmtp(sub, cur)}</span><b style={{ color: B.purple }}>→ {fmtp(grand, cur)}</b></div>}
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...secLabel, color: B.cyan }}>Prepared By</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: B.dark }}>SeatOS (Bookaway Ltd.)</div>
+                  <div style={{ fontSize: 8, color: "#777", lineHeight: 1.5 }}>
+                    {sp && <div style={{ fontWeight: 700, color: B.dark }}>{sp.name}</div>}
+                    {sp?.email && <div>{sp.email}</div>}
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
 
-          <Sec label="Special Terms" n={stOn ? 1 : 0} color={B.green} />
-          <div onClick={() => setStOn(!stOn)} style={{ border: stOn ? "2px solid " + B.green : "2px solid " + B.light, borderRadius: 20, padding: 20, marginBottom: 24, background: stOn ? B.green + "08" : B.card, cursor: "pointer" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><b style={{ fontSize: 15 }}>Special Terms</b><Tog on={stOn} set={setStOn} /></div>
-            {stOn && <div style={{ marginTop: 14, paddingTop: 14, borderTop: "2px solid " + B.light }} onClick={e => e.stopPropagation()}><textarea value={stTxt} onChange={e => setStTxt(e.target.value)} rows={3} style={{ ...sInp, resize: "vertical" }} /></div>}
-          </div>
+              {/* Section 1: Challenges — EDITABLE */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ ...secLabel, color: B.cyan, fontSize: 10, marginBottom: 0 }}>Section 1 — Identified Challenges</div>
+                <button className="np" onClick={() => setEdtCh(p => [...(p||[]), { id: "NEW" + Date.now(), title: "", description: "" }])} style={{ ...sBtn, background: B.cyan + "15", color: B.cyan, padding: "3px 12px", fontSize: 10 }}>+ Add</button>
+              </div>
+              {(edtCh || []).map((ch, i) => (
+                <div key={ch.id} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: i < (edtCh||[]).length - 1 ? "1px solid #eee" : "none", position: "relative" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: B.cyan, minWidth: 20, paddingTop: 4 }}>{i + 1}.</span>
+                    <div style={{ flex: 1 }}>
+                      <input value={ch.title} onChange={e => setEdtCh(p => p.map((c, j) => j === i ? { ...c, title: e.target.value } : c))}
+                        placeholder="Challenge title..." style={{ border: "none", outline: "none", fontSize: 11, fontWeight: 800, color: B.dark, width: "100%", background: "transparent", padding: "2px 0" }} />
+                      <textarea value={ch.description} onChange={e => setEdtCh(p => p.map((c, j) => j === i ? { ...c, description: e.target.value } : c))}
+                        placeholder="Describe the challenge..." rows={2} style={{ border: "none", outline: "none", fontSize: 10, color: "#333", fontWeight: 500, width: "100%", background: "transparent", resize: "vertical", lineHeight: 1.5, padding: "2px 0", fontFamily: "inherit" }} />
+                    </div>
+                    <button className="np" onClick={() => setEdtCh(p => p.filter((_, j) => j !== i))} style={{ ...sBtn, background: "none", color: "#ccc", fontSize: 14, padding: "0 4px", lineHeight: 1 }} title="Remove">×</button>
+                  </div>
+                </div>
+              ))}
 
-          <div style={{ background: B.dark, borderRadius: 20, padding: "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 16 }}>
-            <div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "flex-end" }}>
-              <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>One-Time</div><div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.ot, cur)}</div></div>
-              <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Monthly</div><div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.mo, cur)}</div></div>
-              {bda > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Discount</div><div style={{ fontSize: 18, fontWeight: 700, color: B.cyan, lineHeight: 1 }}>-{fmtp(bda, cur)}</div></div>}
-              <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, color: B.orange, marginBottom: 4 }}>Grand</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{fmtp(grand, cur)}</div></div>
+              {/* Section 2: Solution Mapping — EDITABLE */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, marginBottom: 8 }}>
+                <div style={{ ...secLabel, color: B.orange, fontSize: 10, marginBottom: 0 }}>Section 2 — Solution Mapping</div>
+                <button className="np" onClick={() => setEdtFt(p => [...(p||[]), { feature: "", mappings: [{ challenge: "", how: "" }] }])} style={{ ...sBtn, background: B.orange + "15", color: B.orange, padding: "3px 12px", fontSize: 10 }}>+ Add Feature</button>
+              </div>
+              <div style={{ fontSize: 8, color: "#888", marginBottom: 8 }}>How SeatOS features address each identified challenge:</div>
+              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
+                <thead>
+                  <tr>
+                    <th style={{ fontSize: 8, padding: "6px 8px", textAlign: "left", fontWeight: 800, color: "#666", borderBottom: "2px solid " + B.orange, textTransform: "uppercase", width: "22%" }}>Feature</th>
+                    <th style={{ fontSize: 8, padding: "6px 8px", textAlign: "left", fontWeight: 800, color: "#666", borderBottom: "2px solid " + B.orange, textTransform: "uppercase", width: "22%" }}>Addresses</th>
+                    <th style={{ fontSize: 8, padding: "6px 8px", textAlign: "left", fontWeight: 800, color: "#666", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>How It Solves</th>
+                    <th className="np" style={{ fontSize: 7, padding: "5px 4px", borderBottom: "2px solid " + B.orange, width: 20 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(edtFt || []).map((pf, i) => (
+                    pf.mappings.map((m, j) => (
+                      <tr key={i + "-" + j}>
+                        {j === 0 && <td rowSpan={pf.mappings.length} style={{ padding: "4px 8px", borderBottom: "1px solid #eee", verticalAlign: "top", background: i % 2 === 0 ? "#fafafa" : "#fff" }}>
+                          <input value={pf.feature} onChange={e => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, feature: e.target.value } : f))}
+                            style={{ border: "none", outline: "none", fontSize: 10, fontWeight: 800, color: B.dark, width: "100%", background: "transparent" }} placeholder="Feature name" />
+                        </td>}
+                        <td style={{ padding: "4px 8px", borderBottom: "1px solid #eee" }}>
+                          <input value={m.challenge} onChange={e => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, mappings: f.mappings.map((mm, mj) => mj === j ? { ...mm, challenge: e.target.value } : mm) } : f))}
+                            style={{ border: "none", outline: "none", fontSize: 9, color: B.dark, fontWeight: 700, width: "100%", background: "transparent" }} placeholder="Challenge" />
+                        </td>
+                        <td style={{ padding: "4px 8px", borderBottom: "1px solid #eee" }}>
+                          <input value={m.how} onChange={e => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, mappings: f.mappings.map((mm, mj) => mj === j ? { ...mm, how: e.target.value } : mm) } : f))}
+                            style={{ border: "none", outline: "none", fontSize: 9, color: "#333", fontWeight: 500, width: "100%", background: "transparent" }} placeholder="How it solves..." />
+                        </td>
+                        {j === 0 && <td rowSpan={pf.mappings.length} className="np" style={{ padding: "2px", borderBottom: "1px solid #eee", verticalAlign: "top", textAlign: "center" }}>
+                          <button onClick={() => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, mappings: [...f.mappings, { challenge: "", how: "" }] } : f))} style={{ border: "none", background: "none", color: B.orange, cursor: "pointer", fontSize: 10, fontWeight: 800 }} title="Add row">+</button>
+                          <button onClick={() => setEdtFt(p => p.filter((_, fi) => fi !== i))} style={{ border: "none", background: "none", color: "#ccc", cursor: "pointer", fontSize: 12 }} title="Remove feature">×</button>
+                        </td>}
+                      </tr>
+                    ))
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Section 3: Business Impact — EDITABLE */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, marginBottom: 8 }}>
+                <div style={{ ...secLabel, color: B.green, fontSize: 10, marginBottom: 0 }}>Section 3 — Expected Business Impact</div>
+                <button className="np" onClick={() => setEdtImp(p => [...(p||[]), ""])} style={{ ...sBtn, background: B.green + "15", color: B.green, padding: "3px 12px", fontSize: 10 }}>+ Add</button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 5 }}>
+                {(edtImp || []).map((imp, i) => (
+                  <div key={i} style={{ display: "flex", gap: 5, alignItems: "flex-start", padding: "4px 8px", background: i % 2 === 0 ? B.green + "08" : "#fff", borderRadius: 6 }}>
+                    <span style={{ color: B.green, fontWeight: 800, fontSize: 10, marginTop: 2 }}>✓</span>
+                    <input value={imp} onChange={e => setEdtImp(p => p.map((v, j) => j === i ? e.target.value : v))}
+                      style={{ border: "none", outline: "none", fontSize: 9, color: "#333", fontWeight: 500, flex: 1, background: "transparent", lineHeight: 1.5 }} placeholder="Impact statement..." />
+                    <button className="np" onClick={() => setEdtImp(p => p.filter((_, j) => j !== i))} style={{ border: "none", background: "none", color: "#ccc", cursor: "pointer", fontSize: 11, lineHeight: 1 }}>×</button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Footer */}
+              <div style={{ marginTop: 24, borderTop: "1.5px solid " + B.dark, paddingTop: 12, textAlign: "center", fontSize: 7, color: "#bbb" }}>
+                SeatOS · Bookaway Ltd. · 6 HaTa'as St., Ramat Gan{sp?.email ? " · " + sp.email : ""}
+              </div>
             </div>
-            <button onClick={() => setPg("preview")} disabled={cnt === 0} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: cnt > 0 ? 1 : 0.5 }}>Proposal →</button>
           </div>
         </div>
       </div>
     );
   }
 
-  /* ═══ PROPOSAL PREVIEW ═══ */
+  /* ═══════════════════════════════════════════════════════
+     QUOTATION PREVIEW (EXISTING — renamed from "Proposal")
+     All logic UNCHANGED, only label "PROPOSAL" → "QUOTATION"
+     + fixed fmtn bug (was undefined, now uses fmt)
+     ═══════════════════════════════════════════════════════ */
   const thS = { background: B.bg, padding: "10px 14px", textAlign: "left", fontWeight: 700, fontSize: 11, textTransform: "uppercase", color: B.gray, borderBottom: "2px solid " + B.light };
   const tdS = { padding: "10px 14px", borderBottom: "1px solid " + B.light, color: B.dark, verticalAlign: "top" };
-  const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const active = (() => {
     const raw = ids.map(id => ITEMS.find(i => i.id === id)).filter(Boolean);
     const order = (it) => {
-      if (it.inv === "One-time") return 0; // Implementation first
-      if (it.id === "admin") return 1; // Monthly Admin second
-      if (it.cat === "lic") return 2; // Other licenses (convenience fees)
-      if (it.cat === "svc") return 3; // Other services
-      return 4; // Ancillary last
+      if (it.inv === "One-time") return 0;
+      if (it.id === "admin") return 1;
+      if (it.cat === "lic") return 2;
+      if (it.cat === "svc") return 3;
+      return 4;
     };
     return [...raw].sort((a, b) => order(a) - order(b));
   })();
@@ -493,52 +890,36 @@ export default function App() {
     return <b>{fmtp(b, cur)}</b>;
   };
 
-
-  // Generate standalone HTML blob and open in new tab with auto-print
-  const dlPrint = () => {
-    const el = ref.current;
-    if (!el) return;
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>SeatOS Proposal – ${cu.name || "Customer"}</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI','Helvetica Neue',sans-serif;background:#fff}
-@page{size:A4;margin:0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
-</head><body>${el.outerHTML}<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>`;
-    const blob = new Blob([html], { type: "text/html" });
-    window.open(URL.createObjectURL(blob), "_blank");
-  };
-
-  const A4W = 794, A4H = 1123;
   const anyDW = active.some(it => { const d = sel[it.id]; return d && ((d.hd && (parseFloat(d.da)||0) > 0) || (d.hw && d.wt)); });
 
   return (
     <div style={{ fontFamily: "'Segoe UI',sans-serif", background: B.bg, minHeight: "100vh" }}>
       <div className="np" style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99 }}>
         <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 18px", fontSize: 13 }}>← Editor</button>
-        <button onClick={dlPrint} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 24px", fontSize: 13 }}>⬇ Download / Print</button>
+        <button onClick={() => dlPrint("Quotation")} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 24px", fontSize: 13 }}>⬇ Download / Print</button>
       </div>
 
       <div style={{ display: "flex", justifyContent: "center", padding: "24px 16px", overflow: "auto" }}>
         <div ref={ref} style={{ width: "100%", maxWidth: A4W, background: "#fff", boxShadow: "0 4px 30px rgba(0,0,0,.12)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
 
-          {/* ── Header ── */}
-          <div style={{ background: "#F5F0EB", padding: "20px 36px 16px", position: "relative", overflow: "hidden", flexShrink: 0 }}>
-            <div style={{ position: "absolute", top: -16, right: -16, width: 80, height: 80, borderRadius: 40, background: B.orange + "20" }} />
-            <div style={{ position: "absolute", bottom: -10, right: 50, width: 44, height: 44, borderRadius: 22, background: B.green + "18" }} />
-            <div style={{ position: "absolute", top: 4, right: 100, width: 28, height: 28, borderRadius: 14, background: B.pink + "18" }} />
+          {/* Header — matches screenshot design */}
+          <div style={{ background: "#F5F0EB", padding: prevPx, position: "relative", overflow: "hidden", flexShrink: 0 }}>
+            <div style={{ position: "absolute", top: -30, right: -30, width: isMobile ? 80 : 140, height: isMobile ? 80 : 140, borderRadius: "50%", background: B.orange + "22" }} />
+            <div style={{ position: "absolute", bottom: -24, right: 60, width: isMobile ? 50 : 90, height: isMobile ? 50 : 90, borderRadius: "50%", background: B.green + "15" }} />
+            <div style={{ position: "absolute", top: 10, right: isMobile ? 100 : 180, width: 48, height: 48, borderRadius: 24, background: B.pink + "18" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 1 }}>
-              <div><SeatLogo h={156} /></div>
+              <div><SeatLogo h={isMobile ? 48 : 120} /></div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ color: B.orange, fontSize: 20, fontWeight: 800, fontFamily: "Georgia,serif" }}>PROPOSAL</div>
-                <div style={{ color: "#888", fontSize: 9, marginTop: 1 }}>{today} · {cur} · {ft === "b" ? "Bundle" : "Regular"}</div>
-                <div style={{ color: "#aaa", fontSize: 8 }}>Operated by Bookaway Ltd.</div>
+                <div style={{ color: B.orange, fontSize: isMobile ? 18 : 28, fontWeight: 800, fontFamily: "Georgia,serif", letterSpacing: 1 }}>QUOTATION</div>
+                <div style={{ color: "#aaa", fontSize: 11, marginTop: 4 }}>{today} · {cur} · {ft === "b" ? "Bundle" : "Regular"}</div>
+                <div style={{ color: "#c8c2b9", fontSize: 10, marginTop: 2 }}>Operated by Bookaway Ltd.</div>
               </div>
             </div>
           </div>
 
-          {/* ── Body (flex-grow to fill remaining space) ── */}
-          <div style={{ padding: "14px 36px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
-
-            {/* Prepared For / By */}
-            <div style={{ display: "flex", gap: 24, marginBottom: 10, flexShrink: 0 }}>
+          {/* Body — ALL EXISTING LOGIC UNCHANGED except fmtn→fmt fix */}
+          <div style={{ padding: isMobile ? "12px 16px 16px" : "14px 36px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", gap: isMobile ? 12 : 24, marginBottom: 10, flexShrink: 0, flexWrap: isMobile ? "wrap" : "nowrap" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>Prepared For</div>
                 <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 1 }}>{cu.name || "—"}</div>
@@ -561,7 +942,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Dates */}
             {(cu.s || cu.e) && (
               <div style={{ background: "#F5F0EB", borderRadius: 6, padding: "6px 12px", marginBottom: 8, display: "flex", gap: 20, flexShrink: 0 }}>
                 <div><span style={{ fontSize: 7, color: "#999" }}>Start</span><div style={{ fontSize: 9, fontWeight: 700 }}>{cu.s || "—"}</div></div>
@@ -570,7 +950,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Pricing Breakdown */}
             <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 4, flexShrink: 0 }}>Pricing Breakdown</div>
             <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 8, flexShrink: 0 }}>
               <thead><tr>
@@ -597,18 +976,16 @@ export default function App() {
               </tbody>
             </table>
 
-            {/* Totals */}
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8, flexShrink: 0 }}>
               <div style={{ minWidth: 220, borderRadius: 6, overflow: "hidden", border: "1.5px solid #222" }}>
                 {tots.ot > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>One-Time</span><b>{fmtp(tots.ot, cur)}</b></div>}
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>Monthly</span><b>{fmtp(tots.mo, cur)}</b></div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>Subtotal</span><b>{fmtp(sub, cur)}</b></div>
-                {bda > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9, background: B.purple + "0d" }}><span style={{ color: B.purple }}>Discount ({fmtn(bdp, cur)}%)</span><b style={{ color: B.purple }}>-{fmtp(bda, cur)}</b></div>}
+                {bda > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9, background: B.purple + "0d" }}><span style={{ color: B.purple }}>Discount ({fmt(bdp, cur)}%)</span><b style={{ color: B.purple }}>-{fmtp(bda, cur)}</b></div>}
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 12px", background: B.orange }}><b style={{ color: "#fff", fontSize: 9 }}>Grand Total</b><b style={{ color: "#fff", fontSize: 11 }}>{fmtp(grand, cur)}</b></div>
               </div>
             </div>
 
-            {/* Discounts & Waivers */}
             {anyDW && (
               <div style={{ marginBottom: 6, flexShrink: 0 }}>
                 <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>Discounts & Waivers</div>
@@ -629,7 +1006,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Notes */}
             <div style={{ fontSize: 7, color: "#aaa", lineHeight: 1.4, borderTop: "1px solid #eee", paddingTop: 6, marginBottom: 6, flexShrink: 0 }}>All fees in {cur}. Valid 30 days. {ft === "b" ? "Bundle" : "Regular"} pricing.</div>
 
             {stOn && stTxt && (
@@ -639,10 +1015,8 @@ export default function App() {
               </div>
             )}
 
-            {/* Spacer to push acceptance to bottom */}
             <div style={{ flex: 1 }} />
 
-            {/* Acceptance */}
             <div style={{ borderTop: "1.5px solid #222", paddingTop: 10, flexShrink: 0 }}>
               <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 8 }}>Acceptance</div>
               <div style={{ display: "flex", gap: 24 }}>
@@ -659,7 +1033,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Footer */}
             <div style={{ marginTop: 8, textAlign: "center", fontSize: 6, color: "#ccc", flexShrink: 0 }}>
               SeatOS · Bookaway Ltd. · 6 HaTa'as St., Ramat Gan{sp?.email ? " · " + sp.email : ""}{sp?.phone ? " · " + sp.phone : ""}
             </div>
