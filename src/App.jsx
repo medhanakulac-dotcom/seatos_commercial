@@ -152,15 +152,80 @@ export default function App() {
         *{box-sizing:border-box;margin:0;padding:0}
         body{background:${C.bg}}
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .sidebar{display:flex}
+        .mobile-top{display:none}
+        .mobile-bottom{display:none}
+        .main-area{margin-left:${open ? 248 : 68}px;transition:margin-left 0.25s ease}
+        @media(max-width:768px){
+          .sidebar{display:none!important}
+          .mobile-top{display:flex!important}
+          .mobile-bottom{display:flex!important}
+          .main-area{margin-left:0!important;padding-top:56px!important;padding-bottom:64px!important}
+        }
       `}</style>
 
       <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Segoe UI',-apple-system,sans-serif" }}>
 
-        <aside style={{
+        {/* ─── MOBILE: Top Header ──────────────────────── */}
+        <div className="mobile-top" style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
+          height: 56, background: C.dark, alignItems: "center",
+          padding: "0 16px", justifyContent: "space-between",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src={LOGO_THUMB} alt="seatOS" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover" }} />
+            <span style={{ fontWeight: 800, fontSize: 16, color: "#fff" }}>
+              seat<span style={{ color: C.orange }}>O</span>S
+            </span>
+          </div>
+          <button
+            onClick={() => { sessionStorage.removeItem("seatos_auth"); setAuthed(false); }}
+            style={{
+              background: "rgba(255,255,255,0.08)", border: "none", color: "rgba(255,255,255,0.5)",
+              padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 11, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 4,
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Out
+          </button>
+        </div>
+
+        {/* ─── MOBILE: Bottom Tab Bar ─────────────────── */}
+        <div className="mobile-bottom" style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200,
+          height: 64, background: C.dark, alignItems: "stretch",
+          borderTop: "1px solid rgba(255,255,255,0.08)",
+        }}>
+          {TABS.map(tab => {
+            const isActive = active === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button key={tab.id} onClick={() => setActive(tab.id)} style={{
+                flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+                justifyContent: "center", gap: 4, border: "none", cursor: "pointer",
+                background: isActive ? "rgba(255,255,255,0.06)" : "transparent",
+                color: isActive ? "#fff" : "rgba(255,255,255,0.35)",
+                position: "relative", padding: "8px 0",
+              }}>
+                {isActive && <div style={{
+                  position: "absolute", top: 0, left: "20%", right: "20%",
+                  height: 3, borderRadius: "0 0 3px 3px", background: tab.color,
+                }} />}
+                <span style={{ color: isActive ? tab.color : "inherit", display: "flex" }}><Icon /></span>
+                <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500 }}>
+                  {tab.label.split(" ")[0]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ─── DESKTOP: Sidebar ────────────────────────── */}
+        <aside className="sidebar" style={{
           width: open ? 248 : 68,
           background: C.dark,
           color: "#fff",
-          display: "flex",
           flexDirection: "column",
           transition: "width 0.25s ease",
           position: "fixed",
@@ -183,12 +248,8 @@ export default function App() {
               alt="seatOS"
               crossOrigin="anonymous"
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                objectFit: "cover",
-                flexShrink: 0,
-                border: "2px solid rgba(255,255,255,0.1)",
+                width: 40, height: 40, borderRadius: 10, objectFit: "cover",
+                flexShrink: 0, border: "2px solid rgba(255,255,255,0.1)",
               }}
             />
             {open && (
@@ -203,21 +264,15 @@ export default function App() {
             )}
           </div>
 
-          <div style={{
-            padding: "10px 10px 4px",
-            display: "flex",
-            justifyContent: open ? "flex-end" : "center",
-          }}>
+          {/* Toggle */}
+          <div style={{ padding: "10px 10px 4px", display: "flex", justifyContent: open ? "flex-end" : "center" }}>
             <button
               onClick={() => setOpen(!open)}
               style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "none",
-                color: "rgba(255,255,255,0.4)",
+                background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.4)",
                 width: 30, height: 30, borderRadius: 8,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", fontSize: 12,
-                transition: "all 0.15s",
+                cursor: "pointer", fontSize: 12, transition: "all 0.15s",
               }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "#fff"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
@@ -226,6 +281,7 @@ export default function App() {
             </button>
           </div>
 
+          {/* Nav */}
           <nav style={{ padding: "4px 8px", flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
             {TABS.map(tab => {
               const isActive = active === tab.id;
@@ -241,10 +297,8 @@ export default function App() {
                     borderRadius: 12, border: "none", cursor: "pointer",
                     background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
                     color: isActive ? "#fff" : "rgba(255,255,255,0.4)",
-                    fontWeight: isActive ? 700 : 500,
-                    fontSize: 14,
-                    transition: "all 0.15s",
-                    width: "100%", textAlign: "left",
+                    fontWeight: isActive ? 700 : 500, fontSize: 14,
+                    transition: "all 0.15s", width: "100%", textAlign: "left",
                     position: "relative",
                   }}
                   onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}}
@@ -253,8 +307,7 @@ export default function App() {
                   {isActive && (
                     <div style={{
                       position: "absolute", left: 0, top: 8, bottom: 8,
-                      width: 3, borderRadius: "0 3px 3px 0",
-                      background: tab.color,
+                      width: 3, borderRadius: "0 3px 3px 0", background: tab.color,
                     }} />
                   )}
                   <span style={{ flexShrink: 0, display: "flex", alignItems: "center", color: isActive ? tab.color : "inherit" }}>
@@ -270,27 +323,15 @@ export default function App() {
           <div style={{
             padding: open ? "14px 16px" : "14px 8px",
             borderTop: "1px solid rgba(255,255,255,0.06)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 8,
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
           }}>
             <button
               onClick={() => { sessionStorage.removeItem("seatos_auth"); setAuthed(false); }}
               style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "none",
-                color: "rgba(255,255,255,0.4)",
-                padding: open ? "8px 16px" : "8px",
-                borderRadius: 8,
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: 600,
-                width: open ? "100%" : "auto",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
+                background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.4)",
+                padding: open ? "8px 16px" : "8px", borderRadius: 8, cursor: "pointer",
+                fontSize: 12, fontWeight: 600, width: open ? "100%" : "auto",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                 transition: "all 0.15s",
               }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(231,76,60,0.15)"; e.currentTarget.style.color = "#e74c3c"; }}
@@ -303,12 +344,9 @@ export default function App() {
           </div>
         </aside>
 
-        <main style={{
-          flex: 1,
-          marginLeft: open ? 248 : 68,
-          transition: "margin-left 0.25s ease",
-          minHeight: "100vh",
-          background: C.bg,
+        {/* ─── MAIN CONTENT ────────────────────────────── */}
+        <main className="main-area" style={{
+          flex: 1, minHeight: "100vh", background: C.bg,
         }}>
           <div key={active} style={{ animation: "fadeIn 0.2s ease-out" }}>
             {active === "proposal" && <ProposalApp />}
