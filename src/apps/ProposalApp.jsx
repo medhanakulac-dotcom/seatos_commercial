@@ -390,6 +390,7 @@ export default function App() {
   /* ── NEW: Document Type + Challenge State ── */
   const [docType, setDocType] = useState("proposal"); // "proposal" | "quotation"
   const [outLang, setOutLang] = useState("en"); // output language: en, th, vi, id
+  const setOutLangSave = async (v) => { setOutLang(v); try { await window.storage.set("ol", v); } catch(e){} };
   const [challenges, setChallenges] = useState(DEFAULT_CHALLENGES);
   const [selCh, setSelCh] = useState([]); // selected challenge IDs
   const [editCh, setEditCh] = useState(null); // challenge being edited (full object or null)
@@ -410,6 +411,8 @@ export default function App() {
       try { const r = await window.storage.get("pr"); if (r) { const p = JSON.parse(r.value); setPr(p); setTP(p); } } catch (e) {}
       try { const r = await window.storage.get("ch"); if (r) setChallenges(JSON.parse(r.value)); } catch (e) {}
       try { const r = await window.storage.get("tr"); if (r) setTranslations(JSON.parse(r.value)); } catch (e) {}
+      try { const r = await window.storage.get("ol"); if (r) setOutLang(r.value); } catch (e) {}
+      try { const r = await window.storage.get("si"); if (r) setSpId(r.value); } catch (e) {}
       setLd(false);
     })();
   }, []);
@@ -828,7 +831,7 @@ export default function App() {
           <div style={sCard}>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {[{ k: "en", l: "English", flag: "🇬🇧" }, { k: "th", l: "ไทย", flag: "🇹🇭" }, { k: "vi", l: "Tiếng Việt", flag: "🇻🇳" }, { k: "id", l: "Bahasa", flag: "🇮🇩" }].map(lg => (
-                <button key={lg.k} onClick={() => setOutLang(lg.k)} style={{
+                <button key={lg.k} onClick={() => setOutLangSave(lg.k)} style={{
                   ...sBtn, padding: isMobile ? "8px 14px" : "10px 20px", borderRadius: 14,
                   border: outLang === lg.k ? "2px solid " + B.purple : "2px solid " + B.light,
                   background: outLang === lg.k ? B.purple + "10" : "#fff",
@@ -850,7 +853,7 @@ export default function App() {
             {ppl.length === 0
               ? <p style={{ color: B.gray, textAlign: "center" }}>{t.noSales} <button onClick={() => setPg("set")} style={{ background: "none", border: "none", color: B.orange, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>{t.addInSettings}</button></p>
               : <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{ppl.map(p => (
-                <button key={p.id} onClick={() => setSpId(p.id)} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
+                <button key={p.id} onClick={() => { setSpId(p.id); try { window.storage.set("si", p.id); } catch(e){} }} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
                   <b style={{ fontSize: 13, color: spId === p.id ? B.cyan : B.dark, display: "block" }}>{p.name}</b>
                   <span style={{ fontSize: 11, color: B.gray }}>{p.email}</span>
                 </button>
