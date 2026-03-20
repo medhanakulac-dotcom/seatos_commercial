@@ -390,7 +390,7 @@ export default function App() {
   /* ── NEW: Document Type + Challenge State ── */
   const [docType, setDocType] = useState("proposal"); // "proposal" | "quotation"
   const [outLang, setOutLang] = useState("en"); // output language: en, th, vi, id
-  const setOutLangSave = async (v) => { setOutLang(v); try { await window.storage.set("ol", v); flash("Language saved!"); } catch(e){ flash("Error saving"); } };
+  const setOutLangSave = async (v) => { setOutLang(v); await store("ol", v); };
   const [challenges, setChallenges] = useState(DEFAULT_CHALLENGES);
   const [selCh, setSelCh] = useState([]); // selected challenge IDs
   const [editCh, setEditCh] = useState(null); // challenge being edited (full object or null)
@@ -404,9 +404,10 @@ export default function App() {
   const [editLang, setEditLang] = useState(null); // lang key being edited, or null
   const t = (translations[lang] || translations.en || DEFAULT_TRANSLATIONS.en);
 
-  /* ── Storage Loading (EXTENDED with challenges) ── */
+  /* ── Storage Loading ── */
   useEffect(() => {
     (async () => {
+      if (!window.storage) { setLd(false); return; }
       try { const r = await window.storage.get("sp"); if (r) setPpl(JSON.parse(r.value)); } catch (e) {}
       try { const r = await window.storage.get("pr"); if (r) { const p = JSON.parse(r.value); setPr(p); setTP(p); } } catch (e) {}
       try { const r = await window.storage.get("ch"); if (r) setChallenges(JSON.parse(r.value)); } catch (e) {}
@@ -417,15 +418,23 @@ export default function App() {
     })();
   }, []);
 
-  /* ── Existing Save Functions — with feedback ── */
+  /* ── Save Functions with feedback ── */
   const [saved, setSaved] = useState("");
-  const flash = (msg) => { setSaved(msg); setTimeout(() => setSaved(""), 2000); };
-  const svP = async (p) => { setPpl(p); try { await window.storage.set("sp", JSON.stringify(p)); flash("Sales team saved!"); } catch (e) { flash("Error saving"); } };
-  const svPr = async (p) => { setPr(p); setTP(p); try { await window.storage.set("pr", JSON.stringify(p)); flash("Pricing saved!"); } catch (e) { flash("Error saving"); } };
-
-  /* ── NEW: Save Challenges ── */
-  const svCh = async (c) => { setChallenges(c); try { await window.storage.set("ch", JSON.stringify(c)); flash("Challenges saved!"); } catch (e) { flash("Error saving"); } };
-  const svTr = async (tr) => { setTranslations(tr); try { await window.storage.set("tr", JSON.stringify(tr)); flash("Translations saved!"); } catch (e) { flash("Error saving"); } };
+  const flash = (msg) => { setSaved(msg); setTimeout(() => setSaved(""), 2500); };
+  const store = async (key, val) => {
+    try {
+      if (!window.storage) { flash("Storage not available"); return false; }
+      const v = typeof val === "string" ? val : JSON.stringify(val);
+      const r = await window.storage.set(key, v);
+      if (!r) { flash("Save returned null"); return false; }
+      flash(key === "sp" ? "Sales team saved!" : key === "pr" ? "Pricing saved!" : key === "ch" ? "Challenges saved!" : key === "tr" ? "Translations saved!" : key === "ol" ? "Language saved!" : "Saved!");
+      return true;
+    } catch (e) { flash("Error: " + String(e.message || e).slice(0, 60)); return false; }
+  };
+  const svP = async (p) => { setPpl(p); await store("sp", p); };
+  const svPr = async (p) => { setPr(p); setTP(p); await store("pr", p); };
+  const svCh = async (c) => { setChallenges(c); await store("ch", c); };
+  const svTr = async (tr) => { setTranslations(tr); await store("tr", tr); };
 
   /* ── Existing Pricing Logic (UNCHANGED) ── */
   const ap = (pk) => pk && pr[pk]?.[cur] ? pr[pk][cur][ft] : null;
@@ -858,7 +867,7 @@ export default function App() {
             {ppl.length === 0
               ? <p style={{ color: B.gray, textAlign: "center" }}>{t.noSales} <button onClick={() => setPg("set")} style={{ background: "none", border: "none", color: B.orange, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>{t.addInSettings}</button></p>
               : <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{ppl.map(p => (
-                <button key={p.id} onClick={() => { setSpId(p.id); try { window.storage.set("si", p.id); } catch(e){} }} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
+                <button key={p.id} onClick={() => { setSpId(p.id); store("si", p.id); }} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
                   <b style={{ fontSize: 13, color: spId === p.id ? B.cyan : B.dark, display: "block" }}>{p.name}</b>
                   <span style={{ fontSize: 11, color: B.gray }}>{p.email}</span>
                 </button>
