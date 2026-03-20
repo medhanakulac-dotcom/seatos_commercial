@@ -390,7 +390,7 @@ export default function App() {
   /* ── NEW: Document Type + Challenge State ── */
   const [docType, setDocType] = useState("proposal"); // "proposal" | "quotation"
   const [outLang, setOutLang] = useState("en"); // output language: en, th, vi, id
-  const setOutLangSave = async (v) => { setOutLang(v); await store("ol", v); };
+  const setOutLangSave = async (v) => { setOutLang(v); await store("ol", v, "Language saved!"); };
   const [challenges, setChallenges] = useState(DEFAULT_CHALLENGES);
   const [selCh, setSelCh] = useState([]); // selected challenge IDs
   const [editCh, setEditCh] = useState(null); // challenge being edited (full object or null)
@@ -404,37 +404,49 @@ export default function App() {
   const [editLang, setEditLang] = useState(null); // lang key being edited, or null
   const t = (translations[lang] || translations.en || DEFAULT_TRANSLATIONS.en);
 
-  /* ── Storage Loading ── */
+  /* ── Storage — try window.storage, retry if not ready, fallback to in-memory ── */
+  const memStore = useRef({});
+  const getS = async (key) => {
+    try {
+      if (window.storage) { const r = await window.storage.get(key); return r ? r.value : null; }
+    } catch (e) {}
+    return memStore.current[key] || null;
+  };
+  const setS = async (key, val) => {
+    const v = typeof val === "string" ? val : JSON.stringify(val);
+    memStore.current[key] = v;
+    try {
+      if (window.storage) { await window.storage.set(key, v); return true; }
+    } catch (e) {}
+    return false;
+  };
+
+  /* ── Storage Loading — with delayed retry if window.storage not ready ── */
   useEffect(() => {
-    (async () => {
-      if (!window.storage) { setLd(false); return; }
-      try { const r = await window.storage.get("sp"); if (r) setPpl(JSON.parse(r.value)); } catch (e) {}
-      try { const r = await window.storage.get("pr"); if (r) { const p = JSON.parse(r.value); setPr(p); setTP(p); } } catch (e) {}
-      try { const r = await window.storage.get("ch"); if (r) setChallenges(JSON.parse(r.value)); } catch (e) {}
-      try { const r = await window.storage.get("tr"); if (r) setTranslations(JSON.parse(r.value)); } catch (e) {}
-      try { const r = await window.storage.get("ol"); if (r) setOutLang(r.value); } catch (e) {}
-      try { const r = await window.storage.get("si"); if (r) setSpId(r.value); } catch (e) {}
+    const loadAll = async () => {
+      try { const r = await getS("sp"); if (r) setPpl(JSON.parse(r)); } catch (e) {}
+      try { const r = await getS("pr"); if (r) { const p = JSON.parse(r); setPr(p); setTP(p); } } catch (e) {}
+      try { const r = await getS("ch"); if (r) setChallenges(JSON.parse(r)); } catch (e) {}
+      try { const r = await getS("tr"); if (r) setTranslations(JSON.parse(r)); } catch (e) {}
+      try { const r = await getS("ol"); if (r) setOutLang(r); } catch (e) {}
+      try { const r = await getS("si"); if (r) setSpId(r); } catch (e) {}
       setLd(false);
-    })();
+    };
+    // Try immediately, then retry after 500ms if storage wasn't ready
+    loadAll().then(() => { if (!window.storage) setTimeout(loadAll, 500); });
   }, []);
 
   /* ── Save Functions with feedback ── */
   const [saved, setSaved] = useState("");
   const flash = (msg) => { setSaved(msg); setTimeout(() => setSaved(""), 2500); };
-  const store = async (key, val) => {
-    try {
-      if (!window.storage) { flash("Storage not available"); return false; }
-      const v = typeof val === "string" ? val : JSON.stringify(val);
-      const r = await window.storage.set(key, v);
-      if (!r) { flash("Save returned null"); return false; }
-      flash(key === "sp" ? "Sales team saved!" : key === "pr" ? "Pricing saved!" : key === "ch" ? "Challenges saved!" : key === "tr" ? "Translations saved!" : key === "ol" ? "Language saved!" : "Saved!");
-      return true;
-    } catch (e) { flash("Error: " + String(e.message || e).slice(0, 60)); return false; }
+  const store = async (key, val, label) => {
+    const ok = await setS(key, val);
+    flash(ok ? (label || "Saved!") : (label || "Saved") + " (session only)");
   };
-  const svP = async (p) => { setPpl(p); await store("sp", p); };
-  const svPr = async (p) => { setPr(p); setTP(p); await store("pr", p); };
-  const svCh = async (c) => { setChallenges(c); await store("ch", c); };
-  const svTr = async (tr) => { setTranslations(tr); await store("tr", tr); };
+  const svP = async (p) => { setPpl(p); await store("sp", p, "Sales team saved!"); };
+  const svPr = async (p) => { setPr(p); setTP(p); await store("pr", p, "Pricing saved!"); };
+  const svCh = async (c) => { setChallenges(c); await store("ch", c, "Challenges saved!"); };
+  const svTr = async (tr) => { setTranslations(tr); await store("tr", tr, "Translations saved!"); };
 
   /* ── Existing Pricing Logic (UNCHANGED) ── */
   const ap = (pk) => pk && pr[pk]?.[cur] ? pr[pk][cur][ft] : null;
@@ -867,7 +879,7 @@ export default function App() {
             {ppl.length === 0
               ? <p style={{ color: B.gray, textAlign: "center" }}>{t.noSales} <button onClick={() => setPg("set")} style={{ background: "none", border: "none", color: B.orange, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>{t.addInSettings}</button></p>
               : <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{ppl.map(p => (
-                <button key={p.id} onClick={() => { setSpId(p.id); store("si", p.id); }} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
+                <button key={p.id} onClick={() => { setSpId(p.id); setS("si", p.id); }} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
                   <b style={{ fontSize: 13, color: spId === p.id ? B.cyan : B.dark, display: "block" }}>{p.name}</b>
                   <span style={{ fontSize: 11, color: B.gray }}>{p.email}</span>
                 </button>
