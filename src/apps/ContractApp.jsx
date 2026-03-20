@@ -103,8 +103,8 @@ export default function App(){
       </div>
       <div style={ui.wrap}>
 
-      <div style={ui.card}><div style={ui.ct}><span>🏢 Company (SeatOS) Details</span></div>
-        <div style={ui.g2}>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>🏢 Company (SeatOS) Details</span></div>
+        <div className="sg2">
           <Inp label="Company Name" value={company.name} onChange={v=>upC("name",v)}/>
           <Inp label="Signatory Name" value={company.signName} onChange={v=>upC("signName",v)}/>
           <Inp label="Title" value={company.signTitle} onChange={v=>upC("signTitle",v)}/>
@@ -118,8 +118,8 @@ export default function App(){
       </div>
 
       {CURRENCIES.map(c=>(
-        <div key={c} style={ui.card}><div style={ui.ct}><span>💰 {c} — {pricing[c].name}</span></div>
-          <div style={ui.g3}>
+        <div key={c} className="scard" style={ui.card}><div style={ui.ct}><span>💰 {c} — {pricing[c].name}</span></div>
+          <div className="sg3">
             <Inp label="Online Conv. Fee (per txn)" value={String(pricing[c].online)} onChange={v=>upP(c,"online",Number(v)||0)}/>
             <Inp label="Admin & Maint. (Monthly)" value={String(pricing[c].admin)} onChange={v=>upP(c,"admin",Number(v)||0)}/>
             <Inp label="Implementation (One-time)" value={String(pricing[c].impl)} onChange={v=>upP(c,"impl",Number(v)||0)}/>
@@ -137,8 +137,24 @@ export default function App(){
   /* ═══ FORM ═══ */
   if(view==="form"){return(
     <div style={ui.app}>
-    <div style={ui.wrap}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24}}>
+    <style>{`
+      .sg2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+      .sg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+      @media(max-width:768px){
+        .sg2,.sg3{grid-template-columns:1fr!important}
+        .scard{padding:18px 14px!important;border-radius:16px!important}
+        .sheader{flex-direction:column!important;gap:12px!important}
+        .sheader h1{font-size:24px!important}
+        .scta{width:100%!important;padding:14px!important}
+        .sorderbtns{flex-direction:column!important}
+        .sorderbtns button{width:100%!important}
+      }
+      @media(min-width:769px) and (max-width:1024px){
+        .sg3{grid-template-columns:1fr 1fr!important}
+      }
+    `}</style>
+    <div className="r-wrap" style={ui.wrap}>
+      <div className="sheader" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24}}>
         <div>
           <h1 style={{fontSize:30,fontWeight:900,color:CI.dark,margin:0,letterSpacing:"-0.5px"}}>Contract Builder</h1>
           <p style={{fontSize:14,color:"#999",margin:"4px 0 0"}}>SeatOS Software Subscription &amp; Services Agreement</p>
@@ -147,15 +163,15 @@ export default function App(){
       </div>
 
       {/* Order Type */}
-      <div style={ui.card}><div style={ui.ct}><span>📋 Order Type</span></div>
-        <div style={{display:"flex",gap:12}}>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>📋 Order Type</span></div>
+        <div className="sorderbtns" style={{display:"flex",gap:12}}>
           {["regular","bundle"].map(v=>(<button key={v} onClick={()=>up("orderType")(v)} style={{flex:1,padding:"16px",borderRadius:20,border:form.orderType===v?`3px solid ${CI.orange}`:"3px solid transparent",background:form.orderType===v?"#FFF8F0":"#fff",fontWeight:800,fontSize:15,cursor:"pointer",color:form.orderType===v?CI.orange:"#bbb",boxShadow:form.orderType===v?"0 4px 16px rgba(245,166,35,.2)":"none",transition:"all .2s"}}>{v==="regular"?"📄 Regular":"📦 Bundle"}</button>))}
         </div>
       </div>
 
       {/* Country & Currency */}
-      <div style={ui.card}><div style={ui.ct}><span>🌏 Country &amp; Currency</span></div>
-        <div style={ui.g3}>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>🌏 Country &amp; Currency</span></div>
+        <div className="sg3">
           <SearchSel label="Country *" value={form.country} onChange={v=>{up("country")(v);if(COUNTRY_CUR[v])up("currency")(COUNTRY_CUR[v])}} opts={COUNTRIES.map(c=>({v:c,l:c}))}/>
           <SearchSel label="Currency *" value={form.currency} onChange={up("currency")} opts={CURRENCIES.map(c=>({v:c,l:c+" — "+pricing[c].name}))}/>
           <div><label style={ui.lb}>Rate</label><div style={{padding:"10px 12px",background:"#FFF8F0",borderRadius:14,border:`2px solid ${CI.orange}`,fontWeight:800,color:CI.orange,fontSize:14}}>{isBundle?"Bundle":"Regular"} ({cur})</div></div>
@@ -163,8 +179,8 @@ export default function App(){
       </div>
 
       {/* Company Info */}
-      <div style={ui.card}><div style={ui.ct}><span>🏢 Company Information</span></div>
-        <div style={ui.g2}>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>🏢 Company Information</span></div>
+        <div className="sg2">
           <Inp label="Customer Name *" value={form.customerName} onChange={up("customerName")} ph="e.g. Acme Travel Co., Ltd."/>
           <Inp label="Registration No." value={form.custRegNum} onChange={up("custRegNum")}/>
           <Inp label="State of Incorporation" value={form.country} onChange={()=>{}} disabled/>
@@ -174,8 +190,8 @@ export default function App(){
       </div>
 
       {/* Subscription */}
-      <div style={ui.card}><div style={ui.ct}><span>📅 Subscription Term</span></div>
-        <div style={ui.g3}>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>📅 Subscription Term</span></div>
+        <div className="sg3">
           <Inp label="Start Date *" value={form.subStartDate} onChange={up("subStartDate")} type="date"/>
           <Sel label="Duration *" value={form.termMonths} onChange={v=>up("termMonths")(Number(v))} opts={TERMS.map(x=>({v:x.m,l:x.l}))}/>
           <Inp label="End Date (auto)" value={endDate} onChange={()=>{}} disabled/>
@@ -183,14 +199,14 @@ export default function App(){
       </div>
 
       {/* Fees */}
-      <div style={ui.card}><div style={ui.ct}><span>💰 Licenses &amp; Fees</span><span style={ui.badge}>{cur}</span></div>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>💰 Licenses &amp; Fees</span><span style={ui.badge}>{cur}</span></div>
         {/* Online */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Online Convenience Fee</b><Waive on={form.wOnline} set={up("wOnline")}/></div>
-          {!form.wOnline&&<div style={ui.g3}><Sel label="Mode" value={form.onlineFeeMode} onChange={up("onlineFeeMode")} opts={[{v:"percent",l:"% of transaction"},{v:"flat",l:"Flat "+cur}]}/>{form.onlineFeeMode==="percent"?<Inp label="%" value={form.onlineFeePercent} onChange={up("onlineFeePercent")} ph="3"/>:<Inp label={cur} value={form.onlineFeeFlat} onChange={up("onlineFeeFlat")} ph={String(pr.online)}/>}<div style={{fontSize:12,color:"#888",paddingTop:22}}>Ref: {fN(pr.online,cur)} {cur}/txn</div></div>}
+          {!form.wOnline&&<div className="sg3"><Sel label="Mode" value={form.onlineFeeMode} onChange={up("onlineFeeMode")} opts={[{v:"percent",l:"% of transaction"},{v:"flat",l:"Flat "+cur}]}/>{form.onlineFeeMode==="percent"?<Inp label="%" value={form.onlineFeePercent} onChange={up("onlineFeePercent")} ph="3"/>:<Inp label={cur} value={form.onlineFeeFlat} onChange={up("onlineFeeFlat")} ph={String(pr.online)}/>}<div style={{fontSize:12,color:"#888",paddingTop:22}}>Ref: {fN(pr.online,cur)} {cur}/txn</div></div>}
         </div>
         {/* Offline */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Offline Convenience Fee</b><Waive on={form.wOffline} set={up("wOffline")}/></div>
-          {!form.wOffline&&<div style={ui.g3}><Sel label="Mode" value={form.offlineFeeMode} onChange={up("offlineFeeMode")} opts={[{v:"percent",l:"% of transaction"},{v:"flat",l:"Flat "+cur}]}/>{form.offlineFeeMode==="percent"?<Inp label="%" value={form.offlineFeePercent} onChange={up("offlineFeePercent")} ph="3"/>:<Inp label={cur} value={form.offlineFeeFlat} onChange={up("offlineFeeFlat")} ph={String(pr.online)}/>}<div style={{fontSize:12,color:"#888",paddingTop:22}}>Ref: {fN(pr.online,cur)} {cur}/txn</div></div>}
+          {!form.wOffline&&<div className="sg3"><Sel label="Mode" value={form.offlineFeeMode} onChange={up("offlineFeeMode")} opts={[{v:"percent",l:"% of transaction"},{v:"flat",l:"Flat "+cur}]}/>{form.offlineFeeMode==="percent"?<Inp label="%" value={form.offlineFeePercent} onChange={up("offlineFeePercent")} ph="3"/>:<Inp label={cur} value={form.offlineFeeFlat} onChange={up("offlineFeeFlat")} ph={String(pr.online)}/>}<div style={{fontSize:12,color:"#888",paddingTop:22}}>Ref: {fN(pr.online,cur)} {cur}/txn</div></div>}
         </div>
         {/* Admin */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Admin &amp; Maintenance (Monthly)</b><Waive on={form.wAdmin} set={up("wAdmin")}/></div>
@@ -210,16 +226,16 @@ export default function App(){
       </div>
 
       {/* Hardware */}
-      <div style={ui.card}><div style={ui.ct}><span>🖥️ Hardware</span></div>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>🖥️ Hardware</span></div>
         <p style={{fontSize:12,color:"#888",marginBottom:12}}>Set quantity to 0 to exclude from the contract.</p>
-        <div style={ui.g2}>
+        <div className="sg2">
           <div><label style={ui.lb}>POS Quantity (@ {fN(pr.pos,cur)} {cur}/unit/month)</label><input type="number" min="0" value={form.posQty} onChange={e=>up("posQty")(Math.max(0,Number(e.target.value)))} style={ui.inp}/></div>
           <div><label style={ui.lb}>Kiosk Quantity (@ {fN(pr.kiosk,cur)} {cur}/unit/month)</label><input type="number" min="0" value={form.kioskQty} onChange={e=>up("kioskQty")(Math.max(0,Number(e.target.value)))} style={ui.inp}/></div>
         </div>
       </div>
 
       {/* Summary */}
-      <div style={ui.card}><div style={ui.ct}><span>📊 Summary</span></div>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>📊 Summary</span></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:"6px 20px",fontSize:14,marginBottom:12}}>
           <span style={{color:"#555"}}>Online Conv.</span><span style={{fontWeight:600,textAlign:"right"}}>{onD}{form.onlineFeeMode==="flat"&&!form.wOnline?" "+cur:""}</span>
           <span style={{color:"#555"}}>Offline Conv.</span><span style={{fontWeight:600,textAlign:"right"}}>{offD}{form.offlineFeeMode==="flat"&&!form.wOffline?" "+cur:""}</span>
@@ -229,13 +245,13 @@ export default function App(){
           {form.posQty>0&&<><span style={{color:"#555"}}>POS ×{form.posQty} {form.posQty>1?"units":"unit"} (Monthly)</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.posQty*pr.pos,cur)} {cur}/mo</span></>}
           {form.kioskQty>0&&<><span style={{color:"#555"}}>Kiosk ×{form.kioskQty} {form.kioskQty>1?"units":"unit"} (Monthly)</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.kioskQty*pr.kiosk,cur)} {cur}/mo</span></>}
         </div>
-        <div style={ui.g2}><Inp label="Discount" value={form.discount} onChange={up("discount")} ph="0"/><Inp label="Taxes" value={form.taxes} onChange={up("taxes")} ph="0"/></div>
+        <div className="sg2"><Inp label="Discount" value={form.discount} onChange={up("discount")} ph="0"/><Inp label="Taxes" value={form.taxes} onChange={up("taxes")} ph="0"/></div>
         <p style={{fontSize:12,color:"#888",marginTop:8,fontStyle:"italic"}}>* Convenience fees are usage-based. No fixed grand total.</p>
       </div>
 
       {/* Signatory */}
-      <div style={ui.card}><div style={ui.ct}><span>✍️ Customer Signatory &amp; Billing</span></div>
-        <div style={ui.g2}>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>✍️ Customer Signatory &amp; Billing</span></div>
+        <div className="sg2">
           <Inp label="Name *" value={form.custSignName} onChange={up("custSignName")}/>
           <Inp label="Title" value={form.custSignTitle} onChange={up("custSignTitle")}/>
           <Inp label="Address" value={form.custSignAddress} onChange={up("custSignAddress")}/>
@@ -248,7 +264,7 @@ export default function App(){
       </div>
 
       {/* Special Terms — dynamic list */}
-      <div style={ui.card}><div style={ui.ct}><span>📝 Special Terms</span><button style={{background:"none",border:`2px solid ${CI.green}`,color:CI.green,borderRadius:50,padding:"4px 14px",fontSize:13,fontWeight:800,cursor:"pointer"}} onClick={()=>setForm(p=>({...p,specialTerms:[...p.specialTerms,""]}))}>+ Add Term</button></div>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>📝 Special Terms</span><button style={{background:"none",border:`2px solid ${CI.green}`,color:CI.green,borderRadius:50,padding:"4px 14px",fontSize:13,fontWeight:800,cursor:"pointer"}} onClick={()=>setForm(p=>({...p,specialTerms:[...p.specialTerms,""]}))}>+ Add Term</button></div>
         {form.specialTerms.map((t,i)=>(
           <div key={i} style={{display:"flex",gap:8,marginBottom:10,alignItems:"flex-start"}}>
             <span style={{fontSize:12,fontWeight:700,color:"#999",paddingTop:12,flexShrink:0}}>{i+1}.</span>
@@ -258,14 +274,14 @@ export default function App(){
         ))}
       </div>
 
-      {isBundle&&<div style={ui.card}><div style={ui.ct}><span>📦 Bundle: 12GO</span></div><Sel label="12GO Entity" value={form.twelveGoEntity} onChange={up("twelveGoEntity")} opts={TGO.map(e=>({v:e,l:e}))}/></div>}
+      {isBundle&&<div className="scard" style={ui.card}><div style={ui.ct}><span>📦 Bundle: 12GO</span></div><Sel label="12GO Entity" value={form.twelveGoEntity} onChange={up("twelveGoEntity")} opts={TGO.map(e=>({v:e,l:e}))}/></div>}
 
-      <div style={ui.card}><div style={ui.ct}><span>⚙️ Options</span></div>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>⚙️ Options</span></div>
         <Tog label="Include Amendment page" value={form.includeAmendment} onChange={up("includeAmendment")}/>
       </div>
 
       <div style={{textAlign:"center",marginTop:32}}>
-        <button style={{...ui.btn,...ui.pri}} onClick={()=>setView("preview")}>Preview Contract →</button>
+        <button className="scta" style={{...ui.btn,...ui.pri}} onClick={()=>setView("preview")}>Preview Contract →</button>
       </div>
     </div></div>
   )}
@@ -324,12 +340,15 @@ window.onload=function(){
 
   return(
     <div style={ui.app}>
-      <style>{`@media print{body,html{margin:0;padding:0;background:#fff!important}.no-print{display:none!important}.a4{box-shadow:none!important;margin:0!important;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.a4:last-child{page-break-after:auto}@page{size:A4;margin:0}}`}</style>
-      <div className="no-print" style={{position:"sticky",top:0,zIndex:100,background:`linear-gradient(135deg,${CI.orange},${CI.pink})`,padding:"14px 24px",display:"flex",justifyContent:"center",gap:16}}>
+      <style>{`
+        @media print{body,html{margin:0;padding:0;background:#fff!important}.no-print{display:none!important}.a4{box-shadow:none!important;margin:0!important;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}.a4:last-child{page-break-after:auto}@page{size:A4;margin:0}}
+        @media(max-width:860px){.a4{transform-origin:top center;transform:scale(calc(100vw / 840));width:794px!important;margin-left:auto!important;margin-right:auto!important}.preview-wrap{padding:0 0 40px!important;max-width:100vw!important}.preview-bar{padding:10px 12px!important;gap:8px!important}.preview-bar button{padding:8px 16px!important;font-size:13px!important}}
+      `}</style>
+      <div className="no-print preview-bar" style={{position:"sticky",top:0,zIndex:100,background:CI.orange,padding:"14px 24px",display:"flex",justifyContent:"center",gap:16,flexWrap:"wrap"}}>
         <button style={{...ui.btn,background:"rgba(255,255,255,.2)",color:"#fff",padding:"10px 24px",fontSize:14,border:"1.5px solid rgba(255,255,255,.3)"}} onClick={()=>setView("form")}>← Back to Edit</button>
         <button style={{...ui.btn,background:"#fff",color:CI.orange,padding:"10px 24px",fontSize:14,fontWeight:800}} onClick={handleDownload}>Download PDF</button>
       </div>
-      <div id="contract-pages" style={{maxWidth:840,margin:"24px auto",padding:"0 16px 80px"}}>
+      <div className="preview-wrap" id="contract-pages" style={{maxWidth:840,margin:"24px auto",padding:"0 16px 80px"}}>
 
 {/* PAGE 1 */}
 <div className="a4" style={pg.page}>
