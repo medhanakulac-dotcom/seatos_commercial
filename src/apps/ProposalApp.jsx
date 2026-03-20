@@ -998,24 +998,30 @@ export default function App() {
         <div style={{ display: "flex", justifyContent: "center", padding: "24px 16px", overflow: "auto" }}>
           <div ref={ref} style={{ width: "100%", maxWidth: A4W, background: "#fff", boxShadow: "0 4px 30px rgba(0,0,0,.12)", overflow: "hidden" }}>
 
-            {/* ── Header ── */}
-            <div style={{ background: B.dark, padding: "28px 40px 24px", position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: 50, background: B.cyan + "20" }} />
-              <div style={{ position: "absolute", bottom: -14, right: 70, width: 50, height: 50, borderRadius: 25, background: B.orange + "15" }} />
+            {/* ── Header — same style as Quotation ── */}
+            <div style={{ background: "#F5F0EB", padding: prevPx, position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: -30, right: -30, width: isMobile ? 80 : 140, height: isMobile ? 80 : 140, borderRadius: "50%", background: B.cyan + "22" }} />
+              <div style={{ position: "absolute", bottom: -24, right: 60, width: isMobile ? 50 : 90, height: isMobile ? 50 : 90, borderRadius: "50%", background: B.orange + "15" }} />
+              <div style={{ position: "absolute", top: 10, right: isMobile ? 100 : 180, width: 48, height: 48, borderRadius: 24, background: B.pink + "18" }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 1 }}>
-                <div><SeatLogo h={60} /></div>
+                <div><SeatLogo h={isMobile ? 48 : 156} /></div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ color: B.cyan, fontSize: 22, fontWeight: 800, fontFamily: "Georgia,serif" }}>{t.proposal.toUpperCase()}</div>
-                  <div style={{ color: "rgba(255,255,255,.5)", fontSize: 9, marginTop: 2 }}>{today}</div>
-                  <div style={{ color: "rgba(255,255,255,.35)", fontSize: 8 }}>{ot("operatedBy")}</div>
+                  <div style={{ color: B.cyan, fontSize: isMobile ? 18 : 28, fontWeight: 800, fontFamily: "Georgia,serif", letterSpacing: 1 }}>{ot("proposal").toUpperCase()}</div>
+                  <div style={{ color: "#aaa", fontSize: 11, marginTop: 4 }}>{today} · {cur} · {ft === "b" ? t.bundle : t.regular}</div>
+                  <div style={{ color: "#c8c2b9", fontSize: 10, marginTop: 2 }}>{ot("operatedBy")}</div>
                 </div>
               </div>
-              {/* Prepared For/By in header */}
-              <div style={{ display: "flex", gap: 24, marginTop: 20, borderTop: "1px solid rgba(255,255,255,.1)", paddingTop: 16 }}>
+            </div>
+
+            {/* ── Body ── */}
+            <div style={{ padding: prevBPx }}>
+
+              {/* Prepared For / By */}
+              <div style={{ display: "flex", gap: isMobile ? 12 : 24, marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #eee", flexWrap: isMobile ? "wrap" : "nowrap" }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ ...secLabel, color: B.cyan }}>{ot("preparedFor")}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>{cu.name || "—"}</div>
-                  <div style={{ fontSize: 8, color: "rgba(255,255,255,.5)", lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: B.dark }}>{cu.name || "—"}</div>
+                  <div style={{ fontSize: 8, color: "#777", lineHeight: 1.5 }}>
                     {cu.addr && <div>{cu.addr}</div>}
                     {cu.country && <div>{cu.country}</div>}
                     {cu.email && <div>{cu.email}</div>}
@@ -1023,17 +1029,13 @@ export default function App() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ ...secLabel, color: B.cyan }}>{ot("preparedBy")}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>SeatOS (Bookaway Ltd.)</div>
-                  <div style={{ fontSize: 8, color: "rgba(255,255,255,.5)", lineHeight: 1.5 }}>
-                    {sp && <div style={{ color: "rgba(255,255,255,.7)" }}>{sp.name}</div>}
+                  <div style={{ fontSize: 13, fontWeight: 800, color: B.dark }}>SeatOS (Bookaway Ltd.)</div>
+                  <div style={{ fontSize: 8, color: "#777", lineHeight: 1.5 }}>
+                    {sp && <div style={{ fontWeight: 700, color: B.dark }}>{sp.name}</div>}
                     {sp?.email && <div>{sp.email}</div>}
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* ── Body ── */}
-            <div style={{ padding: "20px 40px 28px" }}>
 
               {/* Section 1: Challenges — rendered in output language */}
               <div style={{ ...secLabel, color: B.cyan, fontSize: 10, marginBottom: 10 }}>{ot("sec1")}</div>
@@ -1154,7 +1156,7 @@ export default function App() {
             <div style={{ position: "absolute", bottom: -10, right: 50, width: 44, height: 44, borderRadius: 22, background: B.green + "18" }} />
             <div style={{ position: "absolute", top: 4, right: 100, width: 28, height: 28, borderRadius: 14, background: B.pink + "18" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 1 }}>
-              <div><SeatLogo h={156} /></div>
+              <div><SeatLogo h={isMobile ? 48 : 156} /></div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ color: B.orange, fontSize: 20, fontWeight: 800, fontFamily: "Georgia,serif" }}>{t.quotation.toUpperCase()}</div>
                 <div style={{ color: "#888", fontSize: 9, marginTop: 1 }}>{today} · {cur} · {ft === "b" ? t.bundle : t.regular}</div>
