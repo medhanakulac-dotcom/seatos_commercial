@@ -390,7 +390,7 @@ export default function App() {
   /* ── NEW: Document Type + Challenge State ── */
   const [docType, setDocType] = useState("proposal"); // "proposal" | "quotation"
   const [outLang, setOutLang] = useState("en"); // output language: en, th, vi, id
-  const setOutLangSave = async (v) => { setOutLang(v); try { await window.storage.set("ol", v); } catch(e){} };
+  const setOutLangSave = async (v) => { setOutLang(v); try { await window.storage.set("ol", v); flash("Language saved!"); } catch(e){ flash("Error saving"); } };
   const [challenges, setChallenges] = useState(DEFAULT_CHALLENGES);
   const [selCh, setSelCh] = useState([]); // selected challenge IDs
   const [editCh, setEditCh] = useState(null); // challenge being edited (full object or null)
@@ -417,13 +417,15 @@ export default function App() {
     })();
   }, []);
 
-  /* ── Existing Save Functions (UNCHANGED) ── */
-  const svP = async (p) => { setPpl(p); try { await window.storage.set("sp", JSON.stringify(p)); } catch (e) {} };
-  const svPr = async (p) => { setPr(p); setTP(p); try { await window.storage.set("pr", JSON.stringify(p)); } catch (e) {} };
+  /* ── Existing Save Functions — with feedback ── */
+  const [saved, setSaved] = useState("");
+  const flash = (msg) => { setSaved(msg); setTimeout(() => setSaved(""), 2000); };
+  const svP = async (p) => { setPpl(p); try { await window.storage.set("sp", JSON.stringify(p)); flash("Sales team saved!"); } catch (e) { flash("Error saving"); } };
+  const svPr = async (p) => { setPr(p); setTP(p); try { await window.storage.set("pr", JSON.stringify(p)); flash("Pricing saved!"); } catch (e) { flash("Error saving"); } };
 
   /* ── NEW: Save Challenges ── */
-  const svCh = async (c) => { setChallenges(c); try { await window.storage.set("ch", JSON.stringify(c)); } catch (e) {} };
-  const svTr = async (tr) => { setTranslations(tr); try { await window.storage.set("tr", JSON.stringify(tr)); } catch (e) {} };
+  const svCh = async (c) => { setChallenges(c); try { await window.storage.set("ch", JSON.stringify(c)); flash("Challenges saved!"); } catch (e) { flash("Error saving"); } };
+  const svTr = async (tr) => { setTranslations(tr); try { await window.storage.set("tr", JSON.stringify(tr)); flash("Translations saved!"); } catch (e) { flash("Error saving"); } };
 
   /* ── Existing Pricing Logic (UNCHANGED) ── */
   const ap = (pk) => pk && pr[pk]?.[cur] ? pr[pk][cur][ft] : null;
@@ -507,6 +509,7 @@ export default function App() {
           </div>
         </div>
         <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 22px", fontSize: 13 }}>{t.builder}</button>
+        {saved && <div style={{ position: "fixed", top: 60, right: 20, background: B.green, color: "#fff", padding: "10px 24px", borderRadius: 12, fontWeight: 700, fontSize: 14, zIndex: 999, boxShadow: "0 4px 20px rgba(0,0,0,.15)" }}>{saved}</div>}
       </div>
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px" }}>
         {/* ── Sales Team (UNCHANGED) ── */}
@@ -525,9 +528,10 @@ export default function App() {
               <button onClick={() => svP(ppl.filter(x => x.id !== p.id))} style={{ ...sBtn, background: "#FEE2E2", color: B.pink, padding: "5px 14px", fontSize: 12 }}>{t.remove}</button>
             </div>
           ))}
+          {ppl.length > 0 && <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}><button onClick={() => svP(ppl)} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 22px", fontSize: 13 }}>{t.save}</button></div>}
         </div>
 
-        {/* ── Pricing (UNCHANGED) ── */}
+        {/* ── Pricing ── */}
         <Sec label={t.pricing} n={0} color={B.purple} />
         <div style={sCard}>
           {PCATS.map(cat => (
@@ -804,6 +808,7 @@ export default function App() {
             <button onClick={goPreview} disabled={!canPreview} style={{ ...sBtn, background: canPreview ? B.orange : B.light, color: "#fff", padding: "8px 24px", fontSize: 13, opacity: canPreview ? 1 : 0.5 }}>{previewLabel}</button>
           </div>
         </div>
+        {saved && <div style={{ position: "fixed", top: 60, right: 20, background: B.green, color: "#fff", padding: "10px 24px", borderRadius: 12, fontWeight: 700, fontSize: 14, zIndex: 999, boxShadow: "0 4px 20px rgba(0,0,0,.15)" }}>{saved}</div>}
 
         <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px" }}>
 
