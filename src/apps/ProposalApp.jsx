@@ -108,6 +108,94 @@ const COUNTRIES = [
   "United Arab Emirates","Qatar","Kuwait","Bahrain","Oman","Israel","Jordan","Other"
 ];
 
+const DEFAULT_TRANSLATIONS = {
+  en: {
+    // UI
+    settings: "Settings", builder: "← Builder", salesTeam: "Sales Team", pricing: "Pricing",
+    save: "Save", reset: "Reset", remove: "Remove", edit: "Edit", del: "Del", cancel: "Cancel",
+    challengeModules: "Challenge Modules", newChallenge: "New Challenge", editChallenge: "Edit Challenge",
+    title: "Title", description: "Description", features: "Features", featureMapping: "Feature Mapping (Feature | How)",
+    businessImpact: "Business Impact", saveChanges: "Save Changes", addChallenge: "+ Add Challenge",
+    resetDefaults: "Reset to Defaults", translations: "Translations",
+    // Doc Type
+    docType: "Document Type", proposal: "Proposal", quotation: "Quotation",
+    proposalDesc: "Challenge-based consulting", quotationDesc: "Pricing & subscription",
+    // Builder
+    docBuilder: "SeatOS Document Builder", docBuilderSub: "Generate Proposals & Quotations",
+    salesPerson: "Sales Person", customer: "Customer", customerName: "Customer Name",
+    address: "Address", email: "Email", country: "Country", incorporation: "Incorporation",
+    startDate: "Start Date", endDate: "End Date", selectChallenges: "Select Challenges",
+    suggested: "Suggested", challenges: "Challenges", impacts: "Impacts",
+    licensesComm: "Licenses & Commission", services: "Services", ancillary: "Ancillary",
+    billDiscount: "Bill Discount", discountBill: "Discount on Entire Bill",
+    specialTerms: "Special Terms", discount: "Discount", waiver: "Waiver",
+    oneTime: "One-Time", monthly: "Monthly", grand: "Grand",
+    regular: "Regular", bundle: "Bundle",
+    perAmount: "Per Amount", perPercent: "Per % of Ticket",
+    noSales: "None yet.", addInSettings: "Add in Settings",
+    // Preview
+    editor: "← Editor", download: "⬇ Download / Print", copyText: "Copy Text",
+    preparedFor: "Prepared For", preparedBy: "Prepared By",
+    operatedBy: "Operated by Bookaway Ltd.",
+    sec1: "Section 1 — Identified Challenges", sec2: "Section 2 — Solution Mapping",
+    sec2desc: "How SeatOS features address each identified challenge:",
+    feature: "Feature", addresses: "Addresses", howItSolves: "How It Solves",
+    sec3: "Section 3 — Expected Business Impact",
+    addFeature: "+ Add Feature", add: "+ Add",
+    pricingBreakdown: "Pricing Breakdown", billing: "Billing", fee: "Fee",
+    subtotal: "Subtotal", grandTotal: "Grand Total",
+    discountsWaivers: "Discounts & Waivers",
+    item: "Item", original: "Original", final: "Final",
+    notes: "Notes", acceptance: "Acceptance",
+    nameTitle: "Name & Title", date: "Date",
+    allFees: "All fees in", valid30: "Valid 30 days.",
+    proposalBtn: "Preview Proposal →", quotationBtn: "Quotation →",
+    previewProposal: "Preview Proposal", previewQuotation: "Preview Quotation",
+    search: "Search...", noResults: "No results", select: "Select...",
+  },
+  th: {
+    settings: "ตั้งค่า", builder: "← กลับ", salesTeam: "ทีมขาย", pricing: "ราคา",
+    save: "บันทึก", reset: "รีเซ็ต", remove: "ลบ", edit: "แก้ไข", del: "ลบ", cancel: "ยกเลิก",
+    challengeModules: "โมดูลความท้าทาย", newChallenge: "เพิ่มความท้าทาย", editChallenge: "แก้ไขความท้าทาย",
+    title: "หัวข้อ", description: "คำอธิบาย", features: "ฟีเจอร์", featureMapping: "การแมปฟีเจอร์ (ฟีเจอร์ | วิธีแก้)",
+    businessImpact: "ผลกระทบทางธุรกิจ", saveChanges: "บันทึกการเปลี่ยนแปลง", addChallenge: "+ เพิ่มความท้าทาย",
+    resetDefaults: "รีเซ็ตค่าเริ่มต้น", translations: "แปลภาษา",
+    docType: "ประเภทเอกสาร", proposal: "ข้อเสนอ", quotation: "ใบเสนอราคา",
+    proposalDesc: "เอกสารเชิงที่ปรึกษา", quotationDesc: "ใบเสนอราคาสมาชิก",
+    docBuilder: "SeatOS สร้างเอกสาร", docBuilderSub: "สร้างข้อเสนอ & ใบเสนอราคา",
+    salesPerson: "พนักงานขาย", customer: "ลูกค้า", customerName: "ชื่อลูกค้า",
+    address: "ที่อยู่", email: "อีเมล", country: "ประเทศ", incorporation: "จดทะเบียน",
+    startDate: "วันเริ่มต้น", endDate: "วันสิ้นสุด", selectChallenges: "เลือกความท้าทาย",
+    suggested: "แนะนำ", challenges: "ความท้าทาย", impacts: "ผลกระทบ",
+    licensesComm: "ไลเซนส์ & คอมมิชชั่น", services: "บริการ", ancillary: "รายการเสริม",
+    billDiscount: "ส่วนลดรวม", discountBill: "ส่วนลดทั้งบิล",
+    specialTerms: "เงื่อนไขพิเศษ", discount: "ส่วนลด", waiver: "การยกเว้น",
+    oneTime: "ครั้งเดียว", monthly: "รายเดือน", grand: "รวม",
+    regular: "ปกติ", bundle: "แพ็กเกจ",
+    perAmount: "ต่อจำนวน", perPercent: "ต่อ % ของตั๋ว",
+    noSales: "ยังไม่มี", addInSettings: "เพิ่มในตั้งค่า",
+    editor: "← แก้ไข", download: "⬇ ดาวน์โหลด / พิมพ์", copyText: "คัดลอก",
+    preparedFor: "จัดทำให้", preparedBy: "จัดทำโดย",
+    operatedBy: "ดำเนินงานโดย Bookaway Ltd.",
+    sec1: "ส่วนที่ 1 — ความท้าทายที่พบ", sec2: "ส่วนที่ 2 — การแมปโซลูชัน",
+    sec2desc: "ฟีเจอร์ SeatOS แก้ไขความท้าทายแต่ละข้ออย่างไร:",
+    feature: "ฟีเจอร์", addresses: "แก้ไขปัญหา", howItSolves: "วิธีแก้ไข",
+    sec3: "ส่วนที่ 3 — ผลกระทบทางธุรกิจที่คาดหวัง",
+    addFeature: "+ เพิ่มฟีเจอร์", add: "+ เพิ่ม",
+    pricingBreakdown: "รายละเอียดราคา", billing: "การเรียกเก็บ", fee: "ค่าธรรมเนียม",
+    subtotal: "รวมย่อย", grandTotal: "รวมทั้งหมด",
+    discountsWaivers: "ส่วนลด & การยกเว้น",
+    item: "รายการ", original: "ราคาเดิม", final: "ราคาสุดท้าย",
+    notes: "หมายเหตุ", acceptance: "การยอมรับ",
+    nameTitle: "ชื่อ & ตำแหน่ง", date: "วันที่",
+    allFees: "ค่าธรรมเนียมทั้งหมดเป็น", valid30: "มีผล 30 วัน",
+    proposalBtn: "ดูข้อเสนอ →", quotationBtn: "ใบเสนอราคา →",
+    previewProposal: "ดูข้อเสนอ", previewQuotation: "ดูใบเสนอราคา",
+    search: "ค้นหา...", noResults: "ไม่พบผลลัพธ์", select: "เลือก...",
+  }
+};
+
+
 function SearchDrop({ label, value, onChange }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -203,10 +291,11 @@ export default function App() {
   const [selCh, setSelCh] = useState([]); // selected challenge IDs
   const [editCh, setEditCh] = useState(null); // challenge being edited (full object or null)
 
-  /* ── NEW: Editable Proposal Draft (initialized on preview, then user can tweak) ── */
-  const [edtCh, setEdtCh] = useState(null);   // [{id,title,description},...] — editable challenge list
-  const [edtFt, setEdtFt] = useState(null);    // [{feature, mappings:[{challenge,how}]},...] — editable features
-  const [edtImp, setEdtImp] = useState(null);  // ["impact",...] — editable impacts
+  /* ── Language & Translations (editable via Settings) ── */
+  const [lang, setLang] = useState("en");
+  const [translations, setTranslations] = useState(DEFAULT_TRANSLATIONS);
+  const [editLang, setEditLang] = useState(null); // lang key being edited, or null
+  const t = (translations[lang] || translations.en || DEFAULT_TRANSLATIONS.en);
 
   /* ── Storage Loading (EXTENDED with challenges) ── */
   useEffect(() => {
@@ -214,6 +303,7 @@ export default function App() {
       try { const r = await window.storage.get("sp"); if (r) setPpl(JSON.parse(r.value)); } catch (e) {}
       try { const r = await window.storage.get("pr"); if (r) { const p = JSON.parse(r.value); setPr(p); setTP(p); } } catch (e) {}
       try { const r = await window.storage.get("ch"); if (r) setChallenges(JSON.parse(r.value)); } catch (e) {}
+      try { const r = await window.storage.get("tr"); if (r) setTranslations(JSON.parse(r.value)); } catch (e) {}
       setLd(false);
     })();
   }, []);
@@ -224,6 +314,7 @@ export default function App() {
 
   /* ── NEW: Save Challenges ── */
   const svCh = async (c) => { setChallenges(c); try { await window.storage.set("ch", JSON.stringify(c)); } catch (e) {} };
+  const svTr = async (tr) => { setTranslations(tr); try { await window.storage.set("tr", JSON.stringify(tr)); } catch (e) {} };
 
   /* ── Existing Pricing Logic (UNCHANGED) ── */
   const ap = (pk) => pk && pr[pk]?.[cur] ? pr[pk][cur][ft] : null;
@@ -271,51 +362,41 @@ export default function App() {
     return challenges.filter(c => !selCh.includes(c.id) && (c.features || []).some(f => selFeatures.has(f))).map(c => c.id);
   })();
 
-  /* ── Responsive: detect screen width ── */
-  const [winW, setWinW] = useState(typeof window !== "undefined" ? window.innerWidth : 800);
-  useEffect(() => {
-    const h = () => setWinW(window.innerWidth);
-    window.addEventListener("resize", h);
-    return () => window.removeEventListener("resize", h);
-  }, []);
-  const isMobile = winW < 640;
-  const isTablet = winW >= 640 && winW < 1024;
-  const px = isMobile ? "12px 14px" : "24px 16px"; // content padding
-  const hPx = isMobile ? "10px 14px" : "14px 24px"; // header padding
-  const prevPx = isMobile ? "16px 16px" : isTablet ? "28px 32px" : "48px 56px"; // preview header
-  const prevBPx = isMobile ? "12px 16px" : "20px 40px"; // preview body
-  const sCard = { ..._sCard, padding: isMobile ? 16 : 24 };
-
   if (ld) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: B.bg }}><span style={{ fontSize: 16, color: B.gray }}>Loading...</span></div>;
 
   /* ═══ SETTINGS (EXTENDED with Challenge Admin) ═══ */
   if (pg === "set") return (
     <div style={{ fontFamily: "'Segoe UI',sans-serif", minHeight: "100vh", background: B.bg }}>
-      <div style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: hPx, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99, flexWrap: "wrap", gap: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}><b style={{ fontSize: 16 }}>Settings</b></div>
-        <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 22px", fontSize: 13 }}>← Builder</button>
+      <div style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: "14px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <b style={{ fontSize: 16 }}>{t.settings}</b>
+          <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", border: "1.5px solid " + B.light }}>
+            {Object.keys(translations).map(k => <button key={k} onClick={() => setLang(k)} style={{ padding: "3px 10px", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700, background: lang === k ? B.dark : "#fff", color: lang === k ? "#fff" : B.gray }}>{k.toUpperCase()}</button>)}
+          </div>
+        </div>
+        <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 22px", fontSize: 13 }}>{t.builder}</button>
       </div>
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: px }}>
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px" }}>
         {/* ── Sales Team (UNCHANGED) ── */}
-        <Sec label="Sales Team" n={ppl.length} color={B.green} />
+        <Sec label={t.salesTeam} n={ppl.length} color={B.green} />
         <div style={sCard}>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
             <input placeholder="Name" value={nP.name} onChange={e => setNP(p => ({ ...p, name: e.target.value }))} style={{ ...sInp, flex: 1, minWidth: 100 }} />
             <input placeholder="Email" value={nP.email} onChange={e => setNP(p => ({ ...p, email: e.target.value }))} style={{ ...sInp, flex: 1, minWidth: 120 }} />
             <input placeholder="Phone" value={nP.phone} onChange={e => setNP(p => ({ ...p, phone: e.target.value }))} style={{ ...sInp, flex: 1, minWidth: 100 }} />
-            <button onClick={() => { if (!nP.name.trim()) return; svP([...ppl, { id: String(Date.now()), ...nP }]); setNP({ name: "", email: "", phone: "" }); }} style={{ ...sBtn, background: B.green, color: "#fff", padding: "10px 20px", fontSize: 14 }}>+ Add</button>
+            <button onClick={() => { if (!nP.name.trim()) return; svP([...ppl, { id: String(Date.now()), ...nP }]); setNP({ name: "", email: "", phone: "" }); }} style={{ ...sBtn, background: B.green, color: "#fff", padding: "10px 20px", fontSize: 14 }}>{t.add}</button>
           </div>
-          {ppl.length === 0 && <p style={{ color: B.gray, textAlign: "center" }}>No sales people yet.</p>}
+          {ppl.length === 0 && <p style={{ color: B.gray, textAlign: "center" }}>{t.noSales}</p>}
           {ppl.map(p => (
             <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: B.bg, borderRadius: 14, marginBottom: 8 }}>
               <div><b>{p.name}</b><div style={{ fontSize: 12, color: B.gray }}>{p.email}{p.phone ? " · " + p.phone : ""}</div></div>
-              <button onClick={() => svP(ppl.filter(x => x.id !== p.id))} style={{ ...sBtn, background: "#FEE2E2", color: B.pink, padding: "5px 14px", fontSize: 12 }}>Remove</button>
+              <button onClick={() => svP(ppl.filter(x => x.id !== p.id))} style={{ ...sBtn, background: "#FEE2E2", color: B.pink, padding: "5px 14px", fontSize: 12 }}>{t.remove}</button>
             </div>
           ))}
         </div>
 
         {/* ── Pricing (UNCHANGED) ── */}
-        <Sec label="Pricing" n={0} color={B.purple} />
+        <Sec label={t.pricing} n={0} color={B.purple} />
         <div style={sCard}>
           {PCATS.map(cat => (
             <div key={cat.k} style={{ marginBottom: 20 }}>
@@ -336,20 +417,20 @@ export default function App() {
             </div>
           ))}
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-            <button onClick={() => setTP(DP)} style={{ ...sBtn, background: B.light, color: B.gray, padding: "8px 18px", fontSize: 13 }}>Reset</button>
-            <button onClick={() => svPr(tP)} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 22px", fontSize: 13 }}>Save</button>
+            <button onClick={() => setTP(DP)} style={{ ...sBtn, background: B.light, color: B.gray, padding: "8px 18px", fontSize: 13 }}>{t.reset}</button>
+            <button onClick={() => svPr(tP)} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 22px", fontSize: 13 }}>{t.save}</button>
           </div>
         </div>
 
         {/* ── NEW: Challenge Modules Admin ── */}
-        <Sec label="Challenge Modules" n={challenges.length} color={B.cyan} />
+        <Sec label={t.challengeModules} n={challenges.length} color={B.cyan} />
         <div style={sCard}>
           {editCh ? (
             /* ── Edit/Add Challenge Form ── */
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <b style={{ fontSize: 15, color: B.cyan }}>{editCh.id ? "Edit Challenge" : "New Challenge"}</b>
-                <button onClick={() => setEditCh(null)} style={{ ...sBtn, background: B.light, color: B.gray, padding: "5px 14px", fontSize: 12 }}>Cancel</button>
+                <button onClick={() => setEditCh(null)} style={{ ...sBtn, background: B.light, color: B.gray, padding: "5px 14px", fontSize: 12 }}>{t.cancel}</button>
               </div>
               <div style={{ marginBottom: 10 }}>
                 <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>Title</label>
@@ -378,14 +459,14 @@ export default function App() {
                 const next = isNew ? [...challenges, ch] : challenges.map(c => c.id === ch.id ? ch : c);
                 svCh(next); setEditCh(null);
               }} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "10px 24px", fontSize: 14 }}>
-                {editCh.id && challenges.find(c => c.id === editCh.id) ? "Save Changes" : "+ Add Challenge"}
+                {editCh.id && challenges.find(c => c.id === editCh.id) ? t.saveChanges : t.addChallenge}
               </button>
             </div>
           ) : (
             /* ── Challenge List ── */
             <div>
-              <button onClick={() => setEditCh({ title: "", description: "", features: [], feature_mapping: [], business_impact: [] })} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "8px 20px", fontSize: 13, marginBottom: 16 }}>+ New Challenge</button>
-              {challenges.length === 0 && <p style={{ color: B.gray, textAlign: "center" }}>No challenges defined.</p>}
+              <button onClick={() => setEditCh({ title: "", description: "", features: [], feature_mapping: [], business_impact: [] })} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "8px 20px", fontSize: 13, marginBottom: 16 }}>{t.addChallenge}</button>
+              {challenges.length === 0 && <p style={{ color: B.gray, textAlign: "center" }}>{t.noResults}</p>}
               {challenges.map(ch => (
                 <div key={ch.id} style={{ background: B.bg, borderRadius: 14, padding: "12px 16px", marginBottom: 8 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
@@ -397,14 +478,54 @@ export default function App() {
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => setEditCh({ ...ch })} style={{ ...sBtn, background: B.card, border: "1.5px solid " + B.light, color: B.dark, padding: "4px 12px", fontSize: 11 }}>Edit</button>
-                      <button onClick={() => { if (confirm("Delete '" + ch.title + "'?")) svCh(challenges.filter(c => c.id !== ch.id)); }} style={{ ...sBtn, background: "#FEE2E2", color: B.pink, padding: "4px 12px", fontSize: 11 }}>Del</button>
+                      <button onClick={() => setEditCh({ ...ch })} style={{ ...sBtn, background: B.card, border: "1.5px solid " + B.light, color: B.dark, padding: "4px 12px", fontSize: 11 }}>{t.edit}</button>
+                      <button onClick={() => { if (confirm("Delete '" + ch.title + "'?")) svCh(challenges.filter(c => c.id !== ch.id)); }} style={{ ...sBtn, background: "#FEE2E2", color: B.pink, padding: "4px 12px", fontSize: 11 }}>{t.del}</button>
                     </div>
                   </div>
                 </div>
               ))}
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 12 }}>
-                <button onClick={() => svCh(DEFAULT_CHALLENGES)} style={{ ...sBtn, background: B.light, color: B.gray, padding: "8px 18px", fontSize: 13 }}>Reset to Defaults</button>
+                <button onClick={() => svCh(DEFAULT_CHALLENGES)} style={{ ...sBtn, background: B.light, color: B.gray, padding: "8px 18px", fontSize: 13 }}>{t.resetDefaults}</button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Translation Editor ── */}
+        <Sec label={t.translations} n={Object.keys(translations).length} color={B.orange} />
+        <div style={sCard}>
+          {editLang ? (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <b style={{ fontSize: 15, color: B.orange }}>Editing: {editLang.toUpperCase()}</b>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => setEditLang(null)} style={{ ...sBtn, background: B.light, color: B.gray, padding: "5px 14px", fontSize: 12 }}>{t.cancel}</button>
+                  <button onClick={() => { svTr(translations); setEditLang(null); }} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "5px 14px", fontSize: 12 }}>{t.save}</button>
+                </div>
+              </div>
+              <div style={{ maxHeight: 400, overflow: "auto" }}>
+                {Object.keys(translations[editLang] || {}).map(key => (
+                  <div key={key} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ fontSize: 10, color: B.gray, fontWeight: 600, minWidth: 110, fontFamily: "monospace" }}>{key}</span>
+                    <input value={translations[editLang]?.[key] || ""} onChange={e => setTranslations(prev => ({ ...prev, [editLang]: { ...prev[editLang], [key]: e.target.value } }))}
+                      style={{ ...sInp, padding: "5px 10px", fontSize: 12 }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                {Object.keys(translations).map(k => (
+                  <button key={k} onClick={() => setEditLang(k)} style={{ ...sBtn, padding: "10px 20px", borderRadius: 14, border: "2px solid " + B.light, background: lang === k ? B.orange + "10" : "#fff", cursor: "pointer" }}>
+                    <b style={{ fontSize: 14, color: lang === k ? B.orange : B.dark, display: "block" }}>{k.toUpperCase()}</b>
+                    <span style={{ fontSize: 11, color: B.gray }}>{Object.keys(translations[k] || {}).length} keys</span>
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button onClick={() => { const name = prompt("Language code (e.g. id, ja, ko):"); if (name && !translations[name]) { const copy = { ...DEFAULT_TRANSLATIONS.en }; svTr({ ...translations, [name]: copy }); } }} style={{ ...sBtn, background: B.orange + "15", color: B.orange, padding: "8px 16px", fontSize: 12 }}>+ Add Language</button>
+                <button onClick={() => svTr(DEFAULT_TRANSLATIONS)} style={{ ...sBtn, background: B.light, color: B.gray, padding: "8px 16px", fontSize: 12 }}>{t.resetDefaults}</button>
               </div>
             </div>
           )}
@@ -429,7 +550,7 @@ export default function App() {
       const hDP = v => { const pp = parseFloat(v); upd(it.id, { dp: v, da: (!isNaN(pp) && base > 0) ? String(Math.round(pp / 100 * base * 100) / 100) : "" }); };
       const hDA = v => { const a = parseFloat(v); upd(it.id, { da: v, dp: (!isNaN(a) && base > 0) ? String(Math.round(a / base * 10000) / 100) : "" }); };
       return (
-        <div key={it.id} onClick={() => toggle(it.id)} style={{ border: on ? "2px solid " + it.clr : "2px solid " + B.light, borderRadius: isMobile ? 16 : 20, padding: isMobile ? 14 : 20, marginBottom: isMobile ? 10 : 14, background: on ? it.clr + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden" }}>
+        <div key={it.id} onClick={() => toggle(it.id)} style={{ border: on ? "2px solid " + it.clr : "2px solid " + B.light, borderRadius: 20, padding: 20, marginBottom: 14, background: on ? it.clr + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden" }}>
           {on && <div style={{ position: "absolute", left: 0, top: 0, width: 5, height: "100%", background: it.clr }} />}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <div style={{ flex: 1, paddingLeft: on ? 8 : 0 }}>
@@ -438,7 +559,7 @@ export default function App() {
                 {it.inv && <span style={{ fontSize: 11, background: it.clr + "18", color: it.clr, padding: "3px 12px", borderRadius: 20, fontWeight: 700 }}>{it.inv}</span>}
               </div>
               {it.desc && <div style={{ fontSize: 12, color: B.gray, marginTop: 4 }}>{it.desc}</div>}
-              {on && aP != null && <div style={{ marginTop: 6, fontSize: 13, color: it.clr, fontWeight: 700 }}>{ft === "b" ? "Bundle" : "Regular"}: {fmtp(aP, cur)}</div>}
+              {on && aP != null && <div style={{ marginTop: 6, fontSize: 13, color: it.clr, fontWeight: 700 }}>{ft === "b" ? t.bundle : t.regular}: {fmtp(aP, cur)}</div>}
             </div>
             <Tog on={on} set={() => toggle(it.id)} />
           </div>
@@ -467,8 +588,8 @@ export default function App() {
                 </div>
               )}
               <div style={{ display: "flex", gap: 16, marginBottom: (d.hd || d.hw) ? 12 : 0 }}>
-                <Chk label="Discount" on={!!d.hd} set={v => upd(it.id, { hd: v })} color={B.purple} />
-                <Chk label="Waiver" on={!!d.hw} set={v => upd(it.id, { hw: v })} color={B.pink} />
+                <Chk label={t.discount} on={!!d.hd} set={v => upd(it.id, { hd: v })} color={B.purple} />
+                <Chk label={t.waiver} on={!!d.hw} set={v => upd(it.id, { hw: v })} color={B.pink} />
               </div>
               {d.hd && (
                 <div style={{ background: B.purple + "10", border: "1px solid " + B.purple + "30", borderRadius: 14, padding: 14, marginBottom: 10 }}>
@@ -499,57 +620,47 @@ export default function App() {
 
     /* ── Determine preview readiness ── */
     const canPreview = docType === "proposal" ? selCh.length > 0 : cnt > 0;
-    const previewLabel = docType === "proposal" ? `Preview Proposal (${selCh.length})` : `Preview Quotation (${cnt})`;
-
-    /* ── Navigate to preview — initialize editable draft for proposal mode ── */
-    const goPreview = () => {
-      if (docType === "proposal") {
-        setEdtCh(selectedChallenges.map(c => ({ id: c.id, title: c.title, description: c.description })));
-        setEdtFt(proposalFeatures.map(pf => ({ feature: pf.feature, mappings: pf.mappings.map(m => ({ ...m })) })));
-        setEdtImp([...proposalImpacts]);
-      }
-      setPg("preview");
-    };
+    const previewLabel = docType === "proposal" ? `${t.previewProposal} (${selCh.length})` : `${t.previewQuotation} (${cnt})`;
 
     return (
       <div style={{ fontFamily: "'Segoe UI',sans-serif", minHeight: "100vh", background: B.bg }}>
         {/* ── Header Bar ── */}
-        <div style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: hPx, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99, flexWrap: "wrap", gap: 8 }}>
+        <div style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: "14px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99, flexWrap: "wrap", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div><b style={{ fontSize: isMobile ? 14 : 16, display: "block" }}>SeatOS Document Builder</b>{!isMobile && <span style={{ fontSize: 11, color: B.gray }}>Generate Proposals & Quotations</span>}</div>
+            <div><b style={{ fontSize: 16, display: "block" }}>SeatOS Document Builder</b><span style={{ fontSize: 11, color: B.gray }}>Generate Proposals & Quotations</span></div>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <button onClick={() => setPg("set")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: isMobile ? "6px 12px" : "8px 18px", fontSize: 13 }}>⚙ Settings</button>
-            <button onClick={goPreview} disabled={!canPreview} style={{ ...sBtn, background: canPreview ? B.orange : B.light, color: "#fff", padding: isMobile ? "6px 14px" : "8px 24px", fontSize: 13, opacity: canPreview ? 1 : 0.5 }}>{previewLabel}</button>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button onClick={() => setPg("set")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 18px", fontSize: 13 }}>⚙ Settings</button>
+            <button onClick={() => setPg("preview")} disabled={!canPreview} style={{ ...sBtn, background: canPreview ? B.orange : B.light, color: "#fff", padding: "8px 24px", fontSize: 13, opacity: canPreview ? 1 : 0.5 }}>{previewLabel}</button>
           </div>
         </div>
 
-        <div style={{ maxWidth: 700, margin: "0 auto", padding: px }}>
+        <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px" }}>
 
           {/* ═══ NEW: Document Type Selector ═══ */}
-          <Sec label="Document Type" n={0} color={B.dark} />
+          <Sec label={t.docType} n={0} color={B.dark} />
           <div style={sCard}>
             <div style={{ display: "flex", gap: 0, borderRadius: 14, overflow: "hidden", border: "2px solid " + B.light }}>
-              {[{ k: "proposal", l: "Proposal", desc: "Challenge-based consulting", clr: B.cyan },
-                { k: "quotation", l: "Quotation", desc: "Pricing & subscription", clr: B.orange }
+              {[{ k: "proposal", l: t.proposal, desc: t.proposalDesc, clr: B.cyan },
+                { k: "quotation", l: t.quotation, desc: t.quotationDesc, clr: B.orange }
               ].map(dt => (
                 <button key={dt.k} onClick={() => setDocType(dt.k)} style={{
-                  flex: 1, padding: isMobile ? "12px 8px" : "16px 12px", border: "none", cursor: "pointer", textAlign: "center",
+                  flex: 1, padding: "16px 12px", border: "none", cursor: "pointer", textAlign: "center",
                   background: docType === dt.k ? dt.clr : "#fff", color: docType === dt.k ? "#fff" : B.gray,
                   transition: "all .2s"
                 }}>
-                  <b style={{ fontSize: isMobile ? 13 : 15, display: "block" }}>{dt.l}</b>
-                  {!isMobile && <span style={{ fontSize: 11, opacity: 0.8 }}>{dt.desc}</span>}
+                  <b style={{ fontSize: 15, display: "block" }}>{dt.l}</b>
+                  <span style={{ fontSize: 11, opacity: 0.8 }}>{dt.desc}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* ═══ Common: Sales Person ═══ */}
-          <Sec label="Sales Person" n={sp ? 1 : 0} color={B.cyan} />
+          <Sec label={t.salesPerson} n={sp ? 1 : 0} color={B.cyan} />
           <div style={sCard}>
             {ppl.length === 0
-              ? <p style={{ color: B.gray, textAlign: "center" }}>None yet. <button onClick={() => setPg("set")} style={{ background: "none", border: "none", color: B.orange, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>Add in Settings</button></p>
+              ? <p style={{ color: B.gray, textAlign: "center" }}>{t.noSales} <button onClick={() => setPg("set")} style={{ background: "none", border: "none", color: B.orange, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>{t.addInSettings}</button></p>
               : <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{ppl.map(p => (
                 <button key={p.id} onClick={() => setSpId(p.id)} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
                   <b style={{ fontSize: 13, color: spId === p.id ? B.cyan : B.dark, display: "block" }}>{p.name}</b>
@@ -559,20 +670,20 @@ export default function App() {
           </div>
 
           {/* ═══ Common: Customer Info ═══ */}
-          <Sec label="Customer" n={0} color={B.pink} />
+          <Sec label={t.customer} n={0} color={B.pink} />
           <div style={sCard}>
-            {[{ k: "name", l: "Customer Name", p: "Acme Co." }, { k: "addr", l: "Address", p: "123 Sukhumvit" }, { k: "email", l: "Email", p: "hi@acme.com" }].map(f => (
+            {[{ k: "name", l: t.customerName, p: "Acme Co." }, { k: "addr", l: t.address, p: "123 Sukhumvit" }, { k: "email", l: t.email, p: "hi@acme.com" }].map(f => (
               <div key={f.k} style={{ marginBottom: 12 }}>
                 <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>{f.l}</label>
                 <input value={cu[f.k]} onChange={e => setCu(p => ({ ...p, [f.k]: e.target.value }))} placeholder={f.p} style={sInp} />
               </div>
             ))}
-            <div style={{ display: "flex", gap: 12, marginBottom: 12, flexDirection: isMobile ? "column" : "row" }}>
-              <SearchDrop label="Country" value={cu.country} onChange={v => setCu(p => ({ ...p, country: v, inc: (p.inc === "" || p.inc === p.country) ? v : p.inc }))} />
-              <SearchDrop label="Incorporation" value={cu.inc || cu.country} onChange={v => setCu(p => ({ ...p, inc: v }))} />
+            <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+              <SearchDrop label={t.country} value={cu.country} onChange={v => setCu(p => ({ ...p, country: v, inc: (p.inc === "" || p.inc === p.country) ? v : p.inc }))} />
+              <SearchDrop label={t.incorporation} value={cu.inc || cu.country} onChange={v => setCu(p => ({ ...p, inc: v }))} />
             </div>
-            <div style={{ display: "flex", gap: 12, flexDirection: isMobile ? "column" : "row" }}>
-              {[{ k: "s", l: "Start Date" }, { k: "e", l: "End Date" }].map(f => (
+            <div style={{ display: "flex", gap: 12 }}>
+              {[{ k: "s", l: t.startDate }, { k: "e", l: t.endDate }].map(f => (
                 <div key={f.k} style={{ flex: 1 }}>
                   <label style={{ fontSize: 12, color: B.gray, fontWeight: 600, display: "block", marginBottom: 4 }}>{f.l}</label>
                   <input type="date" value={cu[f.k]} onChange={e => setCu(p => ({ ...p, [f.k]: e.target.value }))} style={sInp} />
@@ -584,19 +695,19 @@ export default function App() {
           {/* ═══ CONDITIONAL: Proposal Mode → Challenge Selection ═══ */}
           {docType === "proposal" && (
             <>
-              <Sec label="Select Challenges" n={selCh.length} color={B.cyan} />
+              <Sec label={t.selectChallenges} n={selCh.length} color={B.cyan} />
               {challenges.map(ch => {
                 const on = selCh.includes(ch.id);
                 const isSuggested = suggestedIds.includes(ch.id);
                 return (
                   <div key={ch.id} onClick={() => setSelCh(p => on ? p.filter(x => x !== ch.id) : [...p, ch.id])}
-                    style={{ border: on ? "2px solid " + B.cyan : isSuggested ? "2px dashed " + B.orange : "2px solid " + B.light, borderRadius: isMobile ? 16 : 20, padding: isMobile ? "12px 14px" : "16px 20px", marginBottom: 10, background: on ? B.cyan + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden" }}>
+                    style={{ border: on ? "2px solid " + B.cyan : isSuggested ? "2px dashed " + B.orange : "2px solid " + B.light, borderRadius: 20, padding: "16px 20px", marginBottom: 10, background: on ? B.cyan + "08" : B.card, cursor: "pointer", position: "relative", overflow: "hidden" }}>
                     {on && <div style={{ position: "absolute", left: 0, top: 0, width: 5, height: "100%", background: B.cyan }} />}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, paddingLeft: on ? 8 : 0 }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                           <b style={{ fontSize: 14 }}>{ch.title}</b>
-                          {isSuggested && !on && <span style={{ fontSize: 10, background: B.orange + "20", color: B.orange, padding: "2px 10px", borderRadius: 10, fontWeight: 700 }}>Suggested</span>}
+                          {isSuggested && !on && <span style={{ fontSize: 10, background: B.orange + "20", color: B.orange, padding: "2px 10px", borderRadius: 10, fontWeight: 700 }}>{t.suggested}</span>}
                         </div>
                         <div style={{ fontSize: 12, color: B.gray, marginTop: 3 }}>{ch.description}</div>
                         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
@@ -610,13 +721,13 @@ export default function App() {
               })}
 
               {/* Proposal summary bar */}
-              <div style={{ background: B.dark, borderRadius: isMobile ? 16 : 20, padding: isMobile ? "16px 18px" : "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 12, marginTop: 16 }}>
-                <div style={{ display: "flex", gap: isMobile ? 16 : 28, flexWrap: "wrap", alignItems: "flex-end" }}>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Challenges</div><div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, lineHeight: 1 }}>{selCh.length}</div></div>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Features</div><div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, lineHeight: 1 }}>{proposalFeatures.length}</div></div>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Impacts</div><div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, lineHeight: 1 }}>{proposalImpacts.length}</div></div>
+              <div style={{ background: B.dark, borderRadius: 20, padding: "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 16, marginTop: 16 }}>
+                <div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "flex-end" }}>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>{t.challenges}</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{selCh.length}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>{t.features}</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{proposalFeatures.length}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>{t.impacts}</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{proposalImpacts.length}</div></div>
                 </div>
-                <button onClick={goPreview} disabled={selCh.length === 0} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: selCh.length > 0 ? 1 : 0.5 }}>Preview Proposal →</button>
+                <button onClick={() => setPg("preview")} disabled={selCh.length === 0} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: selCh.length > 0 ? 1 : 0.5 }}>{t.proposalBtn}</button>
               </div>
             </>
           )}
@@ -624,27 +735,27 @@ export default function App() {
           {/* ═══ CONDITIONAL: Quotation Mode → Existing Item Selection (RENAMED) ═══ */}
           {docType === "quotation" && (
             <>
-              <Sec label="Pricing" />
+              <Sec label={t.pricing} />
               <div style={sCard}>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
                   {CUR.map(c => <button key={c} onClick={() => setCur(c)} style={{ ...sBtn, padding: "8px 16px", fontSize: 13, background: cur === c ? B.orange : "#fff", color: cur === c ? "#fff" : B.gray, border: cur === c ? "none" : "2px solid " + B.light }}>{SYM[c]} {c}</button>)}
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
-                  {[{ k: "r", l: "Regular" }, { k: "b", l: "Bundle" }].map(x => <button key={x.k} onClick={() => setFt(x.k)} style={{ ...sBtn, padding: "8px 18px", fontSize: 13, background: ft === x.k ? B.green : "#fff", color: ft === x.k ? "#fff" : B.gray, border: ft === x.k ? "none" : "2px solid " + B.light }}>{x.l}</button>)}
+                  {[{ k: "r", l: t.regular }, { k: "b", l: t.bundle }].map(x => <button key={x.k} onClick={() => setFt(x.k)} style={{ ...sBtn, padding: "8px 18px", fontSize: 13, background: ft === x.k ? B.green : "#fff", color: ft === x.k ? "#fff" : B.gray, border: ft === x.k ? "none" : "2px solid " + B.light }}>{x.l}</button>)}
                 </div>
               </div>
 
-              <Sec label="Licenses & Commission" n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "lic").length} color={B.orange} />
+              <Sec label={t.licensesComm} n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "lic").length} color={B.orange} />
               {ITEMS.filter(i => i.cat === "lic").map(RI)}
-              <Sec label="Services" n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "svc").length} color={B.cyan} />
+              <Sec label={t.services} n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "svc").length} color={B.cyan} />
               {ITEMS.filter(i => i.cat === "svc").map(RI)}
-              <Sec label="Ancillary" n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "anc").length} color={B.pink} />
+              <Sec label={t.ancillary} n={ids.filter(id => ITEMS.find(i => i.id === id)?.cat === "anc").length} color={B.pink} />
               {ITEMS.filter(i => i.cat === "anc").map(RI)}
 
               <div style={{ height: 16 }} />
-              <Sec label="Bill Discount" n={bd.on ? 1 : 0} color={B.purple} />
+              <Sec label={t.billDiscount} n={bd.on ? 1 : 0} color={B.purple} />
               <div onClick={() => setBd(p => ({ ...p, on: !p.on }))} style={{ border: bd.on ? "2px solid " + B.purple : "2px solid " + B.light, borderRadius: 20, padding: 20, marginBottom: 20, background: bd.on ? B.purple + "08" : B.card, cursor: "pointer" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><b style={{ fontSize: 15 }}>Discount on Entire Bill</b><Tog on={bd.on} set={v => setBd(p => ({ ...p, on: v }))} /></div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><b style={{ fontSize: 15 }}>{t.discountBill}</b><Tog on={bd.on} set={v => setBd(p => ({ ...p, on: v }))} /></div>
                 {bd.on && (
                   <div style={{ marginTop: 14, paddingTop: 14, borderTop: "2px solid " + B.light }} onClick={e => e.stopPropagation()}>
                     <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
@@ -657,21 +768,21 @@ export default function App() {
                 )}
               </div>
 
-              <Sec label="Special Terms" n={stOn ? 1 : 0} color={B.green} />
+              <Sec label={t.specialTerms} n={stOn ? 1 : 0} color={B.green} />
               <div onClick={() => setStOn(!stOn)} style={{ border: stOn ? "2px solid " + B.green : "2px solid " + B.light, borderRadius: 20, padding: 20, marginBottom: 24, background: stOn ? B.green + "08" : B.card, cursor: "pointer" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><b style={{ fontSize: 15 }}>Special Terms</b><Tog on={stOn} set={setStOn} /></div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><b style={{ fontSize: 15 }}>{t.specialTerms}</b><Tog on={stOn} set={setStOn} /></div>
                 {stOn && <div style={{ marginTop: 14, paddingTop: 14, borderTop: "2px solid " + B.light }} onClick={e => e.stopPropagation()}><textarea value={stTxt} onChange={e => setStTxt(e.target.value)} rows={3} style={{ ...sInp, resize: "vertical" }} /></div>}
               </div>
 
               {/* Quotation summary bar (RENAMED from "Proposal") */}
-              <div style={{ background: B.dark, borderRadius: isMobile ? 16 : 20, padding: isMobile ? "16px 18px" : "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 12 }}>
-                <div style={{ display: "flex", gap: isMobile ? 14 : 28, flexWrap: "wrap", alignItems: "flex-end" }}>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>One-Time</div><div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.ot, cur)}</div></div>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Monthly</div><div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.mo, cur)}</div></div>
-                  {bda > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>Discount</div><div style={{ fontSize: isMobile ? 14 : 18, fontWeight: 700, color: B.cyan, lineHeight: 1 }}>-{fmtp(bda, cur)}</div></div>}
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, color: B.orange, marginBottom: 4 }}>Grand</div><div style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, lineHeight: 1 }}>{fmtp(grand, cur)}</div></div>
+              <div style={{ background: B.dark, borderRadius: 20, padding: "20px 28px", display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fff", marginBottom: 40, flexWrap: "wrap", gap: 16 }}>
+                <div style={{ display: "flex", gap: 28, flexWrap: "wrap", alignItems: "flex-end" }}>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>{t.oneTime}</div><div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.ot, cur)}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>{t.monthly}</div><div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{fmtp(tots.mo, cur)}</div></div>
+                  {bda > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, opacity: 0.5, marginBottom: 4 }}>{t.discount}</div><div style={{ fontSize: 18, fontWeight: 700, color: B.cyan, lineHeight: 1 }}>-{fmtp(bda, cur)}</div></div>}
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 11, color: B.orange, marginBottom: 4 }}>{t.grand}</div><div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1 }}>{fmtp(grand, cur)}</div></div>
                 </div>
-                <button onClick={() => setPg("preview")} disabled={cnt === 0} style={{ ...sBtn, background: B.orange, color: "#fff", padding: isMobile ? "10px 20px" : "14px 32px", fontSize: isMobile ? 13 : 15, opacity: cnt > 0 ? 1 : 0.5 }}>Quotation →</button>
+                <button onClick={() => setPg("preview")} disabled={cnt === 0} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "14px 32px", fontSize: 15, opacity: cnt > 0 ? 1 : 0.5 }}>Quotation →</button>
               </div>
             </>
           )}
@@ -687,19 +798,10 @@ export default function App() {
   const dlPrint = (title) => {
     const el = ref.current;
     if (!el) return;
-    // Clone and clean: hide edit buttons, convert inputs/textareas to static text
-    const clone = el.cloneNode(true);
-    clone.querySelectorAll(".np").forEach(e => e.remove());
-    clone.querySelectorAll("input, textarea").forEach(e => {
-      const span = document.createElement("span");
-      span.style.cssText = e.style.cssText;
-      span.textContent = e.value;
-      e.replaceWith(span);
-    });
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>SeatOS ${title} – ${cu.name || "Customer"}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI','Helvetica Neue',sans-serif;background:#fff}
 @page{size:A4;margin:0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
-</head><body>${clone.outerHTML}<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>`;
+</head><body>${el.outerHTML}<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script></body></html>`;
     const blob = new Blob([html], { type: "text/html" });
     window.open(URL.createObjectURL(blob), "_blank");
   };
@@ -714,127 +816,98 @@ export default function App() {
     return (
       <div style={{ fontFamily: "'Segoe UI',sans-serif", background: B.bg, minHeight: "100vh" }}>
         <div className="np" style={{ background: B.card, borderBottom: "4px solid " + B.cyan, padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99 }}>
-          <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 18px", fontSize: 13 }}>← Editor</button>
+          <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 18px", fontSize: 13 }}>{t.editor}</button>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => { const el = ref.current; if (el) { navigator.clipboard.writeText(el.innerText).then(() => alert("Copied to clipboard!")); } }} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 16px", fontSize: 12 }}>Copy Text</button>
-            <button onClick={() => dlPrint("Proposal")} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "8px 24px", fontSize: 13 }}>⬇ Download / Print</button>
+            <button onClick={() => { const el = ref.current; if (el) { navigator.clipboard.writeText(el.innerText).then(() => alert("Copied to clipboard!")); } }} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 16px", fontSize: 12 }}>{t.copyText}</button>
+            <button onClick={() => dlPrint(t.proposal)} style={{ ...sBtn, background: B.cyan, color: "#fff", padding: "8px 24px", fontSize: 13 }}>{t.download}</button>
           </div>
         </div>
 
         <div style={{ display: "flex", justifyContent: "center", padding: "24px 16px", overflow: "auto" }}>
           <div ref={ref} style={{ width: "100%", maxWidth: A4W, background: "#fff", boxShadow: "0 4px 30px rgba(0,0,0,.12)", overflow: "hidden" }}>
 
-            {/* ── Header — same layout as Quotation, cyan accent ── */}
-            <div style={{ background: "#F5F0EB", padding: prevPx, position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: -30, right: -30, width: 140, height: 140, borderRadius: 70, background: B.cyan + "22" }} />
-              <div style={{ position: "absolute", bottom: -24, right: 60, width: 90, height: 90, borderRadius: 45, background: B.orange + "15" }} />
-              <div style={{ position: "absolute", top: 10, right: 180, width: 48, height: 48, borderRadius: 24, background: B.pink + "18" }} />
+            {/* ── Header ── */}
+            <div style={{ background: B.dark, padding: "28px 40px 24px", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: 50, background: B.cyan + "20" }} />
+              <div style={{ position: "absolute", bottom: -14, right: 70, width: 50, height: 50, borderRadius: 25, background: B.orange + "15" }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 1 }}>
-                <div><SeatLogo h={isMobile ? 48 : 120} /></div>
+                <div><SeatLogo h={60} /></div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ color: B.cyan, fontSize: isMobile ? 18 : 28, fontWeight: 800, fontFamily: "Georgia,serif", letterSpacing: 1 }}>PROPOSAL</div>
-                  <div style={{ color: "#aaa", fontSize: 11, marginTop: 4 }}>{today}</div>
-                  <div style={{ color: "#c8c2b9", fontSize: 10, marginTop: 2 }}>Operated by Bookaway Ltd.</div>
+                  <div style={{ color: B.cyan, fontSize: 22, fontWeight: 800, fontFamily: "Georgia,serif" }}>{t.proposal.toUpperCase()}</div>
+                  <div style={{ color: "rgba(255,255,255,.5)", fontSize: 9, marginTop: 2 }}>{today}</div>
+                  <div style={{ color: "rgba(255,255,255,.35)", fontSize: 8 }}>{t.operatedBy}</div>
                 </div>
               </div>
-            </div>
-            {/* ── Body ── */}
-            <div style={{ padding: prevBPx }}>
-
-              {/* Prepared For / By */}
-              <div style={{ display: "flex", gap: isMobile ? 12 : 24, marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #eee", flexWrap: isMobile ? "wrap" : "nowrap" }}>
+              {/* Prepared For/By in header */}
+              <div style={{ display: "flex", gap: 24, marginTop: 20, borderTop: "1px solid rgba(255,255,255,.1)", paddingTop: 16 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ ...secLabel, color: B.cyan }}>Prepared For</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: B.dark }}>{cu.name || "—"}</div>
-                  <div style={{ fontSize: 8, color: "#777", lineHeight: 1.5 }}>
+                  <div style={{ ...secLabel, color: B.cyan }}>{t.preparedFor}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>{cu.name || "—"}</div>
+                  <div style={{ fontSize: 8, color: "rgba(255,255,255,.5)", lineHeight: 1.5 }}>
                     {cu.addr && <div>{cu.addr}</div>}
                     {cu.country && <div>{cu.country}</div>}
                     {cu.email && <div>{cu.email}</div>}
                   </div>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ ...secLabel, color: B.cyan }}>Prepared By</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: B.dark }}>SeatOS (Bookaway Ltd.)</div>
-                  <div style={{ fontSize: 8, color: "#777", lineHeight: 1.5 }}>
-                    {sp && <div style={{ fontWeight: 700, color: B.dark }}>{sp.name}</div>}
+                  <div style={{ ...secLabel, color: B.cyan }}>{t.preparedBy}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>SeatOS (Bookaway Ltd.)</div>
+                  <div style={{ fontSize: 8, color: "rgba(255,255,255,.5)", lineHeight: 1.5 }}>
+                    {sp && <div style={{ color: "rgba(255,255,255,.7)" }}>{sp.name}</div>}
                     {sp?.email && <div>{sp.email}</div>}
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Section 1: Challenges — EDITABLE */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <div style={{ ...secLabel, color: B.cyan, fontSize: 10, marginBottom: 0 }}>Section 1 — Identified Challenges</div>
-                <button className="np" onClick={() => setEdtCh(p => [...(p||[]), { id: "NEW" + Date.now(), title: "", description: "" }])} style={{ ...sBtn, background: B.cyan + "15", color: B.cyan, padding: "3px 12px", fontSize: 10 }}>+ Add</button>
-              </div>
-              {(edtCh || []).map((ch, i) => (
-                <div key={ch.id} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: i < (edtCh||[]).length - 1 ? "1px solid #eee" : "none", position: "relative" }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 9, fontWeight: 800, color: B.cyan, minWidth: 20, paddingTop: 4 }}>{i + 1}.</span>
-                    <div style={{ flex: 1 }}>
-                      <input value={ch.title} onChange={e => setEdtCh(p => p.map((c, j) => j === i ? { ...c, title: e.target.value } : c))}
-                        placeholder="Challenge title..." style={{ border: "none", outline: "none", fontSize: 11, fontWeight: 800, color: B.dark, width: "100%", background: "transparent", padding: "2px 0" }} />
-                      <textarea value={ch.description} onChange={e => setEdtCh(p => p.map((c, j) => j === i ? { ...c, description: e.target.value } : c))}
-                        placeholder="Describe the challenge..." rows={2} style={{ border: "none", outline: "none", fontSize: 10, color: "#333", fontWeight: 500, width: "100%", background: "transparent", resize: "vertical", lineHeight: 1.5, padding: "2px 0", fontFamily: "inherit" }} />
+            {/* ── Body ── */}
+            <div style={{ padding: "20px 40px 28px" }}>
+
+              {/* Section 1: Challenges */}
+              <div style={{ ...secLabel, color: B.cyan, fontSize: 10, marginBottom: 10 }}>{t.sec1}</div>
+              {selectedChallenges.map((ch, i) => (
+                <div key={ch.id} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: i < selectedChallenges.length - 1 ? "1px solid #eee" : "none" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: B.cyan, minWidth: 20 }}>{i + 1}.</span>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: B.dark }}>{ch.title}</div>
+                      <div style={{ fontSize: 9, color: "#666", marginTop: 2, lineHeight: 1.5 }}>{ch.description}</div>
                     </div>
-                    <button className="np" onClick={() => setEdtCh(p => p.filter((_, j) => j !== i))} style={{ ...sBtn, background: "none", color: "#ccc", fontSize: 14, padding: "0 4px", lineHeight: 1 }} title="Remove">×</button>
                   </div>
                 </div>
               ))}
 
-              {/* Section 2: Solution Mapping — EDITABLE */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, marginBottom: 8 }}>
-                <div style={{ ...secLabel, color: B.orange, fontSize: 10, marginBottom: 0 }}>Section 2 — Solution Mapping</div>
-                <button className="np" onClick={() => setEdtFt(p => [...(p||[]), { feature: "", mappings: [{ challenge: "", how: "" }] }])} style={{ ...sBtn, background: B.orange + "15", color: B.orange, padding: "3px 12px", fontSize: 10 }}>+ Add Feature</button>
-              </div>
-              <div style={{ fontSize: 8, color: "#888", marginBottom: 8 }}>How SeatOS features address each identified challenge:</div>
-              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
+              {/* Section 2: Solution Mapping */}
+              <div style={{ ...secLabel, color: B.orange, fontSize: 10, marginTop: 20, marginBottom: 10 }}>{t.sec2}</div>
+              <div style={{ fontSize: 8, color: "#888", marginBottom: 10 }}>{t.sec2desc}</div>
+              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 16 }}>
                 <thead>
                   <tr>
-                    <th style={{ fontSize: 8, padding: "6px 8px", textAlign: "left", fontWeight: 800, color: "#666", borderBottom: "2px solid " + B.orange, textTransform: "uppercase", width: "22%" }}>Feature</th>
-                    <th style={{ fontSize: 8, padding: "6px 8px", textAlign: "left", fontWeight: 800, color: "#666", borderBottom: "2px solid " + B.orange, textTransform: "uppercase", width: "22%" }}>Addresses</th>
-                    <th style={{ fontSize: 8, padding: "6px 8px", textAlign: "left", fontWeight: 800, color: "#666", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>How It Solves</th>
-                    <th className="np" style={{ fontSize: 7, padding: "5px 4px", borderBottom: "2px solid " + B.orange, width: 20 }}></th>
+                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{t.feature}</th>
+                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{t.addresses}</th>
+                    <th style={{ fontSize: 7, padding: "5px 8px", textAlign: "left", fontWeight: 800, color: "#999", borderBottom: "2px solid " + B.orange, textTransform: "uppercase" }}>{t.howItSolves}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(edtFt || []).map((pf, i) => (
+                  {proposalFeatures.map((pf, i) => (
                     pf.mappings.map((m, j) => (
-                      <tr key={i + "-" + j}>
-                        {j === 0 && <td rowSpan={pf.mappings.length} style={{ padding: "4px 8px", borderBottom: "1px solid #eee", verticalAlign: "top", background: i % 2 === 0 ? "#fafafa" : "#fff" }}>
-                          <input value={pf.feature} onChange={e => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, feature: e.target.value } : f))}
-                            style={{ border: "none", outline: "none", fontSize: 10, fontWeight: 800, color: B.dark, width: "100%", background: "transparent" }} placeholder="Feature name" />
-                        </td>}
-                        <td style={{ padding: "4px 8px", borderBottom: "1px solid #eee" }}>
-                          <input value={m.challenge} onChange={e => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, mappings: f.mappings.map((mm, mj) => mj === j ? { ...mm, challenge: e.target.value } : mm) } : f))}
-                            style={{ border: "none", outline: "none", fontSize: 9, color: B.dark, fontWeight: 700, width: "100%", background: "transparent" }} placeholder="Challenge" />
-                        </td>
-                        <td style={{ padding: "4px 8px", borderBottom: "1px solid #eee" }}>
-                          <input value={m.how} onChange={e => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, mappings: f.mappings.map((mm, mj) => mj === j ? { ...mm, how: e.target.value } : mm) } : f))}
-                            style={{ border: "none", outline: "none", fontSize: 9, color: "#333", fontWeight: 500, width: "100%", background: "transparent" }} placeholder="How it solves..." />
-                        </td>
-                        {j === 0 && <td rowSpan={pf.mappings.length} className="np" style={{ padding: "2px", borderBottom: "1px solid #eee", verticalAlign: "top", textAlign: "center" }}>
-                          <button onClick={() => setEdtFt(p => p.map((f, fi) => fi === i ? { ...f, mappings: [...f.mappings, { challenge: "", how: "" }] } : f))} style={{ border: "none", background: "none", color: B.orange, cursor: "pointer", fontSize: 10, fontWeight: 800 }} title="Add row">+</button>
-                          <button onClick={() => setEdtFt(p => p.filter((_, fi) => fi !== i))} style={{ border: "none", background: "none", color: "#ccc", cursor: "pointer", fontSize: 12 }} title="Remove feature">×</button>
-                        </td>}
+                      <tr key={pf.feature + j}>
+                        {j === 0 && <td rowSpan={pf.mappings.length} style={{ padding: "5px 8px", borderBottom: "1px solid #eee", fontSize: 9, fontWeight: 700, color: B.dark, verticalAlign: "top", background: i % 2 === 0 ? "#fafafa" : "#fff" }}>{pf.feature}</td>}
+                        <td style={{ padding: "5px 8px", borderBottom: "1px solid #eee", fontSize: 8, color: B.cyan, fontWeight: 600 }}>{m.challenge}</td>
+                        <td style={{ padding: "5px 8px", borderBottom: "1px solid #eee", fontSize: 8, color: "#555" }}>{m.how}</td>
                       </tr>
                     ))
                   ))}
                 </tbody>
               </table>
 
-              {/* Section 3: Business Impact — EDITABLE */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, marginBottom: 8 }}>
-                <div style={{ ...secLabel, color: B.green, fontSize: 10, marginBottom: 0 }}>Section 3 — Expected Business Impact</div>
-                <button className="np" onClick={() => setEdtImp(p => [...(p||[]), ""])} style={{ ...sBtn, background: B.green + "15", color: B.green, padding: "3px 12px", fontSize: 10 }}>+ Add</button>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 5 }}>
-                {(edtImp || []).map((imp, i) => (
-                  <div key={i} style={{ display: "flex", gap: 5, alignItems: "flex-start", padding: "4px 8px", background: i % 2 === 0 ? B.green + "08" : "#fff", borderRadius: 6 }}>
-                    <span style={{ color: B.green, fontWeight: 800, fontSize: 10, marginTop: 2 }}>✓</span>
-                    <input value={imp} onChange={e => setEdtImp(p => p.map((v, j) => j === i ? e.target.value : v))}
-                      style={{ border: "none", outline: "none", fontSize: 9, color: "#333", fontWeight: 500, flex: 1, background: "transparent", lineHeight: 1.5 }} placeholder="Impact statement..." />
-                    <button className="np" onClick={() => setEdtImp(p => p.filter((_, j) => j !== i))} style={{ border: "none", background: "none", color: "#ccc", cursor: "pointer", fontSize: 11, lineHeight: 1 }}>×</button>
+              {/* Section 3: Business Impact */}
+              <div style={{ ...secLabel, color: B.green, fontSize: 10, marginTop: 16, marginBottom: 10 }}>{t.sec3}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                {proposalImpacts.map((imp, i) => (
+                  <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start", padding: "5px 10px", background: i % 2 === 0 ? B.green + "08" : "#fff", borderRadius: 6 }}>
+                    <span style={{ color: B.green, fontWeight: 800, fontSize: 10, marginTop: 1 }}>✓</span>
+                    <span style={{ fontSize: 8, color: "#444", lineHeight: 1.5 }}>{imp}</span>
                   </div>
                 ))}
               </div>
@@ -896,33 +969,33 @@ export default function App() {
   return (
     <div style={{ fontFamily: "'Segoe UI',sans-serif", background: B.bg, minHeight: "100vh" }}>
       <div className="np" style={{ background: B.card, borderBottom: "4px solid " + B.orange, padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 99 }}>
-        <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 18px", fontSize: 13 }}>← Editor</button>
-        <button onClick={() => dlPrint("Quotation")} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 24px", fontSize: 13 }}>⬇ Download / Print</button>
+        <button onClick={() => setPg("build")} style={{ ...sBtn, background: B.bg, color: B.dark, padding: "8px 18px", fontSize: 13 }}>{t.editor}</button>
+        <button onClick={() => dlPrint(t.quotation)} style={{ ...sBtn, background: B.orange, color: "#fff", padding: "8px 24px", fontSize: 13 }}>{t.download}</button>
       </div>
 
       <div style={{ display: "flex", justifyContent: "center", padding: "24px 16px", overflow: "auto" }}>
         <div ref={ref} style={{ width: "100%", maxWidth: A4W, background: "#fff", boxShadow: "0 4px 30px rgba(0,0,0,.12)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
 
-          {/* Header — matches screenshot design */}
-          <div style={{ background: "#F5F0EB", padding: prevPx, position: "relative", overflow: "hidden", flexShrink: 0 }}>
-            <div style={{ position: "absolute", top: -30, right: -30, width: isMobile ? 80 : 140, height: isMobile ? 80 : 140, borderRadius: "50%", background: B.orange + "22" }} />
-            <div style={{ position: "absolute", bottom: -24, right: 60, width: isMobile ? 50 : 90, height: isMobile ? 50 : 90, borderRadius: "50%", background: B.green + "15" }} />
-            <div style={{ position: "absolute", top: 10, right: isMobile ? 100 : 180, width: 48, height: 48, borderRadius: 24, background: B.pink + "18" }} />
+          {/* Header — RENAMED to QUOTATION */}
+          <div style={{ background: "#F5F0EB", padding: "20px 36px 16px", position: "relative", overflow: "hidden", flexShrink: 0 }}>
+            <div style={{ position: "absolute", top: -16, right: -16, width: 80, height: 80, borderRadius: 40, background: B.orange + "20" }} />
+            <div style={{ position: "absolute", bottom: -10, right: 50, width: 44, height: 44, borderRadius: 22, background: B.green + "18" }} />
+            <div style={{ position: "absolute", top: 4, right: 100, width: 28, height: 28, borderRadius: 14, background: B.pink + "18" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 1 }}>
-              <div><SeatLogo h={isMobile ? 48 : 120} /></div>
+              <div><SeatLogo h={156} /></div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ color: B.orange, fontSize: isMobile ? 18 : 28, fontWeight: 800, fontFamily: "Georgia,serif", letterSpacing: 1 }}>QUOTATION</div>
-                <div style={{ color: "#aaa", fontSize: 11, marginTop: 4 }}>{today} · {cur} · {ft === "b" ? "Bundle" : "Regular"}</div>
-                <div style={{ color: "#c8c2b9", fontSize: 10, marginTop: 2 }}>Operated by Bookaway Ltd.</div>
+                <div style={{ color: B.orange, fontSize: 20, fontWeight: 800, fontFamily: "Georgia,serif" }}>{t.quotation.toUpperCase()}</div>
+                <div style={{ color: "#888", fontSize: 9, marginTop: 1 }}>{today} · {cur} · {ft === "b" ? t.bundle : t.regular}</div>
+                <div style={{ color: "#aaa", fontSize: 8 }}>{t.operatedBy}</div>
               </div>
             </div>
           </div>
 
           {/* Body — ALL EXISTING LOGIC UNCHANGED except fmtn→fmt fix */}
-          <div style={{ padding: isMobile ? "12px 16px 16px" : "14px 36px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", gap: isMobile ? 12 : 24, marginBottom: 10, flexShrink: 0, flexWrap: isMobile ? "wrap" : "nowrap" }}>
+          <div style={{ padding: "14px 36px 16px", flex: 1, display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", gap: 24, marginBottom: 10, flexShrink: 0 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>Prepared For</div>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{t.preparedFor}</div>
                 <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 1 }}>{cu.name || "—"}</div>
                 <div style={{ fontSize: 8, color: "#777", lineHeight: 1.4 }}>
                   {cu.addr && <div>{cu.addr}</div>}
@@ -932,7 +1005,7 @@ export default function App() {
                 </div>
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>Prepared By</div>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{t.preparedBy}</div>
                 <div style={{ fontSize: 11, fontWeight: 800, marginBottom: 1 }}>SeatOS (Bookaway Ltd.)</div>
                 <div style={{ fontSize: 8, color: "#777", lineHeight: 1.4 }}>
                   <div>6 HaTa'as St., Ramat Gan, 5251247</div>
@@ -951,12 +1024,12 @@ export default function App() {
               </div>
             )}
 
-            <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 4, flexShrink: 0 }}>Pricing Breakdown</div>
+            <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 4, flexShrink: 0 }}>{t.pricingBreakdown}</div>
             <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 8, flexShrink: 0 }}>
               <thead><tr>
                 <th style={{ ...thS, fontSize: 7, padding: "4px 6px", width: 18 }}>#</th>
                 <th style={{ ...thS, fontSize: 7, padding: "4px 6px" }}>Item</th>
-                <th style={{ ...thS, fontSize: 7, padding: "4px 6px" }}>Billing</th>
+                <th style={{ ...thS, fontSize: 7, padding: "4px 6px" }}>{t.billing}</th>
                 <th style={{ ...thS, fontSize: 7, padding: "4px 6px", textAlign: "right" }}>Fee ({cur})</th>
               </tr></thead>
               <tbody>
@@ -981,17 +1054,17 @@ export default function App() {
               <div style={{ minWidth: 220, borderRadius: 6, overflow: "hidden", border: "1.5px solid #222" }}>
                 {tots.ot > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>One-Time</span><b>{fmtp(tots.ot, cur)}</b></div>}
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>Monthly</span><b>{fmtp(tots.mo, cur)}</b></div>
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>Subtotal</span><b>{fmtp(sub, cur)}</b></div>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9 }}><span style={{ color: "#888" }}>{t.subtotal}</span><b>{fmtp(sub, cur)}</b></div>
                 {bda > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 12px", borderBottom: "1px solid #eee", fontSize: 9, background: B.purple + "0d" }}><span style={{ color: B.purple }}>Discount ({fmt(bdp, cur)}%)</span><b style={{ color: B.purple }}>-{fmtp(bda, cur)}</b></div>}
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 12px", background: B.orange }}><b style={{ color: "#fff", fontSize: 9 }}>Grand Total</b><b style={{ color: "#fff", fontSize: 11 }}>{fmtp(grand, cur)}</b></div>
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 12px", background: B.orange }}><b style={{ color: "#fff", fontSize: 9 }}>{t.grandTotal}</b><b style={{ color: "#fff", fontSize: 11 }}>{fmtp(grand, cur)}</b></div>
               </div>
             </div>
 
             {anyDW && (
               <div style={{ marginBottom: 6, flexShrink: 0 }}>
-                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>Discounts & Waivers</div>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{t.discountsWaivers}</div>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead><tr>{["Item","Original","Discount","Final","Waiver"].map(h => <th key={h} style={{ fontSize: 6, padding: "2px 4px", textAlign: "left", color: "#999", borderBottom: "1px solid #ddd" }}>{h}</th>)}</tr></thead>
+                  <thead><tr>{[t.item,t.original,t.discount,t.final,t.waiver].map(h => <th key={h} style={{ fontSize: 6, padding: "2px 4px", textAlign: "left", color: "#999", borderBottom: "1px solid #ddd" }}>{h}</th>)}</tr></thead>
                   <tbody>
                     {active.map(it => { const d = sel[it.id]; if (!d || (!(d.hd && (parseFloat(d.da)||0) > 0) && !(d.hw && d.wt))) return null; const b = bf(it.id), f = ff(it.id), p = parseFloat(d.dp)||0, a = parseFloat(d.da)||0; return (
                       <tr key={it.id}>{[
@@ -1007,11 +1080,11 @@ export default function App() {
               </div>
             )}
 
-            <div style={{ fontSize: 7, color: "#aaa", lineHeight: 1.4, borderTop: "1px solid #eee", paddingTop: 6, marginBottom: 6, flexShrink: 0 }}>All fees in {cur}. Valid 30 days. {ft === "b" ? "Bundle" : "Regular"} pricing.</div>
+            <div style={{ fontSize: 7, color: "#aaa", lineHeight: 1.4, borderTop: "1px solid #eee", paddingTop: 6, marginBottom: 6, flexShrink: 0 }}>{t.allFees} {cur}. {t.valid30} {ft === "b" ? t.bundle : t.regular} pricing.</div>
 
             {stOn && stTxt && (
               <div style={{ marginBottom: 6, flexShrink: 0 }}>
-                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>Notes</div>
+                <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 3 }}>{t.notes}</div>
                 <div style={{ background: "#F5F0EB", borderRadius: 6, padding: "6px 12px", fontSize: 7, lineHeight: 1.5, color: "#555" }}>{stTxt}</div>
               </div>
             )}
@@ -1019,17 +1092,17 @@ export default function App() {
             <div style={{ flex: 1 }} />
 
             <div style={{ borderTop: "1.5px solid #222", paddingTop: 10, flexShrink: 0 }}>
-              <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 8 }}>Acceptance</div>
+              <div style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", color: B.orange, marginBottom: 8 }}>{t.acceptance}</div>
               <div style={{ display: "flex", gap: 24 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 8, color: "#888", marginBottom: 14 }}>Customer</div>
                   <div style={{ borderBottom: "1px solid #222", height: 14, marginBottom: 2 }} />
-                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 7, color: "#aaa" }}>Name & Title</span><span style={{ fontSize: 7, color: "#aaa" }}>Date</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 7, color: "#aaa" }}>{t.nameTitle}</span><span style={{ fontSize: 7, color: "#aaa" }}>{t.date}</span></div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 8, color: "#888", marginBottom: 14 }}>SeatOS</div>
                   <div style={{ borderBottom: "1px solid #222", height: 14, marginBottom: 2 }} />
-                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 7, color: "#aaa" }}>{sp ? sp.name : "—"}</span><span style={{ fontSize: 7, color: "#aaa" }}>Date</span></div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 7, color: "#aaa" }}>{sp ? sp.name : "—"}</span><span style={{ fontSize: 7, color: "#aaa" }}>{t.date}</span></div>
                 </div>
               </div>
             </div>
