@@ -215,12 +215,16 @@ export default function App(){
       }
     `}</style>
     <div className="r-wrap" style={ui.wrap}>
-      <div className="sheader" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24}}>
+      {/* Header bar - matches SeatOS Document Builder style */}
+      <div style={{background:"#fff",borderRadius:16,padding:"16px 24px",marginBottom:20,boxShadow:"0 2px 12px rgba(0,0,0,.05)",border:"1px solid rgba(0,0,0,.04)",borderBottom:`3px solid ${CI.orange}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
         <div>
-          <h1 style={{fontSize:30,fontWeight:900,color:CI.dark,margin:0,letterSpacing:"-0.5px"}}>Contract Builder</h1>
-          <p style={{fontSize:14,color:"#999",margin:"4px 0 0"}}>SeatOS Software Subscription &amp; Services Agreement</p>
+          <h1 style={{fontSize:18,fontWeight:800,color:CI.dark,margin:0}}>SeatOS Contract Builder</h1>
+          <p style={{fontSize:12,color:"#aaa",margin:"2px 0 0"}}>Generate Contracts &amp; Agreements</p>
         </div>
-        <button className="sbtn-settings" style={{...ui.btn,background:"#fff",color:"#777",padding:"10px 22px",fontSize:13,border:"2px solid #e8e4df"}} onClick={()=>setShowSettings(true)}>⚙️ Settings</button>
+        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+          <button className="sbtn-settings" style={{padding:"8px 20px",borderRadius:8,border:"1.5px solid #ddd",background:"#fff",color:"#555",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6}} onClick={()=>setShowSettings(true)}>⚙ Settings</button>
+          <button className="scta" style={{padding:"8px 20px",borderRadius:8,border:"none",background:CI.orange,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}} onClick={()=>setView("preview")}>Preview Contract →</button>
+        </div>
       </div>
 
       {/* Order Type */}
@@ -342,7 +346,7 @@ export default function App(){
       </div>
 
       <div style={{textAlign:"center",marginTop:32}}>
-        <button className="scta" style={{...ui.btn,...ui.pri}} onClick={()=>setView("preview")}>Preview Contract →</button>
+        <button className="scta" style={{...ui.btn,background:CI.orange,color:"#fff",padding:"14px 48px",borderRadius:10,fontSize:15}} onClick={()=>setView("preview")}>Preview Contract →</button>
       </div>
     </div></div>
   )}
