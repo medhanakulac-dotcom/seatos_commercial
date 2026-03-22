@@ -405,7 +405,6 @@ export default function App() {
   /* ── NEW: Document Type + Challenge State ── */
   const [docType, setDocType] = useState("proposal"); // "proposal" | "quotation"
   const [outLang, setOutLang] = useState("en"); // output language: en, th, vi, id
-  const setOutLangSave = async (v) => { setOutLang(v); await setS("ol", JSON.stringify(v)); flash("Language saved!"); };
   const [challenges, setChallenges] = useState(DEFAULT_CHALLENGES);
   const [selCh, setSelCh] = useState([]); // selected challenge IDs
   const [editCh, setEditCh] = useState(null); // challenge being edited (full object or null)
@@ -424,19 +423,30 @@ export default function App() {
     try { const v = await sbFetch("GET", key); return v != null ? (typeof v === "string" ? v : JSON.stringify(v)) : null; } catch (e) { return null; }
   };
   const setS = async (key, val) => {
-    const v = typeof val === "string" ? JSON.parse(val) : val;
-    try { await sbFetch("PATCH", key, v); return true; } catch (e) { return false; }
+    try { await sbFetch("PATCH", key, val); return true; } catch (e) { return false; }
   };
 
-  /* ── Load from Supabase on startup ── */
+  /* ── Load from Supabase on startup — only override if data is non-empty ── */
   useEffect(() => {
     (async () => {
-      try { const r = await getS("sp"); if (r) setPpl(JSON.parse(r)); } catch (e) {}
-      try { const r = await getS("pr"); if (r) { const p = JSON.parse(r); setPr(p); setTP(p); } } catch (e) {}
-      try { const r = await getS("ch"); if (r) setChallenges(JSON.parse(r)); } catch (e) {}
-      try { const r = await getS("tr"); if (r) setTranslations(JSON.parse(r)); } catch (e) {}
-      try { const r = await getS("ol"); if (r) setOutLang(r.replace(/"/g, "")); } catch (e) {}
-      try { const r = await getS("si"); if (r && r !== "null") setSpId(r.replace(/"/g, "")); } catch (e) {}
+      try {
+        const r = await getS("sp");
+        if (r) { const d = JSON.parse(r); if (Array.isArray(d) && d.length > 0) setPpl(d); }
+      } catch (e) {}
+      try {
+        const r = await getS("pr");
+        if (r) { const d = JSON.parse(r); if (d && Object.keys(d).length > 0) { setPr(d); setTP(d); } }
+      } catch (e) {}
+      try {
+        const r = await getS("ch");
+        if (r) { const d = JSON.parse(r); if (Array.isArray(d) && d.length > 0) setChallenges(d); }
+      } catch (e) {}
+      try {
+        const r = await getS("tr");
+        if (r) { const d = JSON.parse(r); if (d && Object.keys(d).length > 0) setTranslations(d); }
+      } catch (e) {}
+      try { const r = await getS("ol"); if (r) { const v = r.replace(/"/g, ""); if (v && v !== "en") setOutLang(v); } } catch (e) {}
+      try { const r = await getS("si"); if (r && r !== "null" && r !== '""') setSpId(r.replace(/"/g, "")); } catch (e) {}
       setLd(false);
     })();
   }, []);
@@ -448,6 +458,8 @@ export default function App() {
   const svPr = async (p) => { setPr(p); setTP(p); const ok = await setS("pr", p); flash(ok ? "Pricing saved!" : "Save failed"); };
   const svCh = async (c) => { setChallenges(c); const ok = await setS("ch", c); flash(ok ? "Challenges saved!" : "Save failed"); };
   const svTr = async (tr) => { setTranslations(tr); const ok = await setS("tr", tr); flash(ok ? "Translations saved!" : "Save failed"); };
+
+  const setOutLangSave = async (v) => { setOutLang(v); await setS("ol", v); flash("Language saved!"); };
 
   /* ── Existing Pricing Logic (UNCHANGED) ── */
   const ap = (pk) => pk && pr[pk]?.[cur] ? pr[pk][cur][ft] : null;
@@ -880,7 +892,7 @@ export default function App() {
             {ppl.length === 0
               ? <p style={{ color: B.gray, textAlign: "center" }}>{t.noSales} <button onClick={() => setPg("set")} style={{ background: "none", border: "none", color: B.orange, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>{t.addInSettings}</button></p>
               : <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{ppl.map(p => (
-                <button key={p.id} onClick={() => { setSpId(p.id); setS("si", JSON.stringify(p.id)); }} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
+                <button key={p.id} onClick={() => { setSpId(p.id); setS("si", p.id); }} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
                   <b style={{ fontSize: 13, color: spId === p.id ? B.cyan : B.dark, display: "block" }}>{p.name}</b>
                   <span style={{ fontSize: 11, color: B.gray }}>{p.email}</span>
                 </button>
