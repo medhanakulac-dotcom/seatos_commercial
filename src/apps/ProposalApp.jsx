@@ -86,7 +86,7 @@ const DEFAULT_CHALLENGES = [
     features: ["Trip List", "Bookings Management", "Real-Time Inventory"],
     feature_mapping: [{ feature: "Trip List", how: "Real-time seat availability visibility per departure" }, { feature: "Bookings Management", how: "Automatic conflict detection and alerts" }, { feature: "Real-Time Inventory", how: "Centralized capacity management prevents overselling" }],
     business_impact: ["Reduce overbooking incidents by 90%+", "Lower compensation and refund costs", "Improve brand reputation"],
-    i18n: { th: { title: "จองเกิน 0026 รายได้รั่วไหล", description: "สต็อกไม่ซิงค์แบบเรียลไทม์ทำให้จองเกินและต้องจ่ายค่าชดเชย", feature_mapping_how: ["มองเห็นที่นั่งว่างแบบเรียลไทม์ต่อเที่ยว","ตรวจจับความขัดแย้งอัตโนมัติ","จัดการความจุรวมศูนย์ป้องกันขายเกิน"], business_impact: ["ลดการจองเกิน 90%+","ลดค่าชดเชยและคืนเงิน","เพิ่มชื่อเสียงแบรนด์"] }, vi: { title: "Đặt quá chỗ 0026 Thất thoát doanh thu", description: "Thiếu đồng bộ tồn kho thời gian thực dẫn đến đặt quá chỗ và chi phí bồi thường.", feature_mapping_how: ["Hiển thị ghế trống thời gian thực mỗi chuyến","Phát hiện xung đột tự động","Quản lý sức chứa tập trung ngăn bán quá"], business_impact: ["Giảm 90%+ sự cố đặt quá chỗ","Giảm chi phí bồi thường và hoàn tiền","Cải thiện uy tín thương hiệu"] }, id: { title: "Overbooking 0026 Kebocoran Pendapatan", description: "Kurangnya sinkronisasi inventaris real-time menyebabkan overbooking dan biaya kompensasi.", feature_mapping_how: ["Visibilitas kursi real-time per keberangkatan","Deteksi konflik otomatis","Manajemen kapasitas terpusat mencegah overselling"], business_impact: ["Kurangi insiden overbooking 90%+","Turunkan biaya kompensasi dan refund","Tingkatkan reputasi merek"] } } },
+    i18n: { th: { title: "จองเกิน & รายได้รั่วไหล", description: "สต็อกไม่ซิงค์แบบเรียลไทม์ทำให้จองเกินและต้องจ่ายค่าชดเชย", feature_mapping_how: ["มองเห็นที่นั่งว่างแบบเรียลไทม์ต่อเที่ยว","ตรวจจับความขัดแย้งอัตโนมัติ","จัดการความจุรวมศูนย์ป้องกันขายเกิน"], business_impact: ["ลดการจองเกิน 90%+","ลดค่าชดเชยและคืนเงิน","เพิ่มชื่อเสียงแบรนด์"] }, vi: { title: "Đặt quá chỗ & Thất thoát doanh thu", description: "Thiếu đồng bộ tồn kho thời gian thực dẫn đến đặt quá chỗ và chi phí bồi thường.", feature_mapping_how: ["Hiển thị ghế trống thời gian thực mỗi chuyến","Phát hiện xung đột tự động","Quản lý sức chứa tập trung ngăn bán quá"], business_impact: ["Giảm 90%+ sự cố đặt quá chỗ","Giảm chi phí bồi thường và hoàn tiền","Cải thiện uy tín thương hiệu"] }, id: { title: "Overbooking & Kebocoran Pendapatan", description: "Kurangnya sinkronisasi inventaris real-time menyebabkan overbooking dan biaya kompensasi.", feature_mapping_how: ["Visibilitas kursi real-time per keberangkatan","Deteksi konflik otomatis","Manajemen kapasitas terpusat mencegah overselling"], business_impact: ["Kurangi insiden overbooking 90%+","Turunkan biaya kompensasi dan refund","Tingkatkan reputasi merek"] } } },
   { id: "CH005", title: "No Online Presence", description: "No website or booking engine — losing direct customers to OTAs with high commission fees.",
     features: ["Online Booking Engine", "White-Label Website", "Payment Gateway"],
     feature_mapping: [{ feature: "Online Booking Engine", how: "Branded booking widget embeddable on any website" }, { feature: "White-Label Website", how: "Ready-to-use operator website with booking capability" }, { feature: "Payment Gateway", how: "Accept online payments (cards, e-wallets, bank transfer)" }],
@@ -1131,7 +1131,8 @@ export default function App() {
                 <button className="np" onClick={() => setEdtFt(p => [...(p||[]), { feature: "", mappings: [{ challenge: "", how: "" }] }])} style={{ ...sBtn, background: B.orange + "15", color: B.orange, padding: "3px 12px", fontSize: 10 }}>+ Add</button>
               </div>
               <div style={{ fontSize: 8, color: "#888", marginBottom: 8 }}>{ot("sec2desc")}</div>
-              <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
+              <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", marginBottom: 12 }}>
+              <table style={{ width: "100%", minWidth: 600, borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
                     <th style={{ fontSize: 8, padding: "6px 8px", textAlign: "left", fontWeight: 800, color: "#666", borderBottom: "2px solid " + B.orange, textTransform: "uppercase", width: "22%" }}>{ot("feature")}</th>
@@ -1162,6 +1163,7 @@ export default function App() {
                   ))}
                 </tbody>
               </table>
+              </div>
 
               {/* Section 3: Business Impact — EDITABLE */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, marginBottom: 8 }}>
