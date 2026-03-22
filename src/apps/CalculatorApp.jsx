@@ -615,46 +615,63 @@ export default function App() {
           padding: "0 16px 60px",
         }}
       >
-        {/* ─── HEADER (ticket counter style) ──────────────────────── */}
-        <header
+        {/* ─── HEADER (SeatOS Document Builder style) ─────────── */}
+        <div
           style={{
-            maxWidth: 1120,
-            margin: "0 auto",
-            padding: "28px 0 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 12,
-            animation: "fadeUp 0.5s ease-out",
+            background: "linear-gradient(180deg, #fafaf9 0%, #f5f5f4 100%)",
+            borderBottom: "3px solid #f97316",
+            marginBottom: 24,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <img
-              src="https://res.cloudinary.com/dkwj2iikl/image/upload/v1773201660/216db52f-36bd-4673-ade2-725c4beba594_thumb_zt4ub4.jpg"
-              alt="SeatOS"
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                objectFit: "cover",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-                border: "2px solid #fff",
-              }}
-            />
+          <header
+            style={{
+              maxWidth: 1120,
+              margin: "0 auto",
+              padding: "14px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
             <div>
-              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>
-                SeatOS
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#1c1917" }}>
+                SeatOS BD Deal Calculator
               </div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#a1a1aa", letterSpacing: 1.5, textTransform: "uppercase" }}>
-                BD Deal Calculator
+              <div style={{ fontSize: 11, fontWeight: 400, color: "#a1a1aa" }}>
+                Deal Segmentation & Pricing Tool
               </div>
             </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Pill color="#a855f7">Business Development</Pill>
-          </div>
-        </header>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <a
+                href="https://lookerstudio.google.com/u/0/reporting/7b91397c-d7f0-46ce-b9f4-5a83d7ee5e84/page/p_c022vx2fsd"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "6px 14px",
+                  borderRadius: 6,
+                  border: "1px solid #d4d4d8",
+                  background: "#fff",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#52525b",
+                  textDecoration: "none",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#f4f4f5"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#71717a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-6"/></svg>
+                View Data
+              </a>
+            </div>
+          </header>
+        </div>
 
         {/* ─── MAIN GRID ──────────────────────────────────────── */}
         <div
@@ -695,47 +712,6 @@ export default function App() {
                 </Pill>
               </div>
 
-              {/* Data source link */}
-              <a
-                href="https://lookerstudio.google.com/u/0/reporting/7b91397c-d7f0-46ce-b9f4-5a83d7ee5e84/page/p_c022vx2fsd"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "14px 20px",
-                  borderRadius: 14,
-                  background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
-                  border: "1px solid #bfdbfe",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#1d4ed8",
-                  textDecoration: "none",
-                  marginBottom: 18,
-                  transition: "all 0.25s",
-                  boxShadow: "0 2px 8px rgba(59,130,246,0.08)",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(59,130,246,0.15)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(59,130,246,0.08)"; e.currentTarget.style.transform = "translateY(0)"; }}
-              >
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(59,130,246,0.12)", flexShrink: 0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-6"/>
-                  </svg>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>
-                    {model === "ticket" ? "View Ticket Volume Data" : "View GMV & Revenue Data"}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#60a5fa", marginTop: 1 }}>Looker Studio — past 12 months</div>
-                </div>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                  </svg>
-                </div>
-              </a>
 
               {/* Model + Country row */}
               <div
