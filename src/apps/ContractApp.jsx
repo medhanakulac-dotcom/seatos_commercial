@@ -45,7 +45,7 @@ const fN=(n,c)=>{if(!n&&n!==0)return"";const d=["IDR","VND"].includes(c)?0:2;ret
 
 /* ═══ UI — seatOS CI: beige bg, orange/pink/green/cyan/purple, rounded, playful ═══ */
 const CI={orange:"#F5A623",pink:"#E91E8C",green:"#4CAF50",cyan:"#00BCD4",purple:"#7C4DFF",bg:"#F5F0EB",dark:"#2D2D2D"};
-const ui={app:{fontFamily:"'Nunito','Segoe UI',Tahoma,sans-serif",background:CI.bg,minHeight:"100vh"},wrap:{maxWidth:880,margin:"0 auto",padding:"32px 16px 80px"},card:{background:"#fff",borderRadius:24,padding:"28px 28px",marginBottom:20,boxShadow:"0 4px 20px rgba(0,0,0,.05)",border:"1px solid rgba(0,0,0,.04)"},ct:{fontSize:15,fontWeight:800,color:CI.dark,marginBottom:14,display:"flex",alignItems:"center",gap:10,justifyContent:"space-between"},g2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14},g3:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14},lb:{fontSize:11.5,fontWeight:700,color:"#777",marginBottom:4,display:"block",textTransform:"uppercase",letterSpacing:"0.5px"},inp:{width:"100%",padding:"12px 14px",borderRadius:14,border:"2px solid #e8e4df",fontSize:14,outline:"none",boxSizing:"border-box",transition:"border .2s,box-shadow .2s"},sel:{width:"100%",padding:"12px 14px",borderRadius:14,border:"2px solid #e8e4df",fontSize:14,outline:"none",boxSizing:"border-box",background:"#fff",cursor:"pointer"},full:{gridColumn:"1/-1"},btn:{padding:"14px 36px",borderRadius:50,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",transition:"transform .15s,box-shadow .15s"},pri:{background:CI.orange,color:"#fff",boxShadow:"0 4px 16px rgba(245,166,35,.3)"},sec2:{background:"#fff",color:CI.orange,border:`2px solid ${CI.orange}`},badge:{display:"inline-block",background:"#FFF3E0",color:CI.orange,fontWeight:800,padding:"4px 14px",borderRadius:50,fontSize:12}};
+const ui={app:{fontFamily:"'Nunito','Segoe UI',Tahoma,sans-serif",background:CI.bg,minHeight:"100vh"},wrap:{maxWidth:880,margin:"0 auto",padding:"32px 16px 80px"},card:{background:"#fff",borderRadius:24,padding:"28px 28px",marginBottom:20,boxShadow:"0 4px 20px rgba(0,0,0,.05)",border:"1px solid rgba(0,0,0,.04)"},ct:{fontSize:15,fontWeight:800,color:CI.dark,marginBottom:14,display:"flex",alignItems:"center",gap:10,justifyContent:"space-between",paddingLeft:12,borderLeft:"4px solid #333"},g2:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14},g3:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14},lb:{fontSize:11.5,fontWeight:700,color:"#777",marginBottom:4,display:"block",textTransform:"uppercase",letterSpacing:"0.5px"},inp:{width:"100%",padding:"12px 14px",borderRadius:14,border:"2px solid #e8e4df",fontSize:14,outline:"none",boxSizing:"border-box",transition:"border .2s,box-shadow .2s"},sel:{width:"100%",padding:"12px 14px",borderRadius:14,border:"2px solid #e8e4df",fontSize:14,outline:"none",boxSizing:"border-box",background:"#fff",cursor:"pointer"},full:{gridColumn:"1/-1"},btn:{padding:"14px 36px",borderRadius:50,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",transition:"transform .15s,box-shadow .15s"},pri:{background:CI.orange,color:"#fff",boxShadow:"0 4px 16px rgba(245,166,35,.3)"},sec2:{background:"#fff",color:CI.orange,border:`2px solid ${CI.orange}`},badge:{display:"inline-block",background:"#FFF3E0",color:CI.orange,fontWeight:800,padding:"4px 14px",borderRadius:50,fontSize:12}};
 const pg={page:{width:794,background:"#fff",padding:"48px 56px 40px",boxSizing:"border-box",position:"relative",pageBreakAfter:"always",marginBottom:24,boxShadow:"0 2px 16px rgba(0,0,0,.1)",fontFamily:"Arial,Helvetica,sans-serif",fontSize:10,lineHeight:1.5,color:"#222"},hr:{height:2,background:"#000",margin:"4px 0 8px"},title:{fontSize:13,fontWeight:700,textAlign:"center",margin:"12px 0 8px"},secTitle:{fontSize:11,fontWeight:700,textDecoration:"underline",margin:"14px 0 6px"},tbl:{width:"100%",borderCollapse:"collapse",fontSize:9.5,marginBottom:8},thDark:{background:"#333",color:"#fff",border:"1px solid #333",padding:"4px 6px",textAlign:"left",fontWeight:700,fontSize:9},th:{background:"#f5f5f5",border:"1px solid #ccc",padding:"4px 6px",textAlign:"left",fontWeight:700,fontSize:9},td:{border:"1px solid #ccc",padding:"4px 6px",fontSize:9.5,verticalAlign:"top"},tdB:{border:"1px solid #ccc",padding:"4px 6px",fontSize:9.5,verticalAlign:"top",fontWeight:700},ft:{display:"flex",justifyContent:"space-between",fontSize:8,color:"#999",borderTop:"1px solid #eee",paddingTop:6,marginTop:16},init:{textAlign:"right",fontSize:8.5,color:"#555",marginTop:12}};
 
 /* Components */
@@ -156,7 +156,7 @@ export default function App(){
       </div>
       <div className="settings-wrap" style={ui.wrap}>
 
-      <div className="scard" style={ui.card}><div style={ui.ct}><span>🏢 Company (SeatOS) Details</span></div>
+      <div className="scard" style={ui.card}><div style={ui.ct}><span>Company (SeatOS) Details</span></div>
         <div className="sg2">
           <Inp label="Company Name" value={company.name} onChange={v=>upC("name",v)}/>
           <Inp label="Signatory Name" value={company.signName} onChange={v=>upC("signName",v)}/>
@@ -171,7 +171,7 @@ export default function App(){
       </div>
 
       {CURRENCIES.map(c=>(
-        <div key={c} className="scard" style={ui.card}><div style={ui.ct}><span>💰 {c} — {pricing[c].name}</span></div>
+        <div key={c} className="scard" style={ui.card}><div style={ui.ct}><span>{c} — {pricing[c].name}</span></div>
           <div className="sg3">
             <Inp label="Online Conv. Fee (per txn)" value={String(pricing[c].online)} onChange={v=>upP(c,"online",Number(v)||0)}/>
             <Inp label="Admin & Maint. (Monthly)" value={String(pricing[c].admin)} onChange={v=>upP(c,"admin",Number(v)||0)}/>
@@ -215,27 +215,28 @@ export default function App(){
       }
     `}</style>
     <div className="r-wrap" style={ui.wrap}>
-      {/* Header bar - matches SeatOS Document Builder style */}
-      <div style={{background:"#fff",borderRadius:16,padding:"16px 24px",marginBottom:20,boxShadow:"0 2px 12px rgba(0,0,0,.05)",border:"1px solid rgba(0,0,0,.04)",borderBottom:`3px solid ${CI.orange}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+      {/* Header bar - matches SeatOS Document Builder */}
+      <div style={{background:"#fff",padding:"14px 28px",marginBottom:0,borderBottom:"none",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
         <div>
-          <h1 style={{fontSize:18,fontWeight:800,color:CI.dark,margin:0}}>SeatOS Contract Builder</h1>
-          <p style={{fontSize:12,color:"#aaa",margin:"2px 0 0"}}>Generate Contracts &amp; Agreements</p>
+          <h1 style={{fontSize:17,fontWeight:800,color:CI.dark,margin:0}}>SeatOS Contract Builder</h1>
+          <p style={{fontSize:12,color:"#bbb",margin:"2px 0 0"}}>Generate Contracts &amp; Agreements</p>
         </div>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
-          <button className="sbtn-settings" style={{padding:"8px 20px",borderRadius:8,border:"1.5px solid #ddd",background:"#fff",color:"#555",fontSize:13,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:6}} onClick={()=>setShowSettings(true)}>⚙ Settings</button>
-          <button className="scta" style={{padding:"8px 20px",borderRadius:8,border:"none",background:CI.orange,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}} onClick={()=>setView("preview")}>Preview Contract →</button>
+          <button className="sbtn-settings" style={{padding:"8px 22px",borderRadius:50,border:"1.5px solid #ddd",background:"#fff",color:"#555",fontSize:13,fontWeight:600,cursor:"pointer"}} onClick={()=>setShowSettings(true)}>⚙ Settings</button>
+          <button className="scta" style={{padding:"8px 22px",borderRadius:50,border:"none",background:"#555",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer"}} onClick={()=>setView("preview")}>Preview Contract →</button>
         </div>
       </div>
+      <div style={{height:3,background:CI.orange,marginBottom:20}}/>
 
       {/* Order Type */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>📋 Order Type</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Order Type</span></div>
         <div className="sorderbtns" style={{display:"flex",gap:12}}>
           {["regular","bundle"].map(v=>(<button key={v} onClick={()=>up("orderType")(v)} style={{flex:1,padding:"16px",borderRadius:20,border:form.orderType===v?`3px solid ${CI.orange}`:"3px solid transparent",background:form.orderType===v?"#FFF8F0":"#fff",fontWeight:800,fontSize:15,cursor:"pointer",color:form.orderType===v?CI.orange:"#bbb",boxShadow:form.orderType===v?"0 4px 16px rgba(245,166,35,.2)":"none",transition:"all .2s"}}>{v==="regular"?"📄 Regular":"📦 Bundle"}</button>))}
         </div>
       </div>
 
       {/* Country & Currency */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>🌏 Country &amp; Currency</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Country & Currency</span></div>
         <div className="sg3">
           <SearchSel label="Country *" value={form.country} onChange={v=>{up("country")(v);if(COUNTRY_CUR[v])up("currency")(COUNTRY_CUR[v])}} opts={COUNTRIES.map(c=>({v:c,l:c}))}/>
           <SearchSel label="Currency *" value={form.currency} onChange={up("currency")} opts={CURRENCIES.map(c=>({v:c,l:c+" — "+pricing[c].name}))}/>
@@ -244,7 +245,7 @@ export default function App(){
       </div>
 
       {/* Company Info */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>🏢 Company Information</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Customer Information</span></div>
         <div className="sg2">
           <Inp label="Customer Name *" value={form.customerName} onChange={up("customerName")} ph="e.g. Acme Travel Co., Ltd."/>
           <Inp label="Registration No." value={form.custRegNum} onChange={up("custRegNum")}/>
@@ -255,7 +256,7 @@ export default function App(){
       </div>
 
       {/* Subscription */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>📅 Subscription Term</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Subscription Term</span></div>
         <div className="sg3">
           <Inp label="Start Date *" value={form.subStartDate} onChange={up("subStartDate")} type="date"/>
           <Sel label="Duration *" value={form.termMonths} onChange={v=>up("termMonths")(Number(v))} opts={TERMS.map(x=>({v:x.m,l:x.l}))}/>
@@ -264,7 +265,7 @@ export default function App(){
       </div>
 
       {/* Fees */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>💰 Licenses &amp; Fees</span><span style={ui.badge}>{cur}</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Licenses & Fees</span><span style={ui.badge}>{cur}</span></div>
         {/* Online */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Online Convenience Fee</b><Waive on={form.wOnline} set={up("wOnline")}/></div>
           {!form.wOnline&&<div className="sg3"><Sel label="Mode" value={form.onlineFeeMode} onChange={up("onlineFeeMode")} opts={[{v:"percent",l:"% of transaction"},{v:"flat",l:"Flat "+cur}]}/>{form.onlineFeeMode==="percent"?<Inp label="%" value={form.onlineFeePercent} onChange={up("onlineFeePercent")} ph="3"/>:<Inp label={cur} value={form.onlineFeeFlat} onChange={up("onlineFeeFlat")} ph={String(pr.online)}/>}<div style={{fontSize:12,color:"#888",paddingTop:22}}>Ref: {fN(pr.online,cur)} {cur}/txn</div></div>}
@@ -291,7 +292,7 @@ export default function App(){
       </div>
 
       {/* Hardware */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>🖥️ Hardware</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Hardware</span></div>
         <p style={{fontSize:12,color:"#888",marginBottom:12}}>Set quantity to 0 to exclude from the contract.</p>
         <div className="sg2">
           <div><label style={ui.lb}>POS Quantity (@ {fN(pr.pos,cur)} {cur}/unit/month)</label><input type="number" min="0" value={form.posQty} onChange={e=>up("posQty")(Math.max(0,Number(e.target.value)))} style={ui.inp}/></div>
@@ -300,7 +301,7 @@ export default function App(){
       </div>
 
       {/* Summary */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>📊 Summary</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Summary</span></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:"6px 20px",fontSize:14,marginBottom:12}}>
           <span style={{color:"#555"}}>Online Conv.</span><span style={{fontWeight:600,textAlign:"right"}}>{onD}{form.onlineFeeMode==="flat"&&!form.wOnline?" "+cur:""}</span>
           <span style={{color:"#555"}}>Offline Conv.</span><span style={{fontWeight:600,textAlign:"right"}}>{offD}{form.offlineFeeMode==="flat"&&!form.wOffline?" "+cur:""}</span>
@@ -315,7 +316,7 @@ export default function App(){
       </div>
 
       {/* Signatory */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>✍️ Customer Signatory &amp; Billing</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Customer Signatory & Billing</span></div>
         <div className="sg2">
           <Inp label="Name *" value={form.custSignName} onChange={up("custSignName")}/>
           <Inp label="Title" value={form.custSignTitle} onChange={up("custSignTitle")}/>
@@ -329,7 +330,7 @@ export default function App(){
       </div>
 
       {/* Special Terms — dynamic list */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>📝 Special Terms</span><button style={{background:"none",border:`2px solid ${CI.green}`,color:CI.green,borderRadius:50,padding:"4px 14px",fontSize:13,fontWeight:800,cursor:"pointer"}} onClick={()=>setForm(p=>({...p,specialTerms:[...p.specialTerms,""]}))}>+ Add Term</button></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Special Terms</span><button style={{background:"none",border:`2px solid ${CI.green}`,color:CI.green,borderRadius:50,padding:"4px 14px",fontSize:13,fontWeight:800,cursor:"pointer"}} onClick={()=>setForm(p=>({...p,specialTerms:[...p.specialTerms,""]}))}>+ Add Term</button></div>
         {form.specialTerms.map((t,i)=>(
           <div key={i} style={{display:"flex",gap:8,marginBottom:10,alignItems:"flex-start"}}>
             <span style={{fontSize:12,fontWeight:700,color:"#999",paddingTop:12,flexShrink:0}}>{i+1}.</span>
@@ -339,9 +340,9 @@ export default function App(){
         ))}
       </div>
 
-      {isBundle&&<div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>📦 Bundle: 12GO</span></div><Sel label="12GO Entity" value={form.twelveGoEntity} onChange={up("twelveGoEntity")} opts={TGO.map(e=>({v:e,l:e}))}/></div>}
+      {isBundle&&<div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Bundle: 12GO</span></div><Sel label="12GO Entity" value={form.twelveGoEntity} onChange={up("twelveGoEntity")} opts={TGO.map(e=>({v:e,l:e}))}/></div>}
 
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>⚙️ Options</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Options</span></div>
         <Tog label="Include Amendment page" value={form.includeAmendment} onChange={up("includeAmendment")}/>
       </div>
 
