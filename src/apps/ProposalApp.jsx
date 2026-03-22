@@ -1,22 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SeatOS Document Builder</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
-</style>
-</head>
-<body>
-<div id="root"></div>
-<script type="text/babel">
-const { useState, useRef, useEffect } = React;
+import { useState, useRef, useEffect } from "react";
 
+/* ── Supabase Config ── */
+const SUPABASE_URL = "https://vaoukjukkzvjuzgedvfd.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhb3VranVra3p2anV6Z2VkdmZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNTMyNzMsImV4cCI6MjA4OTcyOTI3M30.wqLt84tV43PsdC8HXRGJfiFN5MVy4L0exXUGoUfAAds";
+const sbFetch = async (method, key, value) => {
+  const url = `${SUPABASE_URL}/rest/v1/app_settings?key=eq.${key}`;
+  const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: method === "GET" ? "" : "return=minimal" };
+  if (method === "GET") {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?key=eq.${key}&select=value`, { headers });
+    const d = await r.json();
+    return d?.[0]?.value ?? null;
+  }
+  await fetch(url, { method: "PATCH", headers, body: JSON.stringify({ value }) });
+  return true;
+};
 
 const B = {
   bg: "#F5EFE7", orange: "#F5A623", green: "#2ECC71", pink: "#E84C88",
@@ -387,7 +384,7 @@ function Chk({ label, on, set, color }) {
   );
 }
 
-function App() {
+export default function App() {
   /* ── Existing State (UNCHANGED) ── */
   const [pg, setPg] = useState("build");
   const [ld, setLd] = useState(true);
@@ -408,7 +405,7 @@ function App() {
   /* ── NEW: Document Type + Challenge State ── */
   const [docType, setDocType] = useState("proposal"); // "proposal" | "quotation"
   const [outLang, setOutLang] = useState("en"); // output language: en, th, vi, id
-  const setOutLangSave = (v) => { setOutLang(v); setLS("ol", v); flash("Language saved!"); };
+  const setOutLangSave = async (v) => { setOutLang(v); await setS("ol", JSON.stringify(v)); flash("Language saved!"); };
   const [challenges, setChallenges] = useState(DEFAULT_CHALLENGES);
   const [selCh, setSelCh] = useState([]); // selected challenge IDs
   const [editCh, setEditCh] = useState(null); // challenge being edited (full object or null)
@@ -422,28 +419,35 @@ function App() {
   const [editLang, setEditLang] = useState(null); // lang key being edited, or null
   const t = (translations[lang] || translations.en || DEFAULT_TRANSLATIONS.en);
 
-  /* ── localStorage Storage ── */
-  const getLS = (key) => { try { return localStorage.getItem("seatos_" + key); } catch(e) { return null; } };
-  const setLS = (key, val) => { try { const v = typeof val === "string" ? val : JSON.stringify(val); localStorage.setItem("seatos_" + key, v); return true; } catch(e) { return false; } };
+  /* ── Supabase Storage ── */
+  const getS = async (key) => {
+    try { const v = await sbFetch("GET", key); return v != null ? (typeof v === "string" ? v : JSON.stringify(v)) : null; } catch (e) { return null; }
+  };
+  const setS = async (key, val) => {
+    const v = typeof val === "string" ? JSON.parse(val) : val;
+    try { await sbFetch("PATCH", key, v); return true; } catch (e) { return false; }
+  };
 
-  /* ── Load from localStorage on startup ── */
+  /* ── Load from Supabase on startup ── */
   useEffect(() => {
-    try { const r = getLS("sp"); if (r) setPpl(JSON.parse(r)); } catch (e) {}
-    try { const r = getLS("pr"); if (r) { const p = JSON.parse(r); setPr(p); setTP(p); } } catch (e) {}
-    try { const r = getLS("ch"); if (r) setChallenges(JSON.parse(r)); } catch (e) {}
-    try { const r = getLS("tr"); if (r) setTranslations(JSON.parse(r)); } catch (e) {}
-    try { const r = getLS("ol"); if (r) setOutLang(r); } catch (e) {}
-    try { const r = getLS("si"); if (r) setSpId(r); } catch (e) {}
-    setLd(false);
+    (async () => {
+      try { const r = await getS("sp"); if (r) setPpl(JSON.parse(r)); } catch (e) {}
+      try { const r = await getS("pr"); if (r) { const p = JSON.parse(r); setPr(p); setTP(p); } } catch (e) {}
+      try { const r = await getS("ch"); if (r) setChallenges(JSON.parse(r)); } catch (e) {}
+      try { const r = await getS("tr"); if (r) setTranslations(JSON.parse(r)); } catch (e) {}
+      try { const r = await getS("ol"); if (r) setOutLang(r.replace(/"/g, "")); } catch (e) {}
+      try { const r = await getS("si"); if (r && r !== "null") setSpId(r.replace(/"/g, "")); } catch (e) {}
+      setLd(false);
+    })();
   }, []);
 
   /* ── Save Functions with feedback ── */
   const [saved, setSaved] = useState("");
   const flash = (msg) => { setSaved(msg); setTimeout(() => setSaved(""), 2500); };
-  const svP = (p) => { setPpl(p); setLS("sp", p); flash("Sales team saved!"); };
-  const svPr = (p) => { setPr(p); setTP(p); setLS("pr", p); flash("Pricing saved!"); };
-  const svCh = (c) => { setChallenges(c); setLS("ch", c); flash("Challenges saved!"); };
-  const svTr = (tr) => { setTranslations(tr); setLS("tr", tr); flash("Translations saved!"); };
+  const svP = async (p) => { setPpl(p); const ok = await setS("sp", p); flash(ok ? "Sales team saved!" : "Save failed"); };
+  const svPr = async (p) => { setPr(p); setTP(p); const ok = await setS("pr", p); flash(ok ? "Pricing saved!" : "Save failed"); };
+  const svCh = async (c) => { setChallenges(c); const ok = await setS("ch", c); flash(ok ? "Challenges saved!" : "Save failed"); };
+  const svTr = async (tr) => { setTranslations(tr); const ok = await setS("tr", tr); flash(ok ? "Translations saved!" : "Save failed"); };
 
   /* ── Existing Pricing Logic (UNCHANGED) ── */
   const ap = (pk) => pk && pr[pk]?.[cur] ? pr[pk][cur][ft] : null;
@@ -876,7 +880,7 @@ function App() {
             {ppl.length === 0
               ? <p style={{ color: B.gray, textAlign: "center" }}>{t.noSales} <button onClick={() => setPg("set")} style={{ background: "none", border: "none", color: B.orange, fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}>{t.addInSettings}</button></p>
               : <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{ppl.map(p => (
-                <button key={p.id} onClick={() => { setSpId(p.id); setLS("si", p.id); }} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
+                <button key={p.id} onClick={() => { setSpId(p.id); setS("si", JSON.stringify(p.id)); }} style={{ ...sBtn, padding: "12px 18px", borderRadius: 16, border: spId === p.id ? "2px solid " + B.cyan : "2px solid " + B.light, background: spId === p.id ? B.cyan + "10" : "#fff", textAlign: "left", cursor: "pointer" }}>
                   <b style={{ fontSize: 13, color: spId === p.id ? B.cyan : B.dark, display: "block" }}>{p.name}</b>
                   <span style={{ fontSize: 11, color: B.gray }}>{p.email}</span>
                 </button>
@@ -1362,10 +1366,3 @@ function App() {
     </div>
   );
 }
-
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(React.createElement(App));
-
-</script>
-</body>
-</html>
