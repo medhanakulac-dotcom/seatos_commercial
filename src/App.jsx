@@ -97,10 +97,10 @@ function LoginScreen() {
       <div style={{ background: "#fff", borderRadius: 24, padding: "48px 40px", width: 400, maxWidth: "90vw", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", textAlign: "center" }}>
         <img src={LOGO_THUMB} alt="seatOS" style={{ width: 64, height: 64, borderRadius: 16, objectFit: "cover", marginBottom: 20 }} />
         <div style={{ fontWeight: 800, fontSize: 24, color: C.dark, marginBottom: 4 }}>
-          seat<span style={{ color: C.orange }}>O</span>S Hub
+          seat<span style={{ color: C.orange }}>O</span>S Deal Suite
         </div>
         <div style={{ fontSize: 13, color: C.gray, marginBottom: 32 }}>
-          Internal Tools — Sign in with your email
+          Sign in with your email
         </div>
         <form onSubmit={handleSubmit}>
           <input
@@ -289,7 +289,7 @@ export default function App() {
                 <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: -0.3, color: "#fff" }}>
                   seat<span style={{ color: C.orange }}>O</span>S
                 </div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 1 }}>Internal Tools</div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 1 }}>Deal Suite</div>
               </div>
             )}
           </div>
