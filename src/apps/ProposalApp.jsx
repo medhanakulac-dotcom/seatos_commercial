@@ -4,14 +4,18 @@ import { useState, useRef, useEffect } from "react";
 const SUPABASE_URL = "https://vaoukjukkzvjuzgedvfd.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhb3VranVra3p2anV6Z2VkdmZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNTMyNzMsImV4cCI6MjA4OTcyOTI3M30.wqLt84tV43PsdC8HXRGJfiFN5MVy4L0exXUGoUfAAds";
 const sbFetch = async (method, key, value) => {
-  const url = `${SUPABASE_URL}/rest/v1/app_settings?key=eq.${key}`;
-  const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: method === "GET" ? "" : "return=minimal" };
+  const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" };
   if (method === "GET") {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?key=eq.${key}&select=value`, { headers });
     const d = await r.json();
     return d?.[0]?.value ?? null;
   }
-  await fetch(url, { method: "PATCH", headers, body: JSON.stringify({ value }) });
+  // UPSERT: insert if not exists, update if exists
+  await fetch(`${SUPABASE_URL}/rest/v1/app_settings`, {
+    method: "POST",
+    headers: { ...headers, Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ key, value })
+  });
   return true;
 };
 
