@@ -618,8 +618,8 @@ export default function App() {
         {/* ─── HEADER (SeatOS Document Builder style) ─────────── */}
         <div
           style={{
-            background: "linear-gradient(180deg, #fafaf9 0%, #f5f5f4 100%)",
-            borderBottom: "3px solid #f97316",
+            background: "#fff",
+            borderBottom: "4px solid #F5A623",
             marginBottom: 24,
           }}
         >
@@ -627,7 +627,7 @@ export default function App() {
             style={{
               maxWidth: 1120,
               margin: "0 auto",
-              padding: "14px 16px",
+              padding: "14px 24px",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -636,12 +636,12 @@ export default function App() {
             }}
           >
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#1c1917" }}>
+              <b style={{ fontSize: 16, display: "block", color: "#1A1A1A" }}>
                 SeatOS BD Deal Calculator
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 400, color: "#a1a1aa" }}>
+              </b>
+              <span style={{ fontSize: 11, color: "#8E8E93" }}>
                 Deal Segmentation & Pricing Tool
-              </div>
+              </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <a
@@ -652,21 +652,21 @@ export default function App() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
-                  padding: "6px 14px",
-                  borderRadius: 6,
-                  border: "1px solid #d4d4d8",
-                  background: "#fff",
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "#52525b",
+                  padding: "8px 22px",
+                  borderRadius: 50,
+                  border: "none",
+                  background: "#F5EFE7",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#1A1A1A",
                   textDecoration: "none",
                   cursor: "pointer",
                   transition: "all 0.15s",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#f4f4f5"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#E8E2D9"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#F5EFE7"; }}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#71717a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-6"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-6"/></svg>
                 View Data
               </a>
             </div>
