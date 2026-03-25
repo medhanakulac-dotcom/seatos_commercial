@@ -621,6 +621,8 @@ export default function App() {
             background: "#fff",
             borderBottom: "4px solid #F5A623",
             marginBottom: 24,
+            marginLeft: -16,
+            marginRight: -16,
           }}
         >
           <header
