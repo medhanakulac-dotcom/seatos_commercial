@@ -108,7 +108,7 @@ export default function App(){
     onlineFeeMode:"percent",onlineFeePercent:"3",onlineFeeFlat:"",
     offlineFeeMode:"percent",offlineFeePercent:"3",offlineFeeFlat:"",
     adminFee:"",implFee:"",smsFee:"",
-    implEnabled:true,smsEnabled:true,
+    implEnabled:true,smsEnabled:false,
     wOnline:false,wOffline:false,wAdmin:false,wImpl:false,wSms:false,
     wAdminMonths:"",wOnlineMonths:"",wOfflineMonths:"",wSmsMonths:"",
     posQty:0,kioskQty:0,
@@ -328,8 +328,8 @@ export default function App(){
           {form.wAdmin&&<div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600,flex:1}}>Waived</div><Inp label="Waive months" value={form.wAdminMonths} onChange={up("wAdminMonths")} ph="e.g. 6" style={{width:120}}/></div>}
         </div>
         {/* Implementation */}
-        <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><Chk label="Implementation & Configuration" value={form.implEnabled} onChange={up("implEnabled")}/><Waive on={form.wImpl} set={up("wImpl")}/></div>
-          {form.implEnabled&&!form.wImpl&&<Inp label="" value={form.implFee} onChange={up("implFee")} ph={String(pr.impl)}/>}
+        <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Implementation &amp; Configuration</b><Waive on={form.wImpl} set={up("wImpl")}/></div>
+          {!form.wImpl&&<Inp label="" value={form.implFee} onChange={up("implFee")} ph={String(pr.impl)}/>}
           {form.wImpl&&<div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600}}>Waived</div>}
         </div>
         {/* SMS */}
@@ -356,7 +356,7 @@ export default function App(){
           <span style={{color:"#555"}}>Offline Conv.</span><span style={{textAlign:"right",color:"#aaa"}}>{getConvDisplay(form.offlineFeeMode,"3","")}</span><span style={{fontWeight:600,textAlign:"right",color:form.wOffline?CI.pink:"inherit"}}>{offD}{form.wOffline&&form.wOfflineMonths?` (${form.wOfflineMonths} mo)`:""}</span>
           <span style={{color:"#555"}}>Admin & Maintenance</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.admin,cur)} {cur}/mo</span><span style={{fontWeight:600,textAlign:"right",color:form.wAdmin?CI.pink:"inherit"}}>{form.wAdmin?("Waived"+(form.wAdminMonths?` (${form.wAdminMonths} mo)`:"")):(fN(v_admin,cur)+" "+cur+"/mo")}</span>
           <span style={{color:"#555"}}>Implementation</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.impl,cur)} {cur}</span><span style={{fontWeight:600,textAlign:"right",color:form.wImpl?CI.pink:"inherit"}}>{form.wImpl?"Waived":(!form.implEnabled?"N/A":fN(v_impl,cur)+" "+cur)}</span>
-          <span style={{color:"#555"}}>SMS Notification</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.sms,cur)} {cur}/msg</span><span style={{fontWeight:600,textAlign:"right",color:form.wSms?CI.pink:"inherit"}}>{form.wSms?("Waived"+(form.wSmsMonths?` (${form.wSmsMonths} mo)`:"")):(form.smsEnabled?fN(v_sms,cur)+" "+cur+"/msg":"N/A")}</span>
+          {form.smsEnabled&&<><span style={{color:"#555"}}>SMS Notification</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.sms,cur)} {cur}/msg</span><span style={{fontWeight:600,textAlign:"right",color:form.wSms?CI.pink:"inherit"}}>{form.wSms?("Waived"+(form.wSmsMonths?` (${form.wSmsMonths} mo)`:"")):(fN(v_sms,cur)+" "+cur+"/msg")}</span></>}
           {form.posQty>0&&<><span style={{color:"#555"}}>POS ×{form.posQty} {form.posQty>1?"units":"unit"}</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.pos,cur)} {cur}/unit/mo</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.posQty*pr.pos,cur)} {cur}/mo</span></>}
           {form.kioskQty>0&&<><span style={{color:"#555"}}>Kiosk ×{form.kioskQty} {form.kioskQty>1?"units":"unit"}</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.kiosk,cur)} {cur}/unit/mo</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.kioskQty*pr.kiosk,cur)} {cur}/mo</span></>}
         </div>
@@ -524,11 +524,11 @@ window.onload=function(){
 {f.kioskQty>0&&<tr><td style={{...pg.td,textAlign:"center"}}>{f.kioskQty}</td><td style={pg.td}>Kiosk</td><td style={pg.td}>Monthly</td><td style={pg.td}>{fN(pr.kiosk,cur)} {cur} per each Kiosk</td></tr>}
 </tbody></table></>)}
 
-<div style={{fontWeight:700,fontSize:10,margin:"10px 0 4px"}}>ANCILLARY CHARGES</div>
+{f.smsEnabled&&<><div style={{fontWeight:700,fontSize:10,margin:"10px 0 4px"}}>ANCILLARY CHARGES</div>
 <table style={pg.tbl}>
 <thead><tr><th style={pg.th}>Type</th><th style={{...pg.th,width:36}}>YES</th><th style={{...pg.th,width:36}}>NO</th><th style={{...pg.th,width:100}}>Invoicing</th><th style={{...pg.th,width:80}}>Fees ({cur})</th></tr></thead>
-<tbody><tr><td style={pg.td}>SMS notification</td><td style={{...pg.td,textAlign:"center"}}>{f.smsEnabled?"✓":""}</td><td style={{...pg.td,textAlign:"center"}}>{!f.smsEnabled?"✓":""}</td><td style={pg.td}>Monthly</td><td style={{...pg.td,textAlign:"right"}}>{!f.smsEnabled?"—":(f.wSms?"Waived":fN(v_sms,cur))}</td></tr></tbody>
-</table>
+<tbody><tr><td style={pg.td}>SMS notification</td><td style={{...pg.td,textAlign:"center"}}>✓</td><td style={{...pg.td,textAlign:"center"}}></td><td style={pg.td}>Monthly</td><td style={{...pg.td,textAlign:"right"}}>{f.wSms?"Waived":fN(v_sms,cur)}</td></tr></tbody>
+</table></>}
 <div style={{fontWeight:700,fontSize:10,margin:"10px 0 4px"}}>FEES SUMMARY</div>
 <table style={pg.tbl}>
 <thead><tr><th style={pg.thDark}></th><th style={pg.thDark}></th></tr></thead>
@@ -539,7 +539,7 @@ window.onload=function(){
 {f.posQty>0&&<tr><td style={pg.td}>POS ×{f.posQty} {f.posQty>1?"units":"unit"}</td><td style={{...pg.td,textAlign:"right"}}>{fN(f.posQty*pr.pos,cur)} /mo</td></tr>}
 {f.kioskQty>0&&<tr><td style={pg.td}>Kiosk ×{f.kioskQty} {f.kioskQty>1?"units":"unit"}</td><td style={{...pg.td,textAlign:"right"}}>{fN(f.kioskQty*pr.kiosk,cur)} /mo</td></tr>}
 <tr><td style={pg.tdB}>Total for One-Time Payments</td><td style={{...pg.td,textAlign:"right",fontWeight:700}}>{fN(v_impl,cur)}</td></tr>
-<tr><td style={pg.tdB}>Total for Monthly Payments</td><td style={{...pg.td,textAlign:"right",fontWeight:700}}>{fN(v_admin+v_sms+(f.posQty*pr.pos)+(f.kioskQty*pr.kiosk),cur)}</td></tr>
+<tr><td style={pg.tdB}>Total for Monthly Payments</td><td style={{...pg.td,textAlign:"right",fontWeight:700}}>{fN(v_admin,cur)}</td></tr>
 </tbody></table>
 <Ft label="SeatOS – Order Form" n={pgN()}/>
 </div>
