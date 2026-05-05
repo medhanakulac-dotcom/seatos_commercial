@@ -110,12 +110,13 @@ export default function App(){
     adminFee:"",implFee:"",smsFee:"",
     implEnabled:true,smsEnabled:true,
     wOnline:false,wOffline:false,wAdmin:false,wImpl:false,wSms:false,
+    wAdminMonths:"",wOnlineMonths:"",wOfflineMonths:"",wSmsMonths:"",
     posQty:0,kioskQty:0,
     discount:"",taxes:"",
     custSignName:"",custSignTitle:"",custSignAddress:"",custSignEmail:"",custSignPhone:"",
     billingContact:"",billingEmail:"",billingPhone:"",
     specialTerms:["In order to utilize the capacity of the Licensed Software, the Customer undertakes to process and manage offline and online all ticket bookings using the Licensed Software (seatOS), thereby improving inventory management and reducing poor customer experience caused by booking decline.","In the event that the Customer requests a new feature to be developed for the Licensed Software, the Customer agrees to process and manage all offline and online ticket bookings using the Licensed Software (seatOS) only."],
-    includeAmendment:true,twelveGoEntity:TGO[0]
+    includeAmendment:false,twelveGoEntity:TGO[0]
   });
   const[view,setView]=useState("form");
   const up=k=>v=>setForm(p=>({...p,[k]:v}));
@@ -133,6 +134,53 @@ export default function App(){
   const hasHardware=form.posQty>0||form.kioskQty>0;
   const disc=form.discount!==""?Number(form.discount):0;
   const tax=form.taxes!==""?Number(form.taxes):0;
+
+  /* ── Discount breakdown: compare actual vs standard (default rate card) ── */
+  const discountLines=(()=>{
+    const lines=[];
+    // Admin & Maintenance
+    const stdAdmin=pr.admin;
+    const actAdmin=form.wAdmin?0:(form.adminFee!==""?Number(form.adminFee):stdAdmin);
+    if(form.wAdmin) lines.push({item:"Monthly Administration and Maintenance Fee",std:fN(stdAdmin,cur)+" "+cur+"/mo",act:"Waived"+(form.wAdminMonths?" for "+form.wAdminMonths+" month(s)":""),diff:fN(stdAdmin,cur)+" "+cur+"/mo"});
+    else if(actAdmin<stdAdmin) lines.push({item:"Monthly Administration and Maintenance Fee",std:fN(stdAdmin,cur)+" "+cur+"/mo",act:fN(actAdmin,cur)+" "+cur+"/mo",diff:fN(stdAdmin-actAdmin,cur)+" "+cur+"/mo"});
+    // Implementation
+    if(form.implEnabled){
+      const stdImpl=pr.impl;
+      const actImpl=form.wImpl?0:(form.implFee!==""?Number(form.implFee):stdImpl);
+      if(form.wImpl) lines.push({item:"Implementation and Configuration",std:fN(stdImpl,cur)+" "+cur,act:"Waived",diff:fN(stdImpl,cur)+" "+cur});
+      else if(actImpl<stdImpl) lines.push({item:"Implementation and Configuration",std:fN(stdImpl,cur)+" "+cur,act:fN(actImpl,cur)+" "+cur,diff:fN(stdImpl-actImpl,cur)+" "+cur});
+    }
+    // SMS
+    if(form.smsEnabled){
+      const stdSms=pr.sms;
+      const actSms=form.wSms?0:(form.smsFee!==""?Number(form.smsFee):stdSms);
+      if(form.wSms) lines.push({item:"SMS Notification",std:fN(stdSms,cur)+" "+cur+"/msg",act:"Waived"+(form.wSmsMonths?" for "+form.wSmsMonths+" month(s)":""),diff:fN(stdSms,cur)+" "+cur+"/msg"});
+      else if(actSms<stdSms) lines.push({item:"SMS Notification",std:fN(stdSms,cur)+" "+cur+"/msg",act:fN(actSms,cur)+" "+cur+"/msg",diff:fN(stdSms-actSms,cur)+" "+cur+"/msg"});
+    }
+    // Online Conv (% mode only — flat rate compared to default)
+    if(form.onlineFeeMode==="percent"){
+      const stdPct=3,actPct=form.wOnline?0:Number(form.onlineFeePercent||3);
+      if(form.wOnline) lines.push({item:"Online Convenience Fee",std:stdPct+"%",act:"Waived"+(form.wOnlineMonths?" for "+form.wOnlineMonths+" month(s)":""),diff:stdPct+"%"});
+      else if(actPct<stdPct) lines.push({item:"Online Convenience Fee",std:stdPct+"%",act:actPct+"%",diff:(stdPct-actPct)+"%"});
+    } else {
+      const stdFlat=pr.online,actFlat=form.wOnline?0:(form.onlineFeeFlat!==""?Number(form.onlineFeeFlat):stdFlat);
+      if(form.wOnline) lines.push({item:"Online Convenience Fee",std:fN(stdFlat,cur)+" "+cur+"/txn",act:"Waived"+(form.wOnlineMonths?" for "+form.wOnlineMonths+" month(s)":""),diff:fN(stdFlat,cur)+" "+cur+"/txn"});
+      else if(actFlat<stdFlat) lines.push({item:"Online Convenience Fee",std:fN(stdFlat,cur)+" "+cur+"/txn",act:fN(actFlat,cur)+" "+cur+"/txn",diff:fN(stdFlat-actFlat,cur)+" "+cur+"/txn"});
+    }
+    // Offline Conv
+    if(form.offlineFeeMode==="percent"){
+      const stdPct=3,actPct=form.wOffline?0:Number(form.offlineFeePercent||3);
+      if(form.wOffline) lines.push({item:"Offline Convenience Fee",std:stdPct+"%",act:"Waived"+(form.wOfflineMonths?" for "+form.wOfflineMonths+" month(s)":""),diff:stdPct+"%"});
+      else if(actPct<stdPct) lines.push({item:"Offline Convenience Fee",std:stdPct+"%",act:actPct+"%",diff:(stdPct-actPct)+"%"});
+    } else {
+      const stdFlat=pr.online,actFlat=form.wOffline?0:(form.offlineFeeFlat!==""?Number(form.offlineFeeFlat):stdFlat);
+      if(form.wOffline) lines.push({item:"Offline Convenience Fee",std:fN(stdFlat,cur)+" "+cur+"/txn",act:"Waived"+(form.wOfflineMonths?" for "+form.wOfflineMonths+" month(s)":""),diff:fN(stdFlat,cur)+" "+cur+"/txn"});
+      else if(actFlat<stdFlat) lines.push({item:"Offline Convenience Fee",std:fN(stdFlat,cur)+" "+cur+"/txn",act:fN(actFlat,cur)+" "+cur+"/txn",diff:fN(stdFlat-actFlat,cur)+" "+cur+"/txn"});
+    }
+    // Additional discount amount
+    if(disc>0) lines.push({item:"Additional Discount",std:"—",act:"-"+fN(disc,cur)+" "+cur,diff:fN(disc,cur)+" "+cur});
+    return lines;
+  })();
   const endDate=(()=>{if(!form.subStartDate)return"";const d=new Date(form.subStartDate);d.setMonth(d.getMonth()+form.termMonths);d.setDate(d.getDate()-1);return d.toISOString().split("T")[0]})();
   const bl=(v,fb="")=>v||fb;
 
@@ -267,15 +315,17 @@ export default function App(){
         {/* Online */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Online Convenience Fee</b><Waive on={form.wOnline} set={up("wOnline")}/></div>
           {!form.wOnline&&<div className="sg3"><Sel label="Mode" value={form.onlineFeeMode} onChange={up("onlineFeeMode")} opts={[{v:"percent",l:"% of transaction"},{v:"flat",l:"Flat "+cur}]}/>{form.onlineFeeMode==="percent"?<Inp label="%" value={form.onlineFeePercent} onChange={up("onlineFeePercent")} ph="3"/>:<Inp label={cur} value={form.onlineFeeFlat} onChange={up("onlineFeeFlat")} ph={String(pr.online)}/>}<div style={{fontSize:12,color:"#888",paddingTop:22}}>Ref: {fN(pr.online,cur)} {cur}/txn</div></div>}
+          {form.wOnline&&<div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600,flex:1}}>Waived</div><Inp label="Waive months" value={form.wOnlineMonths} onChange={up("wOnlineMonths")} ph="e.g. 3" style={{width:120}}/></div>}
         </div>
         {/* Offline */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Offline Convenience Fee</b><Waive on={form.wOffline} set={up("wOffline")}/></div>
           {!form.wOffline&&<div className="sg3"><Sel label="Mode" value={form.offlineFeeMode} onChange={up("offlineFeeMode")} opts={[{v:"percent",l:"% of transaction"},{v:"flat",l:"Flat "+cur}]}/>{form.offlineFeeMode==="percent"?<Inp label="%" value={form.offlineFeePercent} onChange={up("offlineFeePercent")} ph="3"/>:<Inp label={cur} value={form.offlineFeeFlat} onChange={up("offlineFeeFlat")} ph={String(pr.online)}/>}<div style={{fontSize:12,color:"#888",paddingTop:22}}>Ref: {fN(pr.online,cur)} {cur}/txn</div></div>}
+          {form.wOffline&&<div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600,flex:1}}>Waived</div><Inp label="Waive months" value={form.wOfflineMonths} onChange={up("wOfflineMonths")} ph="e.g. 3" style={{width:120}}/></div>}
         </div>
         {/* Admin */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Admin &amp; Maintenance (Monthly)</b><Waive on={form.wAdmin} set={up("wAdmin")}/></div>
           {!form.wAdmin&&<Inp label="" value={form.adminFee} onChange={up("adminFee")} ph={String(pr.admin)}/>}
-          {form.wAdmin&&<div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600}}>Waived</div>}
+          {form.wAdmin&&<div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600,flex:1}}>Waived</div><Inp label="Waive months" value={form.wAdminMonths} onChange={up("wAdminMonths")} ph="e.g. 6" style={{width:120}}/></div>}
         </div>
         {/* Implementation */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><Chk label="Implementation & Configuration" value={form.implEnabled} onChange={up("implEnabled")}/><Waive on={form.wImpl} set={up("wImpl")}/></div>
@@ -285,7 +335,7 @@ export default function App(){
         {/* SMS */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><Chk label="SMS Notification" value={form.smsEnabled} onChange={up("smsEnabled")}/><Waive on={form.wSms} set={up("wSms")}/></div>
           {form.smsEnabled&&!form.wSms&&<Inp label="" value={form.smsFee} onChange={up("smsFee")} ph={String(pr.sms)}/>}
-          {form.wSms&&<div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600}}>Waived</div>}
+          {form.wSms&&<div style={{display:"flex",gap:10,alignItems:"center"}}><div style={{padding:"8px 12px",borderRadius:10,background:"#fff0f0",border:"1.5px solid #E91E8C",color:"#E91E8C",fontSize:13,fontWeight:600,flex:1}}>Waived</div><Inp label="Waive months" value={form.wSmsMonths} onChange={up("wSmsMonths")} ph="e.g. 3" style={{width:120}}/></div>}
         </div>
       </div>
 
@@ -300,15 +350,27 @@ export default function App(){
 
       {/* Summary */}
       <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Summary</span></div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:"6px 20px",fontSize:14,marginBottom:12}}>
-          <span style={{color:"#555"}}>Online Conv.</span><span style={{fontWeight:600,textAlign:"right"}}>{onD}{form.onlineFeeMode==="flat"&&!form.wOnline?" "+cur:""}</span>
-          <span style={{color:"#555"}}>Offline Conv.</span><span style={{fontWeight:600,textAlign:"right"}}>{offD}{form.offlineFeeMode==="flat"&&!form.wOffline?" "+cur:""}</span>
-          <span style={{color:"#555"}}>Admin &amp; Maintenance (Monthly)</span><span style={{fontWeight:600,textAlign:"right"}}>{form.wAdmin?"Waived":fN(v_admin,cur)+" "+cur}</span>
-          <span style={{color:"#555"}}>Implementation (One-time)</span><span style={{fontWeight:600,textAlign:"right"}}>{form.wImpl?"Waived":(!form.implEnabled?"N/A":fN(v_impl,cur)+" "+cur)}</span>
-          <span style={{color:"#555"}}>SMS Notification (per msg)</span><span style={{fontWeight:600,textAlign:"right"}}>{form.wSms?"Waived":(!form.smsEnabled?"N/A":fN(v_sms,cur)+" "+cur)}</span>
-          {form.posQty>0&&<><span style={{color:"#555"}}>POS ×{form.posQty} {form.posQty>1?"units":"unit"} (Monthly)</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.posQty*pr.pos,cur)} {cur}/mo</span></>}
-          {form.kioskQty>0&&<><span style={{color:"#555"}}>Kiosk ×{form.kioskQty} {form.kioskQty>1?"units":"unit"} (Monthly)</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.kioskQty*pr.kiosk,cur)} {cur}/mo</span></>}
+        <div style={{display:"grid",gridTemplateColumns:"1fr auto auto",gap:"6px 16px",fontSize:14,marginBottom:12}}>
+          <span style={{color:"#555",fontWeight:600}}>Item</span><span style={{color:"#555",fontWeight:600,textAlign:"right"}}>Standard</span><span style={{color:"#555",fontWeight:600,textAlign:"right"}}>Actual</span>
+          <span style={{color:"#555"}}>Online Conv.</span><span style={{textAlign:"right",color:"#aaa"}}>{getConvDisplay(form.onlineFeeMode,"3","")}</span><span style={{fontWeight:600,textAlign:"right",color:form.wOnline?CI.pink:"inherit"}}>{onD}{form.wOnline&&form.wOnlineMonths?` (${form.wOnlineMonths} mo)`:""}</span>
+          <span style={{color:"#555"}}>Offline Conv.</span><span style={{textAlign:"right",color:"#aaa"}}>{getConvDisplay(form.offlineFeeMode,"3","")}</span><span style={{fontWeight:600,textAlign:"right",color:form.wOffline?CI.pink:"inherit"}}>{offD}{form.wOffline&&form.wOfflineMonths?` (${form.wOfflineMonths} mo)`:""}</span>
+          <span style={{color:"#555"}}>Admin & Maintenance</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.admin,cur)} {cur}/mo</span><span style={{fontWeight:600,textAlign:"right",color:form.wAdmin?CI.pink:"inherit"}}>{form.wAdmin?("Waived"+(form.wAdminMonths?` (${form.wAdminMonths} mo)`:"")):(fN(v_admin,cur)+" "+cur+"/mo")}</span>
+          <span style={{color:"#555"}}>Implementation</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.impl,cur)} {cur}</span><span style={{fontWeight:600,textAlign:"right",color:form.wImpl?CI.pink:"inherit"}}>{form.wImpl?"Waived":(!form.implEnabled?"N/A":fN(v_impl,cur)+" "+cur)}</span>
+          <span style={{color:"#555"}}>SMS Notification</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.sms,cur)} {cur}/msg</span><span style={{fontWeight:600,textAlign:"right",color:form.wSms?CI.pink:"inherit"}}>{form.wSms?("Waived"+(form.wSmsMonths?` (${form.wSmsMonths} mo)`:"")):(form.smsEnabled?fN(v_sms,cur)+" "+cur+"/msg":"N/A")}</span>
+          {form.posQty>0&&<><span style={{color:"#555"}}>POS ×{form.posQty} {form.posQty>1?"units":"unit"}</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.pos,cur)} {cur}/unit/mo</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.posQty*pr.pos,cur)} {cur}/mo</span></>}
+          {form.kioskQty>0&&<><span style={{color:"#555"}}>Kiosk ×{form.kioskQty} {form.kioskQty>1?"units":"unit"}</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.kiosk,cur)} {cur}/unit/mo</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.kioskQty*pr.kiosk,cur)} {cur}/mo</span></>}
         </div>
+        {/* Discount summary */}
+        {(form.wOnline||form.wOffline||form.wAdmin||form.wImpl||form.wSms)&&<div style={{padding:"10px 14px",borderRadius:12,background:"#FFF0F5",border:"1.5px solid #E91E8C",marginBottom:12}}>
+          <div style={{fontSize:12,fontWeight:700,color:CI.pink,marginBottom:4}}>Discount Summary</div>
+          <div style={{fontSize:12,color:"#555",lineHeight:1.8}}>
+            {form.wOnline&&<div>• Online Convenience Fee — Waived{form.wOnlineMonths?` for ${form.wOnlineMonths} months`:""} (standard: {getConvDisplay(form.onlineFeeMode,"3","")})</div>}
+            {form.wOffline&&<div>• Offline Convenience Fee — Waived{form.wOfflineMonths?` for ${form.wOfflineMonths} months`:""} (standard: {getConvDisplay(form.offlineFeeMode,"3","")})</div>}
+            {form.wAdmin&&<div>• Admin & Maintenance — Waived{form.wAdminMonths?` for ${form.wAdminMonths} months`:""} (standard: {fN(pr.admin,cur)} {cur}/mo)</div>}
+            {form.wImpl&&<div>• Implementation — Waived (standard: {fN(pr.impl,cur)} {cur})</div>}
+            {form.wSms&&<div>• SMS Notification — Waived{form.wSmsMonths?` for ${form.wSmsMonths} months`:""} (standard: {fN(pr.sms,cur)} {cur}/msg)</div>}
+          </div>
+        </div>}
         <div className="sg2"><Inp label="Discount" value={form.discount} onChange={up("discount")} ph="0"/><Inp label="Taxes" value={form.taxes} onChange={up("taxes")} ph="0"/></div>
         <p style={{fontSize:12,color:"#888",marginTop:8,fontStyle:"italic"}}>* Convenience fees are usage-based. No fixed grand total.</p>
       </div>
@@ -327,11 +389,15 @@ export default function App(){
         </div>
       </div>
 
-      {/* Special Terms — dynamic list */}
+      {/* Special Terms — dynamic list with reorder */}
       <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Special Terms</span><button style={{background:"none",border:`2px solid ${CI.green}`,color:CI.green,borderRadius:50,padding:"4px 14px",fontSize:13,fontWeight:800,cursor:"pointer"}} onClick={()=>setForm(p=>({...p,specialTerms:[...p.specialTerms,""]}))}>+ Add Term</button></div>
         {form.specialTerms.map((t,i)=>(
           <div key={i} style={{display:"flex",gap:8,marginBottom:10,alignItems:"flex-start"}}>
-            <span style={{fontSize:12,fontWeight:700,color:"#999",paddingTop:12,flexShrink:0}}>{i+1}.</span>
+            <div style={{display:"flex",flexDirection:"column",gap:2,paddingTop:8,flexShrink:0}}>
+              <button disabled={i===0} onClick={()=>{const arr=[...form.specialTerms];[arr[i-1],arr[i]]=[arr[i],arr[i-1]];setForm(p=>({...p,specialTerms:arr}))}} style={{background:"none",border:"none",cursor:i===0?"default":"pointer",color:i===0?"#ddd":"#888",fontSize:14,padding:0,lineHeight:1}}>▲</button>
+              <span style={{fontSize:11,fontWeight:700,color:"#999",textAlign:"center"}}>{i+1}</span>
+              <button disabled={i===form.specialTerms.length-1} onClick={()=>{const arr=[...form.specialTerms];[arr[i],arr[i+1]]=[arr[i+1],arr[i]];setForm(p=>({...p,specialTerms:arr}))}} style={{background:"none",border:"none",cursor:i===form.specialTerms.length-1?"default":"pointer",color:i===form.specialTerms.length-1?"#ddd":"#888",fontSize:14,padding:0,lineHeight:1}}>▼</button>
+            </div>
             <textarea value={t} onChange={e=>{const arr=[...form.specialTerms];arr[i]=e.target.value;setForm(p=>({...p,specialTerms:arr}))}} placeholder="Enter special term..." style={{...ui.inp,minHeight:60,resize:"vertical",flex:1}}/>
             {form.specialTerms.length>1&&<button onClick={()=>{const arr=form.specialTerms.filter((_,j)=>j!==i);setForm(p=>({...p,specialTerms:arr}))}} style={{background:"none",border:"none",color:"#e53935",fontSize:18,cursor:"pointer",padding:"8px",flexShrink:0,fontWeight:700}}>✕</button>}
           </div>
@@ -481,10 +547,14 @@ window.onload=function(){
 {/* PAGE 2 */}
 <div className="a4" style={pg.page}>
 <Lg w={150}/><div style={pg.hr}/>
-<table style={{...pg.tbl,marginTop:4}}><tbody>
-<tr><td style={pg.td}>Discount</td><td style={{...pg.td,textAlign:"right",width:"40%"}}>{fN(disc,cur)}</td></tr>
-<tr><td style={pg.td}>Taxes</td><td style={{...pg.td,textAlign:"right"}}>{fN(tax,cur)}</td></tr>
-</tbody></table>
+{(discountLines.length>0||tax>0)&&<table style={{...pg.tbl,marginTop:4}}><tbody>
+{discountLines.length>0&&<tr><td style={pg.td}>Discount</td><td style={{...pg.td,textAlign:"left",width:"40%"}}>
+<div style={{fontSize:8,color:"#333",lineHeight:1.7}}>
+{discountLines.map((dl,i)=><div key={i}>• {dl.item}: {dl.std} → {dl.act}{dl.act!=="—"&&dl.std!=="—"?" (reduced by "+dl.diff+")":""}</div>)}
+</div>
+</td></tr>}
+{tax>0&&<tr><td style={pg.td}>Taxes</td><td style={{...pg.td,textAlign:"right"}}>{fN(tax,cur)}</td></tr>}
+</tbody></table>}
 {isBundle?(<p style={{fontSize:8.5,fontStyle:"italic",margin:"8px 0",textAlign:"justify"}}><i>Currency: Fees in this Order are calculated in <b>{curL}</b>. The discounts contained in the fee table(s) above are valid for this Order only and may not be carried over to any future amendments or orders, which will be, unless otherwise agreed, at the applicable list price. For the avoidance of doubt, such discounted pricing shall remain applicable throughout the entire Subscription Term, including the Initial Term and any automatic renewal periods, unless otherwise expressly agreed in writing by both parties.</i></p>):(<p style={{fontSize:8.5,fontStyle:"italic",margin:"8px 0",textAlign:"justify"}}><i>Currency: Fees in this Order are calculated in <b>{curL}</b>. The discounts contained in the fee table(s) above are valid for this Order only and may not be carried over to any future amendments or orders, which will be, unless otherwise agreed, at the applicable list price.</i></p>)}
 <p style={{fontSize:9,margin:"6px 0",textAlign:"justify"}}><b>Off Set:</b> The Company will be entitled to offset any amounts due to it (under any agreement) against any amount payable to the Customer under this Agreement.</p>
 <p style={{fontSize:9,margin:"6px 0",textAlign:"justify"}}><b>Offset Arrangements:</b> The Company reserves the right to offset any amounts due to it (under any agreement) against any amounts payable to the Customer under this Agreement. Furthermore, this Agreement provides the Company the option to specifically offset payments received from Customer's subscription services against any due payments to the Company and its affiliates, as part of the settlement process.</p>
