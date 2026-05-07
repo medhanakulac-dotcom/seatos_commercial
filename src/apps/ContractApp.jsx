@@ -82,26 +82,6 @@ export default function App(){
   const[settingsLoaded,setSettingsLoaded]=useState(false);
   const[saving,setSaving]=useState(false);
   const[saveMsg,setSaveMsg]=useState("");
-
-  /* Auto-load settings from Supabase on mount */
-  useEffect(()=>{
-    loadSettings().then(data=>{
-      if(data){
-        if(data.pricing)setPricing(data.pricing);
-        if(data.company)setCompany(data.company);
-      }
-      setSettingsLoaded(true);
-    });
-  },[]);
-
-  /* Save settings to Supabase */
-  const handleSave=async()=>{
-    setSaving(true);setSaveMsg("");
-    const ok=await saveSettings(pricing,company);
-    setSaveMsg(ok?"✅ Saved!":"❌ Save failed");
-    setSaving(false);
-    setTimeout(()=>setSaveMsg(""),3000);
-  };
   const[form,setForm]=useState({
     orderType:"regular",country:"Thailand",currency:"THB",customerName:"",address:"",contactEmail:"",custRegNum:"",
     subStartDate:new Date().toISOString().split("T")[0],termMonths:12,
@@ -119,6 +99,26 @@ export default function App(){
     includeAmendment:false,twelveGoEntity:TGO[0]
   });
   const[view,setView]=useState("form");
+
+  /* Auto-load settings from Supabase on mount — AFTER all useState */
+  useEffect(()=>{
+    loadSettings().then(data=>{
+      if(data){
+        if(data.pricing)setPricing(data.pricing);
+        if(data.company)setCompany(data.company);
+      }
+      setSettingsLoaded(true);
+    }).catch(()=>setSettingsLoaded(true));
+  },[]);
+
+  /* Save settings to Supabase */
+  const handleSave=async()=>{
+    setSaving(true);setSaveMsg("");
+    const ok=await saveSettings(pricing,company);
+    setSaveMsg(ok?"✅ Saved!":"❌ Save failed");
+    setSaving(false);
+    setTimeout(()=>setSaveMsg(""),3000);
+  };
   const up=k=>v=>setForm(p=>({...p,[k]:v}));
   const cur=form.currency;const pr=pricing[cur];const isBundle=form.orderType==="bundle";
 
