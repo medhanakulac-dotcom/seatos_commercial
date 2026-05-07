@@ -282,7 +282,7 @@ export default function App(){
       </div>
 
       {/* Country & Currency */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Country & Currency</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Country &amp; Currency</span></div>
         <div className="sg3">
           <SearchSel label="Country *" value={form.country} onChange={v=>{up("country")(v);if(COUNTRY_CUR[v])up("currency")(COUNTRY_CUR[v])}} opts={COUNTRIES.map(c=>({v:c,l:c}))}/>
           <SearchSel label="Currency *" value={form.currency} onChange={up("currency")} opts={CURRENCIES.map(c=>({v:c,l:c+" — "+pricing[c].name}))}/>
@@ -311,7 +311,7 @@ export default function App(){
       </div>
 
       {/* Fees */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Licenses & Fees</span><span style={ui.badge}>{cur}</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Licenses &amp; Fees</span><span style={ui.badge}>{cur}</span></div>
         {/* Online */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Online Convenience Fee</b><Waive on={form.wOnline} set={up("wOnline")}/></div>
           {!form.wOnline&&<div className="sg3"><Sel label="Mode" value={form.onlineFeeMode} onChange={up("onlineFeeMode")} opts={[{v:"percent",l:"% of transaction"},{v:"flat",l:"Flat "+cur}]}/>{form.onlineFeeMode==="percent"?<Inp label="%" value={form.onlineFeePercent} onChange={up("onlineFeePercent")} ph="3"/>:<Inp label={cur} value={form.onlineFeeFlat} onChange={up("onlineFeeFlat")} ph={String(pr.online)}/>}<div style={{fontSize:12,color:"#888",paddingTop:22}}>Ref: {fN(pr.online,cur)} {cur}/txn</div></div>}
@@ -354,7 +354,7 @@ export default function App(){
           <span style={{color:"#555",fontWeight:600}}>Item</span><span style={{color:"#555",fontWeight:600,textAlign:"right"}}>Standard</span><span style={{color:"#555",fontWeight:600,textAlign:"right"}}>Actual</span>
           <span style={{color:"#555"}}>Online Conv.</span><span style={{textAlign:"right",color:"#aaa"}}>{getConvDisplay(form.onlineFeeMode,"3","")}</span><span style={{fontWeight:600,textAlign:"right",color:form.wOnline?CI.pink:"inherit"}}>{onD}{form.wOnline&&form.wOnlineMonths?` (${form.wOnlineMonths} mo)`:""}</span>
           <span style={{color:"#555"}}>Offline Conv.</span><span style={{textAlign:"right",color:"#aaa"}}>{getConvDisplay(form.offlineFeeMode,"3","")}</span><span style={{fontWeight:600,textAlign:"right",color:form.wOffline?CI.pink:"inherit"}}>{offD}{form.wOffline&&form.wOfflineMonths?` (${form.wOfflineMonths} mo)`:""}</span>
-          <span style={{color:"#555"}}>Admin & Maintenance</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.admin,cur)} {cur}/mo</span><span style={{fontWeight:600,textAlign:"right",color:form.wAdmin?CI.pink:"inherit"}}>{form.wAdmin?("Waived"+(form.wAdminMonths?` (${form.wAdminMonths} mo)`:"")):(fN(v_admin,cur)+" "+cur+"/mo")}</span>
+          <span style={{color:"#555"}}>Admin &amp; Maintenance</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.admin,cur)} {cur}/mo</span><span style={{fontWeight:600,textAlign:"right",color:form.wAdmin?CI.pink:"inherit"}}>{form.wAdmin?("Waived"+(form.wAdminMonths?` (${form.wAdminMonths} mo)`:"")):(fN(v_admin,cur)+" "+cur+"/mo")}</span>
           <span style={{color:"#555"}}>Implementation</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.impl,cur)} {cur}</span><span style={{fontWeight:600,textAlign:"right",color:form.wImpl?CI.pink:"inherit"}}>{form.wImpl?"Waived":(!form.implEnabled?"N/A":fN(v_impl,cur)+" "+cur)}</span>
           {form.smsEnabled&&<><span style={{color:"#555"}}>SMS Notification</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.sms,cur)} {cur}/msg</span><span style={{fontWeight:600,textAlign:"right",color:form.wSms?CI.pink:"inherit"}}>{form.wSms?("Waived"+(form.wSmsMonths?` (${form.wSmsMonths} mo)`:"")):(fN(v_sms,cur)+" "+cur+"/msg")}</span></>}
           {form.posQty>0&&<><span style={{color:"#555"}}>POS ×{form.posQty} {form.posQty>1?"units":"unit"}</span><span style={{textAlign:"right",color:"#aaa"}}>{fN(pr.pos,cur)} {cur}/unit/mo</span><span style={{fontWeight:600,textAlign:"right"}}>{fN(form.posQty*pr.pos,cur)} {cur}/mo</span></>}
@@ -366,7 +366,7 @@ export default function App(){
           <div style={{fontSize:12,color:"#555",lineHeight:1.8}}>
             {form.wOnline&&<div>• Online Convenience Fee — Waived{form.wOnlineMonths?` for ${form.wOnlineMonths} months`:""} (standard: {getConvDisplay(form.onlineFeeMode,"3","")})</div>}
             {form.wOffline&&<div>• Offline Convenience Fee — Waived{form.wOfflineMonths?` for ${form.wOfflineMonths} months`:""} (standard: {getConvDisplay(form.offlineFeeMode,"3","")})</div>}
-            {form.wAdmin&&<div>• Admin & Maintenance — Waived{form.wAdminMonths?` for ${form.wAdminMonths} months`:""} (standard: {fN(pr.admin,cur)} {cur}/mo)</div>}
+            {form.wAdmin&&<div>• Admin &amp; Maintenance — Waived{form.wAdminMonths?` for ${form.wAdminMonths} months`:""} (standard: {fN(pr.admin,cur)} {cur}/mo)</div>}
             {form.wImpl&&<div>• Implementation — Waived (standard: {fN(pr.impl,cur)} {cur})</div>}
             {form.wSms&&<div>• SMS Notification — Waived{form.wSmsMonths?` for ${form.wSmsMonths} months`:""} (standard: {fN(pr.sms,cur)} {cur}/msg)</div>}
           </div>
@@ -376,7 +376,7 @@ export default function App(){
       </div>
 
       {/* Signatory */}
-      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Customer Signatory & Billing</span></div>
+      <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Customer Signatory &amp; Billing</span></div>
         <div className="sg2">
           <Inp label="Name *" value={form.custSignName} onChange={up("custSignName")}/>
           <Inp label="Title" value={form.custSignTitle} onChange={up("custSignTitle")}/>
