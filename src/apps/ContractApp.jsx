@@ -11,15 +11,15 @@ const sbFetch=async(method,body)=>{
     let url=base;let opts={method,headers};
     if(method==="GET"){url=base+"?id=eq.default&select=*"}
     else{
-      /* Use POST with upsert (merge-duplicates) instead of PATCH */
       opts.method="POST";
       opts.body=JSON.stringify({id:"default",...body});
     }
     const r=await fetch(url,opts);
-    if(!r.ok){const t=await r.text();console.error("Supabase error:",r.status,t);return null}
-    const data=await r.json();
-    return data;
-  }catch(e){console.error("Supabase:",e);return null}
+    if(!r.ok)return null;
+    const text=await r.text();
+    if(!text||text.trim()==="")return method==="GET"?[]:true;
+    try{return JSON.parse(text)}catch(e){return method==="GET"?[]:true}
+  }catch(e){return null}
 };
 const loadSettings=async()=>{const d=await sbFetch("GET");return d&&d[0]?{pricing:d[0].pricing,company:d[0].company}:null};
 const saveSettings=async(pricing,company)=>await sbFetch("POST",{pricing,company,updated_at:new Date().toISOString()});
@@ -76,6 +76,9 @@ const Waive=({on,set})=>(<span style={{display:"inline-flex",alignItems:"center"
 const Ft=({label,n})=>(<><div style={pg.init}>Initial (SeatOS): ...............................................</div><div style={pg.ft}><span>{label}</span><span>Page {n}</span></div></>);
 
 export default function App(){
+  try{ return <AppInner/>; }catch(e){ return <div style={{padding:40,fontFamily:"monospace"}}><h2 style={{color:"red"}}>Error</h2><pre>{String(e)}</pre></div>; }
+}
+function AppInner(){
   const[pricing,setPricing]=useState(JSON.parse(JSON.stringify(DEF_PRICING)));
   const[company,setCompany]=useState({...DEF_COMPANY});
   const[showSettings,setShowSettings]=useState(false);
@@ -281,7 +284,7 @@ export default function App(){
         </div>
       </div>
 
-      {/* Country & Currency */}
+      {/* Country &amp; Currency */}
       <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Country &amp; Currency</span></div>
         <div className="sg3">
           <SearchSel label="Country *" value={form.country} onChange={v=>{up("country")(v);if(COUNTRY_CUR[v])up("currency")(COUNTRY_CUR[v])}} opts={COUNTRIES.map(c=>({v:c,l:c}))}/>
@@ -559,7 +562,7 @@ window.onload=function(){
 </tbody></table>}
 {isBundle?(<p style={{fontSize:8.5,fontStyle:"italic",margin:"8px 0",textAlign:"justify"}}><i>Currency: Fees in this Order are calculated in <b>{curL}</b>. The discounts contained in the fee table(s) above are valid for this Order only and may not be carried over to any future amendments or orders, which will be, unless otherwise agreed, at the applicable list price. For the avoidance of doubt, such discounted pricing shall remain applicable throughout the entire Subscription Term, including the Initial Term and any automatic renewal periods, unless otherwise expressly agreed in writing by both parties.</i></p>):(<p style={{fontSize:8.5,fontStyle:"italic",margin:"8px 0",textAlign:"justify"}}><i>Currency: Fees in this Order are calculated in <b>{curL}</b>. The discounts contained in the fee table(s) above are valid for this Order only and may not be carried over to any future amendments or orders, which will be, unless otherwise agreed, at the applicable list price.</i></p>)}
 
-{isBundle&&(<div style={{margin:"10px 0"}}><p style={{fontSize:9,textAlign:"justify",marginBottom:6}}><b>12GO Borne Fees:</b> Notwithstanding anything to the contrary in this Order, all fees shall be borne by {f.country==="Thailand"?"12Go (Thailand) Co., Ltd.":"12Go Asia PTE. LTD."} ("12GO"), an affiliate of the Company (the "12GO Borne Fees"), for as long as the Travel Supply Services Supplier Agreement, attached to this Order as Schedule D (the "Travel Supplier Services Agreement"), remains in full force and effect.</p><p style={{fontSize:9,textAlign:"justify",marginBottom:6}}>Upon expiration or termination of the Travel Supplier Services Agreement for any reason, 12GO shall no longer bear the 12GO Borne Fees, and the Customer shall be responsible for paying the applicable fees specified in this Order from the effective date of such termination or expiration.</p><p style={{fontSize:9,textAlign:"justify"}}>In the event of any conflict between this Order and the Special Deal Agreement terms and conditions, the terms and conditions of this Order shall prevail with respect to this Order.</p></div>)}
+{isBundle&&(<div style={{margin:"10px 0"}}><p style={{fontSize:9,textAlign:"justify",marginBottom:6}}><b>12GO Borne Fees:</b> Notwithstanding anything to the contrary in this Order, all fees shall be borne by {f.country==="Thailand"?"12Go (Thailand) Co., Ltd.":"12Go Asia PTE. LTD."} ("12GO"), an affiliate of the Company (the "12GO Borne Fees"), for as long as the Travel Supply Services Supplier Agreement which this Order is attached to as Schedule D (the "Travel Supplier Services Agreement"), remains in full force and effect.</p><p style={{fontSize:9,textAlign:"justify",marginBottom:6}}>Upon expiration or termination of the Travel Supplier Services Agreement for any reason, 12GO shall no longer bear the 12GO Borne Fees, and the Customer shall be responsible for paying the applicable fees specified in this Order from the effective date of such termination or expiration.</p><p style={{fontSize:9,textAlign:"justify"}}>In the event of any conflict between this Order and the Special Deal Agreement terms and conditions, the terms and conditions of this Order shall prevail with respect to this Order.</p></div>)}
 <div style={{fontWeight:700,fontSize:10,margin:"12px 0 4px"}}>SPECIAL TERMS</div>
 <table style={pg.tbl}><tbody><tr><td style={{...pg.tdB,width:"22%",fontStyle:"italic",verticalAlign:"top"}}>Special Terms</td><td style={{...pg.td,fontSize:9}}>{f.specialTerms.filter(t=>t.trim()).map((t,i)=><p key={i} style={{margin:i<f.specialTerms.length-1?"0 0 6px":"0"}}>• {t}</p>)}</td></tr></tbody></table>
 <div style={{border:"2px solid #000",borderLeft:"none",borderRight:"none",padding:"8px 12px",margin:"12px 0",textAlign:"center"}}><b style={{fontSize:8.5,textTransform:"uppercase"}}>EACH PARTY EXECUTING THIS ORDER REPRESENTS THAT, ON THE DATE SET FORTH BELOW (THE "EFFECTIVE DATE"), SUCH PARTY'S AUTHORIZED REPRESENTATIVE HAS READ, UNDERSTANDS, AND AGREES TO BE BOUND BY THIS THE TERMS OF THIS ORDER</b></div>
@@ -602,7 +605,7 @@ window.onload=function(){
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>2.1. Compliance with Laws. Each party will, at its own expense: (a) remain compliant with all laws and government regulations applicable to this Agreement (including privacy laws), and (b) reasonably cooperate with the other party in connection with such party's performance hereunder.</p>
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>2.2. Customer Responsibilities. Customer shall (a) be responsible for Permitted Users' compliance with this Agreement, (b) be responsible for the accuracy, quality, integrity, and legality of Customer Data and of the means by which Customer acquired such Customer Data, (c) use commercially reasonable efforts to prevent unauthorized access to or use of the Licensed Software, and notify Company promptly of any such unauthorized access or use, (d) use the Licensed Software only in accordance with the Documentation and applicable laws and government regulations, and (e) provide Company with assistance, information and materials that are reasonably requested as necessary to effectively provide the Subscription and Services. "Customer Data" means any data of the Customer, regardless of whether in printed or electronic form, that is (i) provided to or accessed by Company in order for Company to perform its obligations under this Agreement, (ii) provided to Company by Permitted Users, or (iii) derived from Customer's use of the Licensed Software and Services. Customer Data expressly excludes any Aggregated Data as defined in Section 5.1.</p>
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>2.3. Security. Company has implemented industry standard technical and organizational measures designed to secure the Licensed Software and Customer Data from accidental loss and unauthorized access, use, alteration or disclosure. Notwithstanding the foregoing, each party shall take, and hereby represents that it has taken, all steps to ensure the reliability and security of its systems; and that it will comply with their respective systems, network and data security policies.</p>
-<Ft label="SeatOS – Software Subscription & Services Agreement" n={pgN()}/></div>
+<Ft label="SeatOS – Software Subscription &amp; Services Agreement" n={pgN()}/></div>
 
 <div className="a4" style={pg.page}><Lg w={150}/><div style={pg.hr}/>
 <div style={pg.secTitle}>3. Payment</div>
@@ -620,7 +623,7 @@ window.onload=function(){
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>4.5. Notification obligations. Each party will: (a) notify the other party promptly of any material unauthorized possession, use, or knowledge of the other party's Confidential Information by any person that may become known to such party; (b) promptly furnish to the other party details of the unauthorized possession, use, or knowledge, or attempt thereof, and use reasonable efforts to assist the other party in investigating or preventing the recurrence of any unauthorized possession, use, or knowledge, or attempt thereof, of Confidential Information; (c) use reasonable efforts to cooperate with the other party in any litigation and investigation against third parties deemed necessary by the other party to protect its proprietary rights; and (d) promptly use reasonable efforts to prevent a recurrence of any such unauthorized possession, use, or knowledge of Confidential Information.</p>
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>4.6. Confidentiality of Access Credentials. In addition to the foregoing obligations, Customer agrees to hold the Licensed Software, and all logins and passwords for the Subscription, in confidence, and to protect the confidential nature thereof, and shall not disclose any trade secrets contained, embodied, or utilized therein, to anyone other than a Permitted User having a need for such disclosure, and then only to allow use of the Licensed Software as authorized herein. Customer shall take all reasonable steps to ensure that the provisions of this Section are not violated by any employee, Permitted User, or any other person under Customer's control or in its service.</p>
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>4.7. Privacy. Each Party will comply, to the extent applicable, with data protection and data privacy laws in performing their obligations under this Agreement. Company's Data Protection Addendum is also available at [insert URL], and the terms of such Data Protection Addendum as of the Effective Date are hereby incorporated into this Agreement by reference. Customer may separately elect to execute such Data Protection Addendum provided that Customer returns a copy of such executed Data Protection Addendum to Company at privacy@bookaway.com.</p>
-<Ft label="SeatOS – Software Subscription & Services Agreement" n={pgN()}/></div>
+<Ft label="SeatOS – Software Subscription &amp; Services Agreement" n={pgN()}/></div>
 
 <div className="a4" style={pg.page}><Lg w={150}/><div style={pg.hr}/>
 <div style={pg.secTitle}>5. Intellectual property and proprietary rights</div>
@@ -634,7 +637,7 @@ window.onload=function(){
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>6.4. Either party may terminate this Agreement or any Order, or suspend its performance hereunder or thereunder, if the other party becomes insolvent or bankrupt or ceases to do business.</p>
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>6.5. Upon any termination of this Agreement, Customer shall immediately discontinue all use of the Licensed Software Subscription and Services and promptly pay to Company any amounts that may be due and payable under this Agreement. In addition, each Party shall: (a) immediately discontinue all use of the other Party's Confidential Information; (b) at the option of the disclosing Party, either return or destroy all Confidential Information of the disclosing Party in its possession; and (c) delete the disclosing Party's Confidential Information from its computer storage or any other media, except for archival copies which may be retained and shall be destroyed in accordance with the party's record retention policy. Any such retained copies shall remain subject to Section 4 (Confidentiality). Each Party will, on request from the disclosing Party, provide the disclosing Party with a written certification of compliance with this Section 6.5 signed by an officer.</p>
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>6.6. Neither expiration nor termination of this Agreement will terminate those obligations and rights of the parties pursuant to provisions of this Agreement which by their express terms are intended to survive and such provisions will survive the expiration or termination of this Agreement. Without limiting the foregoing, the respective rights and obligations of the parties under Sections 1.4, 1.5, 2.1, 3.4, 4, 5, 6.5, 6.6, 7.3, 8, 9 and 10 will survive the expiration or termination of this Agreement regardless of when such termination becomes effective.</p>
-<Ft label="SeatOS – Software Subscription & Services Agreement" n={pgN()}/></div>
+<Ft label="SeatOS – Software Subscription &amp; Services Agreement" n={pgN()}/></div>
 
 <div className="a4" style={pg.page}><Lg w={150}/><div style={pg.hr}/>
 <div style={pg.secTitle}>7. Warranties; Disclaimers</div>
@@ -646,7 +649,7 @@ window.onload=function(){
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>8.2. Company's obligations under this Section 8 are expressly conditioned on the following: Customer shall (a) promptly notify Company in writing of any such claim of which Customer has actual knowledge, (b) in writing, grant Company sole control of the defense of any such claim and of all negotiations for its settlement or compromise, provided that no such settlement or compromise may impose any monetary or other obligations on Customer, and (c) reasonably cooperate with Company to facilitate the settlement or defense of the claim.</p>
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>8.3. Should the Licensed Software become, or in Company's opinion be likely to become, the subject of a claim of infringement of a trade secret, trademark, or copyright, Company may (a) procure for Customer, at no additional cost to Customer, the right to continue to use the Subscription, (b) replace or modify the Licensed Software, at no cost to Customer, to make it non-infringing, provided that the same function is performed by the replacement or modified Licensed Software, or (c) if in Company's judgment the right to continue to use the Subscription cannot be reasonably procured or the Licensed Software cannot reasonably be replaced or modified, terminate this Agreement and grant Customer a pro-rated refund of any advance fees paid applicable to the remainder of the Subscription Term.</p>
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>8.4. This Section 8 states the entire liability of Company with respect to infringement by the Company Licensed Software, or any parts thereof, and Company shall have no additional liability with respect to any alleged or proven infringement.</p>
-<Ft label="SeatOS – Software Subscription & Services Agreement" n={pgN()}/></div>
+<Ft label="SeatOS – Software Subscription &amp; Services Agreement" n={pgN()}/></div>
 
 <div className="a4" style={pg.page}><Lg w={150}/><div style={pg.hr}/>
 <div style={pg.secTitle}>9. Limitation of Liability; Damages</div>
@@ -663,7 +666,7 @@ window.onload=function(){
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>10.8. Governing Law. Without regard to its conflicts of laws principles, the laws of Singapore govern all matters arising under or relating to this Agreement. The United Nations Convention on Contracts for the International Sale of Goods do not apply to this Agreement. The parties further agree that the party which substantially prevails in a dispute shall be entitled to an award of attorneys' fees and costs.</p>
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>10.9. Dispute Resolution. In any legal action relating to this Agreement, Customer agrees to the exercise of jurisdiction over it by the competent court in Singapore. Customer agrees that, if it brings any such action, it shall do so in the competent court in Singapore.</p>
 <p style={{fontSize:9,marginBottom:4,textAlign:"justify"}}>10.10. Language. The original and controlling version of this Agreement shall be the version using the English Language. All translations of this Agreement into other languages shall be for the convenience of the Parties only and shall not control the meaning or application of this Agreement. All notices and other communications required or permitted by this Agreement must be in English, and the interpretation and application of such notices and other communications shall be based solely upon the English language version thereof.</p>
-<Ft label="SeatOS – Software Subscription & Services Agreement" n={pgN()}/></div>
+<Ft label="SeatOS – Software Subscription &amp; Services Agreement" n={pgN()}/></div>
 
 {/* AMENDMENT */}
 {f.includeAmendment&&(
