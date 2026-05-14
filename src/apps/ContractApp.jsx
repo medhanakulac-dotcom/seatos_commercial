@@ -544,7 +544,7 @@ window.onload=function(){
 {f.posQty>0&&<tr><td style={pg.td}>POS ×{f.posQty} {f.posQty>1?"units":"unit"}</td><td style={{...pg.td,textAlign:"right"}}>{fN(f.posQty*pr.pos,cur)} /mo</td></tr>}
 {f.kioskQty>0&&<tr><td style={pg.td}>Kiosk ×{f.kioskQty} {f.kioskQty>1?"units":"unit"}</td><td style={{...pg.td,textAlign:"right"}}>{fN(f.kioskQty*pr.kiosk,cur)} /mo</td></tr>}
 <tr><td style={pg.tdB}>Total for One-Time Payments</td><td style={{...pg.td,textAlign:"right",fontWeight:700}}>{fN(v_impl,cur)}</td></tr>
-<tr><td style={pg.tdB}>Total for Monthly Payments</td><td style={{...pg.td,textAlign:"right",fontWeight:700}}>{fN(v_admin,cur)}</td></tr>
+<tr><td style={pg.tdB}>Total for Monthly Payments</td><td style={{...pg.td,textAlign:"right",fontWeight:700}}>{fN(v_admin,cur)} x 12</td></tr>
 </tbody></table>
 <Ft label="SeatOS – Order Form" n={pgN()}/>
 </div>
