@@ -90,6 +90,7 @@ function AppInner(){
     subStartDate:new Date().toISOString().split("T")[0],termMonths:12,
     onlineFeeMode:"percent",onlineFeePercent:"3",onlineFeeFlat:"",
     offlineFeeMode:"percent",offlineFeePercent:"3",offlineFeeFlat:"",
+    convUnit:"ticket",
     adminFee:"",implFee:"",smsFee:"",
     implEnabled:true,smsEnabled:false,
     wOnline:false,wOffline:false,wAdmin:false,wImpl:false,wSms:false,
@@ -125,8 +126,9 @@ function AppInner(){
   const up=k=>v=>setForm(p=>({...p,[k]:v}));
   const cur=form.currency;const pr=pricing[cur];const isBundle=form.orderType==="bundle";
 
+  const convLabel=form.convUnit==="booking"?"per booking":"per ticket";
   const getConvDisplay=(mode,pct,flat)=>{
-    if(mode==="percent")return(pct||"3")+"%";
+    if(mode==="percent")return(pct||"3")+"% "+convLabel;
     return fN(flat!==""?Number(flat):pr.online,cur);
   };
   const onD=form.wOnline?"Waived":getConvDisplay(form.onlineFeeMode,form.onlineFeePercent,form.onlineFeeFlat);
@@ -315,6 +317,11 @@ function AppInner(){
 
       {/* Fees */}
       <div className="scard" style={ui.card}><div className="sct" style={ui.ct}><span>Licenses &amp; Fees</span><span style={ui.badge}>{cur}</span></div>
+        {/* Convenience fee unit selector */}
+        <div style={{display:"flex",gap:8,marginBottom:14}}>
+          <span style={{fontSize:12,color:"#888",paddingTop:6}}>Convenience fee basis:</span>
+          {[{v:"ticket",l:"Per Ticket"},{v:"booking",l:"Per Booking"}].map(o=><button key={o.v} onClick={()=>up("convUnit")(o.v)} style={{padding:"5px 16px",borderRadius:50,border:form.convUnit===o.v?`2px solid ${CI.orange}`:"2px solid #e8e4df",background:form.convUnit===o.v?"#FFF8F0":"#fff",fontSize:12,fontWeight:700,color:form.convUnit===o.v?CI.orange:"#999",cursor:"pointer"}}>{o.l}</button>)}
+        </div>
         {/* Online */}
         <div style={{marginBottom:14}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><b style={{fontSize:13}}>Online Convenience Fee</b><Waive on={form.wOnline} set={up("wOnline")}/></div>
           {!form.wOnline&&<div className="sg3"><Sel label="Mode" value={form.onlineFeeMode} onChange={up("onlineFeeMode")} opts={[{v:"percent",l:"% of transaction"},{v:"flat",l:"Flat "+cur}]}/>{form.onlineFeeMode==="percent"?<Inp label="%" value={form.onlineFeePercent} onChange={up("onlineFeePercent")} ph="3"/>:<Inp label={cur} value={form.onlineFeeFlat} onChange={up("onlineFeeFlat")} ph={String(pr.online)}/>}<div style={{fontSize:12,color:"#888",paddingTop:22}}>Ref: {fN(pr.online,cur)} {cur}/txn</div></div>}
