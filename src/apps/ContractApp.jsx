@@ -129,7 +129,7 @@ function AppInner(){
   const convLabel=form.convUnit==="booking"?"per booking":"per ticket";
   const getConvDisplay=(mode,pct,flat)=>{
     if(mode==="percent")return(pct||"3")+"% "+convLabel;
-    return fN(flat!==""?Number(flat):pr.online,cur);
+    return fN(flat!==""?Number(flat):pr.online,cur)+" "+convLabel;
   };
   const onD=form.wOnline?"Waived":getConvDisplay(form.onlineFeeMode,form.onlineFeePercent,form.onlineFeeFlat);
   const offD=form.wOffline?"Waived":getConvDisplay(form.offlineFeeMode,form.offlineFeePercent,form.offlineFeeFlat);
