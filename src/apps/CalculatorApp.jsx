@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 
 // ─── CONFIG ──────────────────────────────────────────────────────
+// Country list is kept ONLY for the Deal Value pricing card (fee overrides).
+// The new segmentation framework (V1) no longer uses region groups for scoring.
 const REGIONS = {
   Thailand: "A",
   Indonesia: "A",
@@ -12,48 +14,82 @@ const REGIONS = {
   "Rest of World": "B",
 };
 
-const DEAL_VALUE_TIERS = {
-  A: [
-    { max: 1199, score: 0 },
-    { max: 2900, score: 1 },
-    { max: 4999, score: 2 },
-    { max: 9999, score: 3 },
-    { max: Infinity, score: 5 },
-  ],
-  B: [
-    { max: 900, score: 0 },
-    { max: 3000, score: 1 },
-    { max: 5000, score: 2 },
-    { max: Infinity, score: 3 },
-  ],
-  C: [
-    { max: 900, score: 0 },
-    { max: 3000, score: 1 },
-    { max: 5000, score: 2 },
-    { max: Infinity, score: 3 },
-  ],
+// ═════════════════════════════════════════════════════════════════
+// SEATOS COMMERCIAL SCORE V2 — 100 POINTS (separate Existing / New)
+// ─────────────────────────────────────────────────────────────────
+// Existing Operator:  Deal Value 50 · Expansion 30 · Strategic 20
+// New Operator:       Projected Deal Value 35 · Top Route/Demand 30
+//                     · Expansion 20 · Strategic 15
+//
+// Why separate:
+//   • Existing — actual revenue already shows importance; no need to
+//     re-score monthly tickets or Top Route.
+//   • New — no real revenue yet, so Top Route / Demand Signal carries
+//     its own heavy weight as a proxy for real transaction potential.
+//   • Travel Agencies are auto-classified Dormant.
+// ═════════════════════════════════════════════════════════════════
+
+// Per-operator factor weights (each column sums to 100).
+const WEIGHTS = {
+  existing: { deal: 50, topRoute: 0, expansion: 30, strategic: 20 },
+  new: { deal: 35, topRoute: 30, expansion: 20, strategic: 15 },
 };
 
-const TICKET_VOLUME_TIERS = {
-  A: [
-    { max: 3000, score: 0 },
-    { max: 10000, score: 2 },
-    { max: Infinity, score: 3 },
-  ],
-  B: [
-    { max: 500, score: 0 },
-    { max: 5000, score: 1 },
-    { max: Infinity, score: 3 },
-  ],
-  C: [
-    { max: 500, score: 0 },
-    { max: 5000, score: 1 },
-    { max: Infinity, score: 3 },
-  ],
+// Deal Value — annual USD figure mapped to a 0–1 level, then × the
+// per-operator Deal Value weight (Existing 50 / New 35).
+//   Existing: Actual Annual Revenue
+//   New:      Projected Annual Commission
+//             = Est. Monthly Tickets × Avg Ticket Price × Commission % × 12
+// NOTE: tiers are configurable defaults — adjust to your official scale.
+const DEAL_VALUE_TIERS = [
+  { max: 4999, frac: 0 },
+  { max: 19999, frac: 0.3 },
+  { max: 49999, frac: 0.6 },
+  { max: 99999, frac: 0.8 },
+  { max: Infinity, frac: 1 },
+];
+
+// Expansion Potential — same 3 criteria for both, raw max 30, then
+// normalized to the per-operator Expansion weight (Existing 30 / New 20).
+// Top Route is NOT here (New: own factor; Existing: not scored).
+const EXPANSION_CRITERIA = [
+  { key: "fleet", label: "Fleet > 20", points: 10 },
+  { key: "posKiosk", label: "POS / Kiosk / White-label opportunity", points: 10 },
+  { key: "multiRoute", label: "Multi-route / multi-branch potential", points: 10 },
+];
+const EXPANSION_RAW_MAX = 30;
+
+// Strategic Value — raw max 15, normalized to per-operator weight
+// (Existing 20 / New 15).
+const STRATEGIC_CRITERIA = [
+  { key: "marquee", label: "Marquee Brand", points: 5 },
+  { key: "caseStudy", label: "Case Study Potential", points: 5 },
+  { key: "marketLeverage", label: "Market Leverage", points: 5 },
+];
+const STRATEGIC_RAW_MAX = 15;
+
+// Top Route / Demand Signal (New operators only) — graded proxy for
+// real demand, scaled to the Top Route weight (30).
+const DEMAND_SIGNAL_LEVELS = [
+  { value: "none", label: "No demand signal", frac: 0 },
+  { value: "demand", label: "Some demand signal", frac: 0.5 },
+  { value: "topRoute", label: "On Travelier Top Route", frac: 1 },
+];
+
+// Segment Mapping (on 0–100 total)
+const SEGMENT_BANDS = [
+  { min: 80, name: "High" },
+  { min: 50, name: "Mid" },
+  { min: 20, name: "Low" },
+  { min: 0, name: "Dormant" },
+];
+
+const getFrac = (tiers, value) => {
+  for (const t of tiers) if (value <= t.max) return t.frac;
+  return tiers[tiers.length - 1].frac;
 };
 
-const OPERATOR_SCORES = { Operator: 2, Agency: 0 };
-
+// ─── DEAL VALUE PRICING (UNCHANGED) ──────────────────────────────
 const DEFAULTS = {
   ticketFee: 0.3,
   revenueShare: 3,
@@ -88,16 +124,16 @@ const getTierScore = (tiers, value) => {
 };
 
 const segmentColor = (s) =>
-  s === "High" ? "#16a34a" : s === "Mid-High" ? "#0d9488" : s === "Medium" ? "#ea8c00" : "#e11d48";
+  s === "High" ? "#16a34a" : s === "Mid" ? "#0d9488" : s === "Low" ? "#ea8c00" : "#71717a";
 
 const segmentBg = (s) =>
   s === "High"
     ? "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)"
-    : s === "Mid-High"
+    : s === "Mid"
     ? "linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%)"
-    : s === "Medium"
+    : s === "Low"
     ? "linear-gradient(135deg, #fef9c3 0%, #fde68a 100%)"
-    : "linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%)";
+    : "linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%)";
 
 // ─── ANIMATED NUMBER ─────────────────────────────────────────────
 function AnimNum({ value, prefix = "", suffix = "" }) {
@@ -167,7 +203,6 @@ function Card({ children, style, accent, className = "" }) {
         e.currentTarget.style.transform = "translateY(0)";
       }}
     >
-      {/* Top accent stripe */}
       {accent && (
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: accent }} />
       )}
@@ -201,13 +236,7 @@ function Pill({ children, color = "#f97316", style }) {
 function Toggle({ checked, onChange, label }) {
   return (
     <label
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        cursor: "pointer",
-        userSelect: "none",
-      }}
+      style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none" }}
     >
       <div
         onClick={() => onChange(!checked)}
@@ -215,9 +244,7 @@ function Toggle({ checked, onChange, label }) {
           width: 44,
           height: 24,
           borderRadius: 12,
-          background: checked
-            ? "linear-gradient(135deg, #f97316, #fb923c)"
-            : "#d4d4d8",
+          background: checked ? "linear-gradient(135deg, #f97316, #fb923c)" : "#d4d4d8",
           position: "relative",
           transition: "background 0.25s",
           flexShrink: 0,
@@ -237,9 +264,7 @@ function Toggle({ checked, onChange, label }) {
           }}
         />
       </div>
-      <span style={{ fontSize: 13, fontWeight: 500, color: "#52525b" }}>
-        {label}
-      </span>
+      <span style={{ fontSize: 13, fontWeight: 500, color: "#52525b" }}>{label}</span>
     </label>
   );
 }
@@ -257,21 +282,12 @@ function WaiverToggle({ checked, onChange }) {
         userSelect: "none",
         padding: "5px 12px",
         borderRadius: 100,
-        background: checked
-          ? "linear-gradient(135deg, #e11d48, #f43f5e)"
-          : "#f4f4f5",
+        background: checked ? "linear-gradient(135deg, #e11d48, #f43f5e)" : "#f4f4f5",
         transition: "all 0.25s",
         border: `1.5px solid ${checked ? "#e11d48" : "#d4d4d8"}`,
       }}
     >
-      <span
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: checked ? "#fff" : "#71717a",
-          letterSpacing: 0.3,
-        }}
-      >
+      <span style={{ fontSize: 11, fontWeight: 700, color: checked ? "#fff" : "#71717a", letterSpacing: 0.3 }}>
         {checked ? "WAIVED" : "Waive"}
       </span>
     </div>
@@ -326,15 +342,7 @@ function Input({ value, onChange, label, prefix, suffix, placeholder, error }) {
       </label>
       <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
         {prefix && (
-          <span
-            style={{
-              position: "absolute",
-              left: 14,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#a1a1aa",
-            }}
-          >
+          <span style={{ position: "absolute", left: 14, fontSize: 13, fontWeight: 600, color: "#a1a1aa" }}>
             {prefix}
           </span>
         )}
@@ -356,31 +364,17 @@ function Input({ value, onChange, label, prefix, suffix, placeholder, error }) {
             outline: "none",
             transition: "border-color 0.2s",
           }}
-          onFocus={(e) =>
-            (e.target.style.borderColor = error ? "#e11d48" : "#f97316")
-          }
-          onBlur={(e) =>
-            (e.target.style.borderColor = error ? "#e11d48" : "#e4e4e7")
-          }
+          onFocus={(e) => (e.target.style.borderColor = error ? "#e11d48" : "#f97316")}
+          onBlur={(e) => (e.target.style.borderColor = error ? "#e11d48" : "#e4e4e7")}
         />
         {suffix && (
-          <span
-            style={{
-              position: "absolute",
-              right: 14,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#a1a1aa",
-            }}
-          >
+          <span style={{ position: "absolute", right: 14, fontSize: 13, fontWeight: 600, color: "#a1a1aa" }}>
             {suffix}
           </span>
         )}
       </div>
       {error && (
-        <span style={{ fontSize: 11, color: "#e11d48", fontWeight: 500 }}>
-          {error}
-        </span>
+        <span style={{ fontSize: 11, color: "#e11d48", fontWeight: 500 }}>{error}</span>
       )}
     </div>
   );
@@ -415,15 +409,60 @@ function ScoreCard({ label, score, max, detail, color = "#f97316" }) {
   );
 }
 
+// ─── CHECK ROW (segmentation indicator) ──────────────────────────
+function CheckRow({ checked, onChange, label, points }) {
+  return (
+    <div
+      onClick={() => onChange(!checked)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10,
+        padding: "10px 14px",
+        borderRadius: 10,
+        cursor: "pointer",
+        userSelect: "none",
+        background: checked ? "#f0fdf4" : "#fafaf9",
+        border: `1.5px solid ${checked ? "#bbf7d0" : "#e4e4e7"}`,
+        transition: "all 0.2s",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: 6,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: checked ? "#16a34a" : "#fff",
+            border: `1.5px solid ${checked ? "#16a34a" : "#d4d4d8"}`,
+            transition: "all 0.2s",
+          }}
+        >
+          {checked && (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+          )}
+        </div>
+        <span style={{ fontSize: 13, fontWeight: 500, color: "#3f3f46" }}>{label}</span>
+      </div>
+      {typeof points === "number" && (
+        <span style={{ fontSize: 11, fontWeight: 700, color: checked ? "#16a34a" : "#a1a1aa" }}>+{points}</span>
+      )}
+    </div>
+  );
+}
+
 // ═════════════════════════════════════════════════════════════════
 // MAIN DASHBOARD
 // ═════════════════════════════════════════════════════════════════
 export default function App() {
-  // State
+  // ── Deal Value (pricing) state — UNCHANGED ──
   const [model, setModel] = useState("ticket");
   const [country, setCountry] = useState("Thailand");
-  const [operatorType, setOperatorType] = useState("Operator");
-  const [marqueeBrand, setMarqueeBrand] = useState(false);
   const [customPricing, setCustomPricing] = useState(false);
 
   const [ticketVolume, setTicketVolume] = useState("");
@@ -440,15 +479,35 @@ export default function App() {
   const [waiveImpl, setWaiveImpl] = useState(false);
   const [waiveMonths, setWaiveMonths] = useState(0); // 0-12 months waived
   const [waiveVariable, setWaiveVariable] = useState(false);
-  const [topRoute, setTopRoute] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
 
-  // Derived
+  // ── Commercial Score V2 state ──
+  const [operatorType, setOperatorType] = useState("Operator"); // Operator | Agency
+  const [customerType, setCustomerType] = useState("new"); // existing | new (default New)
+
+  // Deal Value input
+  //   Existing: manual Actual MONTHLY Revenue (annualized × 12).
+  //   New:      pulled from the Deal Value Calculator (calc.deal) — not typed here.
+  const [monthlyRevenue, setMonthlyRevenue] = useState(""); // existing only
+
+  // Top Route / Demand Signal (New only)
+  const [demandSignal, setDemandSignal] = useState("none"); // none | demand | topRoute
+
+  // Expansion Potential — 3 criteria
+  const [expFleet, setExpFleet] = useState(false);
+  const [expPosKiosk, setExpPosKiosk] = useState(false);
+  const [expMultiRoute, setExpMultiRoute] = useState(false);
+
+  // Strategic Value — 3 criteria
+  const [stratMarquee, setStratMarquee] = useState(false);
+  const [stratCaseStudy, setStratCaseStudy] = useState(false);
+  const [stratMarketLeverage, setStratMarketLeverage] = useState(false);
+
+  // ── Deal Value derived (UNCHANGED) ──
   const countryOverride = COUNTRY_OVERRIDES[country] || {};
   const defaultMonthlyFee = countryOverride.monthlyFee ?? DEFAULTS.monthlyFee;
   const isMonthlyFixed = countryOverride.monthlyFee != null;
 
-  // Sync monthlyFeeInput to country default when country changes
   useEffect(() => {
     const override = COUNTRY_OVERRIDES[country];
     setMonthlyFeeInput(String(override?.monthlyFee ?? DEFAULTS.monthlyFee));
@@ -466,9 +525,6 @@ export default function App() {
   const fixedFee = implFee + monthlyTotal;
   const hasAnyWaiver = waiveImpl || waiveMonths > 0 || waiveVariable || waiveOffline;
 
-  // Offline ticket calculation
-  // If percent mode: Online 20, Offline 80% → Total = 20 / (1 - 0.80) = 100, Offline = 80
-  // If number mode: just use the number directly
   const onlineVol = safe(ticketVolume);
   const offlinePct = offlineMode === "percent" ? Math.min(99.9, Math.max(0, safe(offlineInput))) : 0;
   const offlineVol = offlineMode === "percent"
@@ -495,25 +551,60 @@ export default function App() {
     }
   }, [model, onlineVol, offlineVol, totalVol, gmv, revenue, ticketFee, offlineFee, revShare, fixedFee, implFee, monthlyFeeRate, paidMonths, waiveMonths, monthlyTotal]);
 
-  const scores = useMemo(() => {
-    const vol = calc.vol;
-    const group = REGIONS[country];
-    const ticketScore = getTierScore(TICKET_VOLUME_TIERS[group], vol);
-    const dealScore = getTierScore(DEAL_VALUE_TIERS[group], calc.deal);
-    const opScore = OPERATOR_SCORES[operatorType];
-    const routeBonus = (country !== "Thailand" && topRoute) ? 1 : 0;
-    const total = ticketScore + dealScore + opScore + routeBonus;
-    const rawSegment =
-      total >= 7 ? "High" : total >= 4 ? "Medium" : "Low";
-    // Mid-High override: Operator scoring Medium with deal value > 5,000
-    const isMidHighOverride = rawSegment === "Medium" && operatorType === "Operator" && calc.deal > 5000;
-    const segment = marqueeBrand ? "High" : isMidHighOverride ? "Mid-High" : rawSegment;
-    const override = marqueeBrand && rawSegment !== "High";
-    const midHighOverride = isMidHighOverride && !marqueeBrand;
-    return { ticketScore, dealScore, opScore, routeBonus, total, segment, override, midHighOverride, rawSegment };
-  }, [calc, country, operatorType, marqueeBrand, topRoute]);
+  // ─── COMMERCIAL SCORE V2 (Existing / New) ──────────────────────
+  const seg = useMemo(() => {
+    const isNew = customerType === "new";
+    const W = WEIGHTS[isNew ? "new" : "existing"];
 
-  // ─── FORMULA STRING ────────────────────────────────────────────
+    // Deal Value — Existing: manual annual revenue.
+    //               New: pulled from the Deal Value Calculator (calc.deal).
+    const annualDealValue = isNew ? calc.deal : safe(monthlyRevenue) * 12;
+    const dealFrac = getFrac(DEAL_VALUE_TIERS, annualDealValue);
+    const dealScore = Math.round(dealFrac * W.deal);
+
+    // Top Route / Demand Signal — New only
+    const demandFrac = (DEMAND_SIGNAL_LEVELS.find((l) => l.value === demandSignal) || DEMAND_SIGNAL_LEVELS[0]).frac;
+    const topRouteScore = isNew ? Math.round(demandFrac * W.topRoute) : 0;
+
+    // Expansion Potential — raw 0–30, normalized to weight
+    const expansionRaw =
+      (expFleet ? 10 : 0) + (expPosKiosk ? 10 : 0) + (expMultiRoute ? 10 : 0);
+    const expansionScore = Math.round((expansionRaw / EXPANSION_RAW_MAX) * W.expansion);
+
+    // Strategic Value — raw 0–15, normalized to weight
+    const strategicRaw =
+      (stratMarquee ? 5 : 0) + (stratCaseStudy ? 5 : 0) + (stratMarketLeverage ? 5 : 0);
+    const strategicScore = Math.round((strategicRaw / STRATEGIC_RAW_MAX) * W.strategic);
+
+    const total = dealScore + topRouteScore + expansionScore + strategicScore;
+
+    // Factor list for cards / chips (order + colors)
+    const factors = [
+      { key: "deal", label: isNew ? "Proj. Deal Value" : "Deal Value", score: dealScore, max: W.deal, color: "#14b8a6" },
+      ...(isNew ? [{ key: "topRoute", label: "Demand Signal", score: topRouteScore, max: W.topRoute, color: "#a855f7" }] : []),
+      { key: "expansion", label: "Expansion", score: expansionScore, max: W.expansion, color: "#f97316" },
+      { key: "strategic", label: "Strategic", score: strategicScore, max: W.strategic, color: "#7c3aed" },
+    ];
+
+    // Segment band
+    const band = SEGMENT_BANDS.find((b) => total >= b.min).name;
+
+    // Travel Agency Rule — auto Dormant
+    const isAgency = operatorType === "Agency";
+    const segment = isAgency ? "Dormant" : band;
+
+    return {
+      isNew, W, annualDealValue, dealScore, topRouteScore,
+      expansionRaw, expansionScore, strategicRaw, strategicScore,
+      factors, total, band, segment, isAgency,
+    };
+  }, [
+    customerType, monthlyRevenue, calc.deal,
+    demandSignal, expFleet, expPosKiosk, expMultiRoute,
+    stratMarquee, stratCaseStudy, stratMarketLeverage, operatorType,
+  ]);
+
+  // ─── DEAL VALUE FORMULA STRING (UNCHANGED) ─────────────────────
   const formula = useMemo(() => {
     const monthlyLabel = waiveMonths > 0
       ? `Monthly Fee (${fmt(monthlyFeeRate)} × ${paidMonths} mo, ${waiveMonths} waived)`
@@ -563,7 +654,7 @@ export default function App() {
     }
   }, [model, onlineVol, offlineVol, gmv, revenue, ticketFee, offlineFee, revShare, calc, implFee, monthlyFeeRate, monthlyTotal, paidMonths, waiveMonths, waiveImpl, waiveVariable, waiveOffline]);
 
-  // Comparison (default vs custom/waived)
+  // Comparison (default vs custom/waived) — UNCHANGED
   const comparison = useMemo(() => {
     if (!customPricing && !hasAnyWaiver) return null;
     const defFixed = DEFAULTS.implementationFee + (DEFAULTS.monthlyFee * 12);
@@ -615,7 +706,7 @@ export default function App() {
           padding: "0 16px 60px",
         }}
       >
-        {/* ─── HEADER (SeatOS Document Builder style) ─────────── */}
+        {/* ─── HEADER ───────────────────────────────────────── */}
         <div
           style={{
             background: "#fff",
@@ -639,10 +730,10 @@ export default function App() {
           >
             <div>
               <b style={{ fontSize: 16, display: "block", color: "#1A1A1A" }}>
-                SeatOS BD Deal Calculator
+                SeatOS Commercial Segmentation
               </b>
               <span style={{ fontSize: 11, color: "#8E8E93" }}>
-                Deal Segmentation & Pricing Tool
+                Score deal value & classify customers (High / Mid / Low / Dormant) — Commercial Score V2
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -689,7 +780,7 @@ export default function App() {
         >
           {/* ─── LEFT COLUMN ────────────────────────────────── */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            {/* DEAL VALUE CARD */}
+            {/* DEAL VALUE CARD — UNCHANGED PRICING LOGIC */}
             <Card accent="linear-gradient(90deg, #f97316, #fb923c)">
               <div
                 style={{
@@ -714,16 +805,10 @@ export default function App() {
                 </Pill>
               </div>
 
-
               {/* Model + Country row */}
               <div
                 className="grid-2col"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 16,
-                  marginBottom: 18,
-                }}
+                style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 18 }}
               >
                 <Select
                   label="Pricing Model"
@@ -745,15 +830,9 @@ export default function App() {
               {/* Inputs */}
               {model === "ticket" ? (
                 <div style={{ marginBottom: 18 }}>
-                  {/* Labels row */}
                   <div
                     className="grid-2col"
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 16,
-                      marginBottom: 6,
-                    }}
+                    style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 6 }}
                   >
                     <label style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa", letterSpacing: 0.8, textTransform: "uppercase" }}>
                       Online Ticket Volume (past 12 months)
@@ -783,14 +862,9 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                  {/* Inputs row */}
                   <div
                     className="grid-2col"
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 16,
-                    }}
+                    style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
                   >
                     <input
                       type="text"
@@ -844,49 +918,20 @@ export default function App() {
               ) : (
                 <div
                   className="grid-3col"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: 16,
-                    marginBottom: 18,
-                    alignItems: "end",
-                  }}
+                  style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 18, alignItems: "end" }}
                 >
-                  <Input
-                    label="Travelier GMV (past 12 months, USD)"
-                    value={gmv}
-                    onChange={setGmv}
-                    prefix="$"
-                  />
-                  <Input
-                    label="Travelier Revenue (past 12 months, USD)"
-                    value={revenue}
-                    onChange={setRevenue}
-                    prefix="$"
-                    error={gmvError}
-                  />
-                  <Input
-                    label="Travelier Online Ticket Volume (past 12 months)"
-                    value={ticketVolume}
-                    onChange={setTicketVolume}
-                    placeholder="e.g. 50000"
-                  />
+                  <Input label="Travelier GMV (past 12 months, USD)" value={gmv} onChange={setGmv} prefix="$" />
+                  <Input label="Travelier Revenue (past 12 months, USD)" value={revenue} onChange={setRevenue} prefix="$" error={gmvError} />
+                  <Input label="Travelier Online Ticket Volume (past 12 months)" value={ticketVolume} onChange={setTicketVolume} placeholder="e.g. 50000" />
                 </div>
               )}
 
               {/* Ticket Volume Summary */}
               {(offlineVol > 0 || safe(offlineInput) > 0) && (
                 <div style={{
-                  display: "flex",
-                  gap: 12,
-                  marginBottom: 18,
-                  padding: "10px 16px",
-                  background: "#f5f3ff",
-                  borderRadius: 12,
-                  border: "1px solid #e9d5ff",
-                  fontSize: 13,
-                  alignItems: "center",
-                  flexWrap: "wrap",
+                  display: "flex", gap: 12, marginBottom: 18, padding: "10px 16px",
+                  background: "#f5f3ff", borderRadius: 12, border: "1px solid #e9d5ff",
+                  fontSize: 13, alignItems: "center", flexWrap: "wrap",
                 }}>
                   <span style={{ color: "#7c3aed", fontWeight: 700 }}>Ticket Summary (12 months)</span>
                   <span style={{ color: "#52525b" }}>Travelier Online: <strong>{fmt(onlineVol)}</strong></span>
@@ -898,45 +943,21 @@ export default function App() {
               )}
 
               {/* Custom pricing & Waivers */}
-              <div
-                style={{
-                  padding: "14px 18px",
-                  background: "#fafaf9",
-                  borderRadius: 14,
-                  marginBottom: 18,
-                }}
-              >
+              <div style={{ padding: "14px 18px", background: "#fafaf9", borderRadius: 14, marginBottom: 18 }}>
                 <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-                  <Toggle
-                    checked={customPricing}
-                    onChange={setCustomPricing}
-                    label="Use Custom Pricing"
-                  />
+                  <Toggle checked={customPricing} onChange={setCustomPricing} label="Use Custom Pricing" />
                 </div>
 
-                {/* Fee rows with waiver toggles */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 16 }}>
                   {/* Implementation Fee row */}
                   <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr auto",
-                    gap: 12,
-                    alignItems: "center",
-                    padding: "10px 14px",
-                    background: waiveImpl ? "#fef2f2" : "#fff",
-                    borderRadius: 10,
-                    border: `1px solid ${waiveImpl ? "#fecdd3" : "#e4e4e7"}`,
-                    transition: "all 0.2s",
+                    display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "center",
+                    padding: "10px 14px", background: waiveImpl ? "#fef2f2" : "#fff", borderRadius: 10,
+                    border: `1px solid ${waiveImpl ? "#fecdd3" : "#e4e4e7"}`, transition: "all 0.2s",
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       {customPricing && !waiveImpl ? (
-                        <Input
-                          label="Implementation Fee"
-                          value={implFeeInput}
-                          onChange={setImplFeeInput}
-                          prefix="$"
-                          placeholder="150"
-                        />
+                        <Input label="Implementation Fee" value={implFeeInput} onChange={setImplFeeInput} prefix="$" placeholder="150" />
                       ) : (
                         <div>
                           <div style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>Implementation Fee</div>
@@ -946,9 +967,7 @@ export default function App() {
                         </div>
                       )}
                     </div>
-                    <div>
-                      <WaiverToggle checked={waiveImpl} onChange={setWaiveImpl} />
-                    </div>
+                    <div><WaiverToggle checked={waiveImpl} onChange={setWaiveImpl} /></div>
                   </div>
 
                   {/* Monthly Fee row */}
@@ -959,22 +978,14 @@ export default function App() {
                     border: `1px solid ${waiveMonths >= 12 ? "#fecdd3" : waiveMonths > 0 ? "#fde68a" : (isMonthlyFixed && !customPricing) ? "#bae6fd" : "#e4e4e7"}`,
                     transition: "all 0.2s",
                   }}>
-                    {/* Top: label + value */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: waiveMonths > 0 || true ? 10 : 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 10 }}>
                       <div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>Monthly Fee</div>
                         </div>
                         {customPricing ? (
                           <div style={{ marginTop: 2 }}>
-                            <Input
-                              label=""
-                              value={monthlyFeeInput}
-                              onChange={setMonthlyFeeInput}
-                              prefix="$"
-                              suffix="/mo"
-                              placeholder={isMonthlyFixed ? String(defaultMonthlyFee) : "60"}
-                            />
+                            <Input label="" value={monthlyFeeInput} onChange={setMonthlyFeeInput} prefix="$" suffix="/mo" placeholder={isMonthlyFixed ? String(defaultMonthlyFee) : "60"} />
                           </div>
                         ) : (
                           <div style={{ fontSize: 16, fontWeight: 700, color: waiveMonths >= 12 ? "#e11d48" : "#3f3f46", textDecoration: waiveMonths >= 12 ? "line-through" : "none" }}>
@@ -982,7 +993,6 @@ export default function App() {
                           </div>
                         )}
                       </div>
-                      {/* Summary pill */}
                       <div style={{ textAlign: "right", flexShrink: 0 }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: "#a1a1aa", marginBottom: 4 }}>12-month total</div>
                         <div style={{ fontSize: 18, fontWeight: 800, color: waiveMonths >= 12 ? "#e11d48" : waiveMonths > 0 ? "#d97706" : "#3f3f46" }}>
@@ -996,22 +1006,16 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Waive months selector */}
                     <div style={{
                       background: waiveMonths > 0 ? (waiveMonths >= 12 ? "#fef2f2" : "#fffbeb") : "#f4f4f5",
-                      borderRadius: 8,
-                      padding: "8px 10px",
-                      transition: "background 0.2s",
+                      borderRadius: 8, padding: "8px 10px", transition: "background 0.2s",
                     }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: waiveMonths > 0 ? (waiveMonths >= 12 ? "#e11d48" : "#d97706") : "#71717a", letterSpacing: 0.3 }}>
                           {waiveMonths === 0 ? "Waive months" : waiveMonths >= 12 ? `All 12 months waived` : `${waiveMonths} month${waiveMonths > 1 ? "s" : ""} waived`}
                         </span>
                         {waiveMonths > 0 && (
-                          <span
-                            onClick={() => setWaiveMonths(0)}
-                            style={{ fontSize: 10, fontWeight: 700, color: "#71717a", cursor: "pointer", padding: "2px 8px", borderRadius: 100, background: "#e4e4e7" }}
-                          >
+                          <span onClick={() => setWaiveMonths(0)} style={{ fontSize: 10, fontWeight: 700, color: "#71717a", cursor: "pointer", padding: "2px 8px", borderRadius: 100, background: "#e4e4e7" }}>
                             Reset
                           </span>
                         )}
@@ -1022,16 +1026,8 @@ export default function App() {
                             key={i}
                             onClick={() => setWaiveMonths(i)}
                             style={{
-                              flex: 1,
-                              height: 28,
-                              borderRadius: 6,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: 10,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              transition: "all 0.15s",
+                              flex: 1, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: 10, fontWeight: 700, cursor: "pointer", transition: "all 0.15s",
                               background: i === waiveMonths
                                 ? (i === 0 ? "#3f3f46" : i >= 12 ? "#e11d48" : "#d97706")
                                 : i <= waiveMonths ? (i >= 12 ? "#fecdd3" : "#fde68a") : "#e4e4e7",
@@ -1052,33 +1048,16 @@ export default function App() {
 
                   {/* Travelier Online Conv. Fee / Commission row */}
                   <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr auto",
-                    gap: 12,
-                    alignItems: "center",
-                    padding: "10px 14px",
-                    background: waiveVariable ? "#fef2f2" : "#fff",
-                    borderRadius: 10,
-                    border: `1px solid ${waiveVariable ? "#fecdd3" : "#e4e4e7"}`,
-                    transition: "all 0.2s",
+                    display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "center",
+                    padding: "10px 14px", background: waiveVariable ? "#fef2f2" : "#fff", borderRadius: 10,
+                    border: `1px solid ${waiveVariable ? "#fecdd3" : "#e4e4e7"}`, transition: "all 0.2s",
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       {customPricing && !waiveVariable ? (
                         model === "ticket" ? (
-                          <Input
-                            label="Travelier Online Conv. Fee"
-                            value={ticketFeeInput}
-                            onChange={setTicketFeeInput}
-                            prefix="$"
-                            suffix="/tkt"
-                          />
+                          <Input label="Travelier Online Conv. Fee" value={ticketFeeInput} onChange={setTicketFeeInput} prefix="$" suffix="/tkt" />
                         ) : (
-                          <Input
-                            label="Percentage Commission"
-                            value={revShareInput}
-                            onChange={setRevShareInput}
-                            suffix="%"
-                          />
+                          <Input label="Percentage Commission" value={revShareInput} onChange={setRevShareInput} suffix="%" />
                         )
                       ) : (
                         <div>
@@ -1091,33 +1070,19 @@ export default function App() {
                         </div>
                       )}
                     </div>
-                    <div>
-                      <WaiverToggle checked={waiveVariable} onChange={setWaiveVariable} />
-                    </div>
+                    <div><WaiverToggle checked={waiveVariable} onChange={setWaiveVariable} /></div>
                   </div>
 
                   {/* Offline Convenience Fee row (always visible in ticket model) */}
                   {model === "ticket" && (
                     <div style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr auto",
-                      gap: 12,
-                      alignItems: "center",
-                      padding: "10px 14px",
-                      background: waiveOffline ? "#fef2f2" : "#fff",
-                      borderRadius: 10,
-                      border: `1px solid ${waiveOffline ? "#fecdd3" : "#e4e4e7"}`,
-                      transition: "all 0.2s",
+                      display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "center",
+                      padding: "10px 14px", background: waiveOffline ? "#fef2f2" : "#fff", borderRadius: 10,
+                      border: `1px solid ${waiveOffline ? "#fecdd3" : "#e4e4e7"}`, transition: "all 0.2s",
                     }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         {customPricing && !waiveOffline ? (
-                          <Input
-                            label="Offline Convenience Fee"
-                            value={offlineFeeInput}
-                            onChange={setOfflineFeeInput}
-                            prefix="$"
-                            suffix="/tkt"
-                          />
+                          <Input label="Offline Convenience Fee" value={offlineFeeInput} onChange={setOfflineFeeInput} prefix="$" suffix="/tkt" />
                         ) : (
                           <div>
                             <div style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>
@@ -1129,9 +1094,7 @@ export default function App() {
                           </div>
                         )}
                       </div>
-                      <div>
-                        <WaiverToggle checked={waiveOffline} onChange={setWaiveOffline} />
-                      </div>
+                      <div><WaiverToggle checked={waiveOffline} onChange={setWaiveOffline} /></div>
                     </div>
                   )}
                 </div>
@@ -1150,18 +1113,10 @@ export default function App() {
               </div>
 
               {/* Formula */}
-              <div
-                style={{
-                  background: "linear-gradient(135deg, #1c1917 0%, #292524 100%)",
-                  borderRadius: 14,
-                  padding: "20px 24px",
-                  color: "#fafaf9",
-                }}
-              >
+              <div style={{ background: "linear-gradient(135deg, #1c1917 0%, #292524 100%)", borderRadius: 14, padding: "20px 24px", color: "#fafaf9" }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 14 }}>
                   Calculation Breakdown
                 </div>
-                {/* Fee table */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
                   {formula.varLines.map((vl, i) => (
                     <div key={i}>
@@ -1188,7 +1143,6 @@ export default function App() {
                     <span style={{ fontSize: 13, fontWeight: 600 }}>{fmtUSD(fixedFee)}</span>
                   </div>
                 </div>
-                {/* Total */}
                 <div style={{ background: "#1a1a1a", borderRadius: 10, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: "#fafaf9" }}>Deal Value</span>
                   <span style={{ fontSize: 22, fontWeight: 800, color: "#fb923c" }}>{fmtUSD(formula.total)}</span>
@@ -1197,91 +1151,44 @@ export default function App() {
 
               {/* Comparison */}
               {comparison && (
-                <div
-                  className="grid-2col"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 14,
-                    marginTop: 16,
-                  }}
-                >
-                  <div
-                    style={{
-                      background: "#fafaf9",
-                      borderRadius: 12,
-                      padding: "14px 18px",
-                      border: "1.5px solid #e4e4e7",
-                    }}
-                  >
-                    <div style={{ fontSize: 10, fontWeight: 700, color: "#a1a1aa", letterSpacing: 0.6, textTransform: "uppercase", marginBottom: 4 }}>
-                      Default Pricing
-                    </div>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: "#52525b" }}>
-                      {fmtUSD(comparison.default)}
-                    </div>
+                <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginTop: 16 }}>
+                  <div style={{ background: "#fafaf9", borderRadius: 12, padding: "14px 18px", border: "1.5px solid #e4e4e7" }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#a1a1aa", letterSpacing: 0.6, textTransform: "uppercase", marginBottom: 4 }}>Default Pricing</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: "#52525b" }}>{fmtUSD(comparison.default)}</div>
                   </div>
-                  <div
-                    style={{
-                      background:
-                        comparison.diff >= 0
-                          ? "linear-gradient(135deg, #f0fdf4, #dcfce7)"
-                          : "linear-gradient(135deg, #fff1f2, #ffe4e6)",
-                      borderRadius: 12,
-                      padding: "14px 18px",
-                      border: `1.5px solid ${comparison.diff >= 0 ? "#bbf7d0" : "#fecdd3"}`,
-                    }}
-                  >
+                  <div style={{
+                    background: comparison.diff >= 0 ? "linear-gradient(135deg, #f0fdf4, #dcfce7)" : "linear-gradient(135deg, #fff1f2, #ffe4e6)",
+                    borderRadius: 12, padding: "14px 18px", border: `1.5px solid ${comparison.diff >= 0 ? "#bbf7d0" : "#fecdd3"}`,
+                  }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: "#a1a1aa", letterSpacing: 0.6, textTransform: "uppercase", marginBottom: 4 }}>
-                      Custom Pricing ({comparison.diff >= 0 ? "+" : ""}
-                      {fmt(comparison.diff)})
+                      Custom Pricing ({comparison.diff >= 0 ? "+" : ""}{fmt(comparison.diff)})
                     </div>
-                    <div
-                      style={{
-                        fontSize: 20,
-                        fontWeight: 800,
-                        color: comparison.diff >= 0 ? "#16a34a" : "#e11d48",
-                      }}
-                    >
-                      {fmtUSD(comparison.custom)}
-                    </div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: comparison.diff >= 0 ? "#16a34a" : "#e11d48" }}>{fmtUSD(comparison.custom)}</div>
                   </div>
                 </div>
               )}
             </Card>
 
-            {/* SCORING CARDS */}
-            <div className="grid-scores" style={{ display: "grid", gridTemplateColumns: country !== "Thailand" ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr", gap: 16 }}>
-              <ScoreCard
-                label="Ticket Volume"
-                score={scores.ticketScore}
-                max={3}
-                detail={`${fmt(calc.vol)} tickets → ${scores.ticketScore} pts`}
-                color="#a855f7"
-              />
-              <ScoreCard
-                label="Deal Value"
-                score={scores.dealScore}
-                max={5}
-                detail={`${fmtUSD(calc.deal)} in Group ${REGIONS[country]} → ${scores.dealScore} pts`}
-                color="#14b8a6"
-              />
-              <ScoreCard
-                label="Operator Type"
-                score={scores.opScore}
-                max={2}
-                detail={`${operatorType} → ${scores.opScore} pts`}
-                color="#f97316"
-              />
-              {country !== "Thailand" && (
+            {/* COMMERCIAL SCORE CARDS (V2) */}
+            <div className="grid-scores" style={{ display: "grid", gridTemplateColumns: seg.isNew ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr", gap: 16 }}>
+              {seg.factors.map((f) => (
                 <ScoreCard
-                  label="Top Route Bonus"
-                  score={scores.routeBonus}
-                  max={1}
-                  detail={topRoute ? "Top 10 route → +1 pt" : "Not on top 10 routes"}
-                  color="#7c3aed"
+                  key={f.key}
+                  label={f.label}
+                  score={f.score}
+                  max={f.max}
+                  detail={
+                    f.key === "deal"
+                      ? fmtUSD(seg.annualDealValue)
+                      : f.key === "topRoute"
+                      ? (DEMAND_SIGNAL_LEVELS.find((l) => l.value === demandSignal) || {}).label
+                      : f.key === "expansion"
+                      ? `${seg.expansionRaw / 10} of 3 selected`
+                      : `${seg.strategicRaw / 5} of 3 selected`
+                  }
+                  color={f.color}
                 />
-              )}
+              ))}
             </div>
           </div>
 
@@ -1289,205 +1196,156 @@ export default function App() {
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             {/* SEGMENT INPUTS */}
             <Card accent="linear-gradient(90deg, #a855f7, #7c3aed)">
-              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 18 }}>
-                Segment Inputs
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>
+                Segmentation Inputs
               </div>
+              <div style={{ fontSize: 12, color: "#71717a", marginBottom: 18 }}>
+                SeatOS Commercial Score V2 · {seg.isNew
+                  ? "New: Deal 35 / Demand 30 / Exp 20 / Strat 15"
+                  : "Existing: Deal 50 / Exp 30 / Strat 20"}
+              </div>
+
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <Select
-                  label="Operator Type"
-                  value={operatorType}
-                  onChange={setOperatorType}
-                  options={["Operator", "Agency"]}
-                />
-                <div>
-                  <Toggle
-                    checked={marqueeBrand}
-                    onChange={setMarqueeBrand}
-                    label="Marquee Brand"
-                  />
-                  {marqueeBrand && (
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: "#16a34a",
-                        fontWeight: 600,
-                        marginTop: 6,
-                        marginLeft: 54,
-                      }}
-                    >
-                      Overrides segment to High
+                <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <Select label="Operator Type" value={operatorType} onChange={setOperatorType} options={["Operator", "Agency"]} />
+                  <Select label="Customer Type" value={customerType} onChange={setCustomerType} options={[{ value: "existing", label: "Existing" }, { value: "new", label: "New" }]} />
+                </div>
+
+                {seg.isAgency && (
+                  <div style={{ padding: "10px 14px", background: "#f4f4f5", borderRadius: 10, fontSize: 12, fontWeight: 600, color: "#52525b", display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 14 }}>ℹ</span>
+                    Travel Agency Rule — auto-classified <strong>Dormant</strong> (reactive only), regardless of score.
+                  </div>
+                )}
+
+                {/* ── DEAL VALUE ── */}
+                <div style={{ borderTop: "1px solid #f4f4f5", paddingTop: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#14b8a6" }}>{seg.isNew ? "Projected Deal Value" : "Deal Value / Revenue"} <span style={{ color: "#a1a1aa", fontWeight: 600 }}>· {seg.W.deal} pts</span></div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa" }}>{seg.dealScore}/{seg.W.deal} pts</span>
+                  </div>
+                  {customerType === "existing" ? (
+                    <>
+                      <Input label="Actual Monthly Revenue (USD)" value={monthlyRevenue} onChange={setMonthlyRevenue} prefix="$" placeholder="e.g. 4000" />
+                      <div style={{ marginTop: 8, fontSize: 12, color: "#52525b" }}>
+                        Annualized (× 12): <strong style={{ color: "#14b8a6" }}>{fmtUSD(seg.annualDealValue)}</strong>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ padding: "12px 14px", background: "#f0fdfa", borderRadius: 10, border: "1px solid #99f6e4" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#0d9488", letterSpacing: 0.4, textTransform: "uppercase", marginBottom: 4 }}>
+                        Projected Deal Value
+                      </div>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: "#14b8a6" }}>{fmtUSD(seg.annualDealValue)}</div>
                     </div>
                   )}
                 </div>
-                {country !== "Thailand" && (
-                  <div>
-                    <Toggle
-                      checked={topRoute}
-                      onChange={setTopRoute}
-                      label="Top 10 Best Selling Route on Travelier"
-                    />
-                    {topRoute && (
-                      <div
-                        style={{
-                          fontSize: 11,
-                          color: "#7c3aed",
-                          fontWeight: 600,
-                          marginTop: 6,
-                          marginLeft: 54,
-                        }}
-                      >
-                        +1 bonus point
-                      </div>
-                    )}
+
+                {/* ── TRAVELIER DEMAND SIGNAL (New only) ── */}
+                {seg.isNew && (
+                  <div style={{ borderTop: "1px solid #f4f4f5", paddingTop: 14 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#a855f7" }}>Travelier Demand Signal <span style={{ color: "#a1a1aa", fontWeight: 600 }}>· {seg.W.topRoute} pts</span></div>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa" }}>{seg.topRouteScore}/{seg.W.topRoute} pts</span>
+                    </div>
+                    <Select label="Demand Signal Strength" value={demandSignal} onChange={setDemandSignal} options={DEMAND_SIGNAL_LEVELS.map((l) => ({ value: l.value, label: l.label }))} />
                   </div>
                 )}
+
+                {/* ── EXPANSION ── */}
+                <div style={{ borderTop: "1px solid #f4f4f5", paddingTop: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#f97316" }}>Expansion Potential <span style={{ color: "#a1a1aa", fontWeight: 600 }}>· {seg.W.expansion} pts</span></div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa" }}>{seg.expansionScore}/{seg.W.expansion} pts</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <CheckRow checked={expFleet} onChange={setExpFleet} label="Fleet > 20" points={10} />
+                    <CheckRow checked={expPosKiosk} onChange={setExpPosKiosk} label="POS / Kiosk / White-label opportunity" points={10} />
+                    <CheckRow checked={expMultiRoute} onChange={setExpMultiRoute} label="Multi-route / multi-branch potential" points={10} />
+                  </div>
+                </div>
+
+                {/* ── STRATEGIC ── */}
+                <div style={{ borderTop: "1px solid #f4f4f5", paddingTop: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#7c3aed" }}>Strategic Value <span style={{ color: "#a1a1aa", fontWeight: 600 }}>· {seg.W.strategic} pts</span></div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa" }}>{seg.strategicScore}/{seg.W.strategic} pts</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <CheckRow checked={stratMarquee} onChange={setStratMarquee} label="Marquee Brand" points={5} />
+                    <CheckRow checked={stratCaseStudy} onChange={setStratCaseStudy} label="Case Study Potential" points={5} />
+                    <CheckRow checked={stratMarketLeverage} onChange={setStratMarketLeverage} label="Market Leverage" points={5} />
+                  </div>
+                </div>
               </div>
             </Card>
 
             {/* TOTAL SCORE */}
             <Card style={{ textAlign: "center" }} accent="linear-gradient(90deg, #14b8a6, #0d9488)">
               <div style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>
-                Total Score
+                Total Commercial Score
               </div>
               <div style={{ fontSize: 52, fontWeight: 800, color: "#27272a", lineHeight: 1 }}>
-                <AnimNum value={scores.total} />
+                <AnimNum value={seg.total} />
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#a1a1aa", marginTop: 4 }}>
-                out of {country !== "Thailand" ? 11 : 10}
+                out of 100
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 6,
-                  marginTop: 14,
-                }}
-              >
-                {[
-                  { score: scores.ticketScore, color: "#a855f7" },
-                  { score: scores.dealScore, color: "#14b8a6" },
-                  { score: scores.opScore, color: "#f97316" },
-                  ...(country !== "Thailand" ? [{ score: scores.routeBonus, color: "#7c3aed" }] : []),
-                ].map((s, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 10,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 800,
-                        fontSize: 14,
-                        color: "#fff",
-                        background: s.color,
-                      }}
-                    >
-                      {s.score}
-                    </div>
-                  )
-                )}
+              <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 14 }}>
+                {seg.factors.map((s, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      minWidth: 36, height: 32, padding: "0 6px", borderRadius: 10,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontWeight: 800, fontSize: 14, color: "#fff", background: s.color,
+                    }}
+                  >
+                    {s.score}
+                  </div>
+                ))}
               </div>
             </Card>
 
             {/* FINAL SEGMENT (boarding pass) */}
-            <div
-              style={{
-                background: segmentBg(scores.segment),
-                borderRadius: 18,
-                overflow: "hidden",
-                boxShadow: "0 2px 20px rgba(0,0,0,0.05)",
-              }}
-            >
-              <div style={{ background: segmentColor(scores.segment), padding: "10px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ background: segmentBg(seg.segment), borderRadius: 18, overflow: "hidden", boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }}>
+              <div style={{ background: segmentColor(seg.segment), padding: "10px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", letterSpacing: 1.5, textTransform: "uppercase" }}>Boarding Pass</span>
                 <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>SEGMENT</span>
               </div>
-              <div style={{ borderTop: `2px dashed ${segmentColor(scores.segment)}25` }} />
+              <div style={{ borderTop: `2px dashed ${segmentColor(seg.segment)}25` }} />
               <div style={{ padding: "24px 28px 32px", textAlign: "center" }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "#71717a", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 8 }}>
                   Final Segment
                 </div>
-                <div
-                  style={{
-                    fontSize: 56,
-                    fontWeight: 800,
-                    color: segmentColor(scores.segment),
-                    lineHeight: 1,
-                    letterSpacing: -1,
-                  }}
-                >
-                  {scores.segment}
+                <div style={{ fontSize: 52, fontWeight: 800, color: segmentColor(seg.segment), lineHeight: 1, letterSpacing: -1 }}>
+                  {seg.segment}
                 </div>
-                <div
-                  style={{
-                    marginTop: 14,
-                    fontSize: 13,
-                    fontWeight: 500,
-                    color: "#52525b",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {scores.override
-                    ? "Assigned High due to Marquee Brand override"
-                    : scores.midHighOverride
-                    ? `Upgraded to Mid-High — Operator with Medium score (${scores.total}) and deal value > 5,000 USD`
-                    : `Assigned ${scores.segment} because total score is ${scores.total}`}
+                <div style={{ marginTop: 14, fontSize: 13, fontWeight: 500, color: "#52525b", lineHeight: 1.6 }}>
+                  {seg.isAgency
+                    ? "Travel Agency — automatically classified as Dormant"
+                    : `Assigned ${seg.segment} because total score is ${seg.total}`}
                 </div>
-                <div
-                  style={{
-                    marginTop: 16,
-                    display: "inline-flex",
-                    padding: "6px 16px",
-                    borderRadius: 100,
-                    background: segmentColor(scores.segment) + "18",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: segmentColor(scores.segment),
-                  }}
-                >
-                  {scores.segment === "High"
-                    ? "≥ 7 points"
-                    : scores.segment === "Mid-High"
-                    ? "Medium + Deal > 5K"
-                    : scores.segment === "Medium"
-                    ? "4–6 points"
-                    : "< 4 points"}
-                  {scores.override && " (overridden)"}
+                <div style={{ marginTop: 16, display: "inline-flex", padding: "6px 16px", borderRadius: 100, background: segmentColor(seg.segment) + "18", fontSize: 12, fontWeight: 700, color: segmentColor(seg.segment) }}>
+                  {seg.isAgency
+                    ? "Agency rule"
+                    : seg.segment === "High" ? "80–100 points"
+                    : seg.segment === "Mid" ? "50–79 points"
+                    : seg.segment === "Low" ? "20–49 points"
+                    : "0–19 points"}
                 </div>
               </div>
             </div>
 
             {/* DEAL SUMMARY */}
-            <Card
-              accent="linear-gradient(90deg, #f97316, #ea580c)"
-              style={{ textAlign: "center" }}
-            >
+            <Card accent="linear-gradient(90deg, #f97316, #ea580c)" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>
                 Deal Value
               </div>
-              <div
-                style={{
-                  fontSize: 36,
-                  fontWeight: 800,
-                  color: "#ea580c",
-                  lineHeight: 1,
-                }}
-              >
+              <div style={{ fontSize: 36, fontWeight: 800, color: "#ea580c", lineHeight: 1 }}>
                 <AnimNum value={calc.deal} suffix=" USD" />
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 6,
-                  marginTop: 14,
-                  fontSize: 12,
-                  color: "#71717a",
-                  textAlign: "left",
-                }}
-              >
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 14, fontSize: 12, color: "#71717a", textAlign: "left" }}>
                 {[
                   ...(model === "ticket" ? [
                     { label: "Travelier Online Conv. Fee", value: calc.onlineVar, waived: waiveVariable },
@@ -1521,468 +1379,246 @@ export default function App() {
         {/* ─── RESPONSIVE MOBILE STYLES ─────────────────── */}
         <style>{`
           @media (max-width: 860px) {
-            .grid-main {
-              grid-template-columns: 1fr !important;
-            }
-            .grid-2col {
-              grid-template-columns: 1fr !important;
-            }
-            .grid-3col {
-              grid-template-columns: 1fr !important;
-            }
-            .grid-4col {
-              grid-template-columns: 1fr 1fr !important;
-            }
-            .grid-scores {
-              grid-template-columns: 1fr 1fr !important;
-            }
+            .grid-main { grid-template-columns: 1fr !important; }
+            .grid-2col { grid-template-columns: 1fr !important; }
+            .grid-3col { grid-template-columns: 1fr !important; }
+            .grid-4col { grid-template-columns: 1fr 1fr !important; }
+            .grid-scores { grid-template-columns: 1fr 1fr !important; }
           }
           @media (max-width: 480px) {
-            .grid-4col {
-              grid-template-columns: 1fr !important;
-            }
-            .grid-scores {
-              grid-template-columns: 1fr !important;
-            }
+            .grid-4col { grid-template-columns: 1fr !important; }
+            .grid-scores { grid-template-columns: 1fr !important; }
           }
         `}</style>
-        {/* INSTRUCTIONS & LOGIC REFERENCE (Collapsible)              */}
-        {/* ═══════════════════════════════════════════════════════════ */}
-        <div style={{ maxWidth: 1120, margin: "48px auto 0" }}>
 
-          {/* Toggle Button */}
+        {/* INSTRUCTIONS & LOGIC REFERENCE (Collapsible) */}
+        <div style={{ maxWidth: 1120, margin: "48px auto 0" }}>
           <div
             onClick={() => setShowInstructions(!showInstructions)}
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              padding: "16px 28px",
-              borderRadius: showInstructions ? "16px 16px 0 0" : 16,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              padding: "16px 28px", borderRadius: showInstructions ? "16px 16px 0 0" : 16,
               background: showInstructions ? "linear-gradient(135deg, #1c1917, #292524)" : "#fff",
-              color: showInstructions ? "#fafaf9" : "#27272a",
-              cursor: "pointer",
-              userSelect: "none",
-              boxShadow: "0 2px 24px rgba(0,0,0,0.05), 0 0.5px 2px rgba(0,0,0,0.06)",
-              transition: "all 0.3s",
+              color: showInstructions ? "#fafaf9" : "#27272a", cursor: "pointer", userSelect: "none",
+              boxShadow: "0 2px 24px rgba(0,0,0,0.05), 0 0.5px 2px rgba(0,0,0,0.06)", transition: "all 0.3s",
             }}
-            onMouseEnter={(e) => {
-              if (!showInstructions) {
-                e.currentTarget.style.boxShadow = "0 8px 40px rgba(0,0,0,0.09)";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!showInstructions) {
-                e.currentTarget.style.boxShadow = "0 2px 24px rgba(0,0,0,0.05), 0 0.5px 2px rgba(0,0,0,0.06)";
-                e.currentTarget.style.transform = "translateY(0)";
-              }
-            }}
+            onMouseEnter={(e) => { if (!showInstructions) { e.currentTarget.style.boxShadow = "0 8px 40px rgba(0,0,0,0.09)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
+            onMouseLeave={(e) => { if (!showInstructions) { e.currentTarget.style.boxShadow = "0 2px 24px rgba(0,0,0,0.05), 0 0.5px 2px rgba(0,0,0,0.06)"; e.currentTarget.style.transform = "translateY(0)"; } }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="16" x2="12" y2="12" />
-              <line x1="12" y1="8" x2="12.01" y2="8" />
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
             <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: 0.3 }}>Instructions & Scoring Logic</span>
-            <svg
-              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-              style={{ transition: "transform 0.3s", transform: showInstructions ? "rotate(180deg)" : "rotate(0)" }}
-            >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "transform 0.3s", transform: showInstructions ? "rotate(180deg)" : "rotate(0)" }}>
               <path d="M6 9l6 6 6-6" />
             </svg>
           </div>
 
-          {/* Collapsible Content */}
-          <div style={{
-            maxHeight: showInstructions ? 5000 : 0,
-            overflow: "hidden",
-            transition: "max-height 0.5s ease-in-out",
-          }}>
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 24,
-              padding: "28px 0 0",
-              background: "transparent",
-            }}>
+          <div style={{ maxHeight: showInstructions ? 6000 : 0, overflow: "hidden", transition: "max-height 0.5s ease-in-out" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 24, padding: "28px 0 0", background: "transparent" }}>
 
-          {/* ─── HOW TO USE ──────────────────────────────────── */}
-          <Card accent="linear-gradient(90deg, #3b82f6, #60a5fa)">
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>How to Use This Dashboard</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {[
-                { step: "1", title: "Select Pricing Model", desc: "Choose \"Per Ticket\" for convenience fee model or \"Percentage Commission\" for GMV-based deals." },
-                { step: "2", title: "Select Country / Region", desc: "This determines the scoring group (A or B) and default monthly fee for Philippines." },
-                { step: "3", title: "Enter Ticket Volume", desc: "Fill in Travelier Online Ticket Volume (past 12 months). Use the \"View Data\" link to look up the numbers. Optionally add Offline tickets by % or number." },
-                { step: "4", title: "Review Deal Value", desc: "The calculation breakdown shows all fee components automatically. All Travelier data should be based on the past 12 months." },
-                { step: "5", title: "Adjust Pricing (Optional)", desc: "Toggle \"Use Custom Pricing\" to override any fee. Use Waive buttons to remove individual fees for negotiation." },
-                { step: "6", title: "Fill Segment Inputs", desc: "Select Operator or Agency, toggle Marquee Brand and Top Route Bonus (non-Thailand) on the right panel." },
-                { step: "7", title: "Read the Result", desc: "The final segment (High / Mid-High / Medium / Low) appears in the Boarding Pass card with score breakdown." },
-              ].map((s) => (
-                <div key={s.step} style={{ display: "flex", gap: 14, alignItems: "start" }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: "#3b82f6", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13, flexShrink: 0 }}>{s.step}</div>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#27272a" }}>{s.title}</div>
-                    <div style={{ fontSize: 12, color: "#71717a", marginTop: 2, lineHeight: 1.5 }}>{s.desc}</div>
-                  </div>
+              {/* FRAMEWORK OVERVIEW */}
+              <Card accent="linear-gradient(90deg, #3b82f6, #60a5fa)">
+                <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>SeatOS Commercial Score V2 (100 Points)</div>
+                <div style={{ padding: "14px 18px", background: "#fafaf9", borderRadius: 12, marginBottom: 18, fontSize: 12, color: "#52525b", lineHeight: 1.8 }}>
+                  <div style={{ fontWeight: 700, color: "#1c1917", marginBottom: 6 }}>Why Existing &amp; New are scored differently</div>
+                  <div><strong>Existing</strong> — actual revenue already shows importance, so no need to re-score monthly tickets or Top Route. <strong>New</strong> — no real revenue yet, so <strong>Travelier Demand Signal</strong> carries its own heavy weight (30) as a proxy for future transaction potential.</div>
                 </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* ─── DEAL VALUE ─────────────────────────────────── */}
-          <Card accent="linear-gradient(90deg, #f97316, #fb923c)">
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>1. Deal Value Calculation</div>
-
-            <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-              {/* Model 1 */}
-              <div style={{ background: "#fafaf9", borderRadius: 12, padding: "16px 18px" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#f97316", marginBottom: 8 }}>Model 1: Per Ticket</div>
-                <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.8 }}>
-                  <div><strong>Travelier Online Variable</strong> = Travelier Online Ticket Volume × Online Conv. Fee</div>
-                  <div><strong>Offline Variable</strong> = Offline Ticket Volume × Offline Conv. Fee</div>
-                  <div><strong>Fixed Fees</strong> = Implementation Fee + (Monthly Fee × 12)</div>
-                  <div style={{ marginTop: 6, padding: "6px 10px", background: "#fff7ed", borderRadius: 8, fontWeight: 600, color: "#ea580c" }}>
-                    Deal Value = Travelier Online Variable + Offline Variable + Fixed Fees
-                  </div>
-                </div>
-              </div>
-              {/* Model 2 */}
-              <div style={{ background: "#fafaf9", borderRadius: 12, padding: "16px 18px" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#f97316", marginBottom: 8 }}>Model 2: Percentage Commission</div>
-                <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.8 }}>
-                  <div><strong>Variable Value</strong> = (GMV − Revenue) × Commission %</div>
-                  <div><strong>Fixed Fees</strong> = Implementation Fee + (Monthly Fee × 12)</div>
-                  <div style={{ marginTop: 6, padding: "6px 10px", background: "#fff7ed", borderRadius: 8, fontWeight: 600, color: "#ea580c" }}>
-                    Deal Value = Variable Value + Fixed Fees
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Fee Defaults */}
-            <div style={{ marginTop: 16, padding: "14px 18px", background: "#f4f4f5", borderRadius: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#71717a", marginBottom: 8 }}>Default Fee Structure</div>
-              <div className="grid-3col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-                {[
-                  { label: "Implementation Fee", value: "150 USD", note: "One-time" },
-                  { label: "Monthly Fee", value: "60 USD/mo", note: "× 12 months = 720 USD" },
-                  { label: "Travelier Online Conv. Fee", value: "0.3 USD/ticket", note: "Or 3% Commission" },
-                ].map((f, i) => (
-                  <div key={i} style={{ background: "#fff", borderRadius: 8, padding: "10px 12px" }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa", textTransform: "uppercase", letterSpacing: 0.5 }}>{f.label}</div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: "#27272a", marginTop: 2 }}>{f.value}</div>
-                    <div style={{ fontSize: 11, color: "#71717a", marginTop: 2 }}>{f.note}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ marginTop: 8, background: "#fff", borderRadius: 8, padding: "10px 12px", border: "1px dashed #e4e4e7" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "#a1a1aa", textTransform: "uppercase", letterSpacing: 0.5 }}>Offline Conv. Fee</div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: "#27272a", marginTop: 2 }}>0.3 USD/ticket <span style={{ fontSize: 12, fontWeight: 600, color: "#e11d48" }}>(default: waived)</span></div>
-                <div style={{ fontSize: 11, color: "#71717a", marginTop: 2 }}>Same rate as online, waived by default. Can be activated and adjusted separately.</div>
-              </div>
-            </div>
-
-            {/* Pricing Flexibility */}
-            <div style={{ marginTop: 16, padding: "14px 18px", background: "#fef2f2", borderRadius: 12, border: "1px solid #fecdd3" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#e11d48", marginBottom: 6 }}>Pricing Flexibility & Waivers</div>
-              <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.8 }}>
-                <div>• <strong>Custom Pricing</strong> — Override any fee component (Implementation, Monthly, Online/Offline Conv. Fee, Commission)</div>
-                <div>• <strong>Waive Implementation Fee</strong> — Fully waive the one-time implementation fee</div>
-                <div>• <strong>Waive Monthly Fee</strong> — Select 0–12 months to waive (partial or full waiver)</div>
-                <div>• <strong>Waive Online Conv. Fee</strong> — Fully waive the online convenience fee</div>
-                <div>• <strong>Waive Offline Conv. Fee</strong> — Waived by default. Unwaive to charge offline tickets</div>
-                <div style={{ marginTop: 4, fontStyle: "italic", color: "#71717a" }}>Philippines: Monthly Fee default is 30 USD/mo</div>
-              </div>
-            </div>
-          </Card>
-
-          {/* ─── OFFLINE TICKET CALCULATION ────────────────── */}
-          <Card accent="#6366f1">
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>2. Offline Ticket Volume</div>
-            <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.8 }}>
-              <div>Offline tickets can be entered as a <strong>number</strong> or as a <strong>percentage</strong> of total volume.</div>
-              <div style={{ marginTop: 8, padding: "10px 14px", background: "#eef2ff", borderRadius: 10 }}>
-                <div style={{ fontWeight: 700, color: "#6366f1", marginBottom: 4 }}>Percentage Mode Example</div>
-                <div>Travelier Online = <strong>20</strong> tickets, Offline = <strong>80%</strong></div>
-                <div>→ Total = 20 ÷ (1 − 0.80) = <strong>100</strong> tickets</div>
-                <div>→ Offline = 100 − 20 = <strong>80</strong> tickets</div>
-              </div>
-              <div style={{ marginTop: 8, padding: "10px 14px", background: "#eef2ff", borderRadius: 10 }}>
-                <div style={{ fontWeight: 700, color: "#6366f1", marginBottom: 4 }}>Number Mode Example</div>
-                <div>Travelier Online = <strong>5,000</strong>, Offline = <strong>20,000</strong></div>
-                <div>→ Total = <strong>25,000</strong> tickets</div>
-              </div>
-              <div style={{ marginTop: 8 }}>
-                <strong>Ticket Volume Score</strong> uses <strong>Total Volume (Travelier Online + Offline)</strong> for scoring. Use Travelier data from the past 12 months.
-              </div>
-              <div style={{ marginTop: 4 }}>
-                <strong>Offline Convenience Fee</strong> is <strong>waived by default</strong> but can be activated and priced independently.
-              </div>
-            </div>
-          </Card>
-
-          {/* ─── SCORING: TICKET VOLUME ─────────────────────── */}
-          <Card accent="#a855f7">
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>3. Total Ticket Volume Score (Online + Offline)</div>
-            <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-              {/* Group A */}
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#a855f7", marginBottom: 10 }}>Group A — Thailand, Indonesia, Vietnam, Cambodia</div>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: "2px solid #e4e4e7" }}>
-                      <th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Ticket Volume</th>
-                      <th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ["≤ 3,000", "0"],
-                      ["3,001 – 10,000", "2"],
-                      ["> 10,000", "3"],
-                    ].map(([range, score], i) => (
-                      <tr key={i} style={{ borderBottom: "1px solid #f4f4f5" }}>
-                        <td style={{ padding: "8px" }}>{range}</td>
-                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: "#a855f7" }}>{score}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* Group B */}
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#a855f7", marginBottom: 10 }}>Group B — Philippines, Laos, EMEA, Rest of World</div>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: "2px solid #e4e4e7" }}>
-                      <th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Ticket Volume</th>
-                      <th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ["≤ 500", "0"],
-                      ["501 – 5,000", "1"],
-                      ["> 5,000", "3"],
-                    ].map(([range, score], i) => (
-                      <tr key={i} style={{ borderBottom: "1px solid #f4f4f5" }}>
-                        <td style={{ padding: "8px" }}>{range}</td>
-                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: "#a855f7" }}>{score}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </Card>
-
-          {/* ─── SCORING: DEAL VALUE ────────────────────────── */}
-          <Card accent="#14b8a6">
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>4. Deal Value Score</div>
-            <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-              {/* Group A */}
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#14b8a6", marginBottom: 10 }}>Group A — Thailand, Indonesia, Vietnam, Cambodia</div>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: "2px solid #e4e4e7" }}>
-                      <th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Deal Value (USD)</th>
-                      <th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ["< 1,200", "0"],
-                      ["1,200 – 2,900", "1"],
-                      ["2,901 – 4,999", "2"],
-                      ["5,000 – 9,999", "3"],
-                      ["≥ 10,000", "5"],
-                    ].map(([range, score], i) => (
-                      <tr key={i} style={{ borderBottom: "1px solid #f4f4f5" }}>
-                        <td style={{ padding: "8px" }}>{range}</td>
-                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: "#14b8a6" }}>{score}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* Group B */}
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#14b8a6", marginBottom: 10 }}>Group B — Philippines, Laos, EMEA, Rest of World</div>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: "2px solid #e4e4e7" }}>
-                      <th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Deal Value (USD)</th>
-                      <th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ["≤ 900", "0"],
-                      ["901 – 3,000", "1"],
-                      ["3,001 – 5,000", "2"],
-                      ["> 5,000", "3"],
-                    ].map(([range, score], i) => (
-                      <tr key={i} style={{ borderBottom: "1px solid #f4f4f5" }}>
-                        <td style={{ padding: "8px" }}>{range}</td>
-                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: "#14b8a6" }}>{score}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </Card>
-
-          {/* ─── SCORING: OPERATOR TYPE & BONUS ─────────────── */}
-          <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-            <Card accent="#f97316">
-              <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>5. Operator Type Score</div>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid #e4e4e7" }}>
-                    <th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Type</th>
-                    <th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Score</th>
-                  </tr>
-                </thead>
-                <tbody>
+                <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                   {[
-                    ["Operator", "2"],
-                    ["Agency", "0"],
-                  ].map(([type, score], i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid #f4f4f5" }}>
-                      <td style={{ padding: "8px" }}>{type}</td>
-                      <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: "#f97316" }}>{score}</td>
-                    </tr>
+                    { who: "Existing Operator", color: "#14b8a6", rows: [["Deal Value / Revenue", 50], ["Expansion Potential", 30], ["Strategic Value", 20]] },
+                    { who: "New Operator", color: "#f97316", rows: [["Projected Deal Value", 35], ["Travelier Demand Signal", 30], ["Expansion Potential", 20], ["Strategic Value", 15]] },
+                  ].map((col, i) => (
+                    <div key={i}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: col.color, marginBottom: 8 }}>{col.who}</div>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                        <thead>
+                          <tr style={{ borderBottom: "2px solid #e4e4e7" }}>
+                            <th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Factor</th>
+                            <th style={{ textAlign: "right", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Weight</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {col.rows.map(([label, pts], j) => (
+                            <tr key={j} style={{ borderBottom: "1px solid #f4f4f5" }}>
+                              <td style={{ padding: "7px 8px" }}>{label}</td>
+                              <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 700, color: col.color }}>{pts}</td>
+                            </tr>
+                          ))}
+                          <tr>
+                            <td style={{ padding: "7px 8px", fontWeight: 800 }}>Total</td>
+                            <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 800 }}>100</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </Card>
-
-            <Card accent="#7c3aed">
-              <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>6. Top Route Bonus</div>
-              <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.8, marginBottom: 12 }}>
-                <div style={{ padding: "8px 12px", background: "#f5f3ff", borderRadius: 8, marginBottom: 8 }}>
-                  <strong style={{ color: "#7c3aed" }}>+1 point</strong> if the operator runs a route in the <strong>Top 10 Best Selling Routes on Travelier</strong>
                 </div>
-                <div style={{ padding: "8px 12px", background: "#fef2f2", borderRadius: 8, border: "1px solid #fecdd3" }}>
-                  <strong style={{ color: "#e11d48" }}>Not applicable for Thailand</strong> — this bonus is available for all other markets only
-                </div>
-              </div>
-            </Card>
-          </div>
+              </Card>
 
-          {/* ─── FINAL SEGMENT LOGIC ────────────────────────── */}
-          <Card accent="linear-gradient(90deg, #16a34a, #22c55e)">
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>7. Final Segment Calculation</div>
-
-            {/* Formula */}
-            <div style={{ padding: "14px 18px", background: "#f0fdf4", borderRadius: 12, marginBottom: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#16a34a", marginBottom: 8 }}>Total Score Formula</div>
-              <div style={{ fontSize: 13, color: "#27272a", fontWeight: 600, lineHeight: 1.8 }}>
-                <div>Total Score = Ticket Volume Score + Deal Value Score + Operator Type Score + Top Route Bonus*</div>
-                <div style={{ fontSize: 11, color: "#71717a", fontStyle: "italic" }}>* Top Route Bonus applies to all markets except Thailand</div>
-              </div>
-            </div>
-
-            {/* Segment thresholds */}
-            <div className="grid-4col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 14, marginBottom: 16 }}>
-              {[
-                { segment: "High", rule: "≥ 7 points", color: "#16a34a", bg: "#dcfce7" },
-                { segment: "Mid-High", rule: "Medium + Deal > 5K", color: "#0d9488", bg: "#ccfbf1" },
-                { segment: "Medium", rule: "4 – 6 points", color: "#d97706", bg: "#fef9c3" },
-                { segment: "Low", rule: "< 4 points", color: "#e11d48", bg: "#ffe4e6" },
-              ].map((s, i) => (
-                <div key={i} style={{ background: s.bg, borderRadius: 12, padding: "16px", textAlign: "center" }}>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.segment}</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: s.color, marginTop: 4 }}>{s.rule}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Overrides */}
-            <div className="grid-3col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
-              <div style={{ padding: "14px 18px", background: "#f0fdf4", borderRadius: 12, border: "1.5px solid #bbf7d0" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", marginBottom: 6 }}>Marquee Brand Override</div>
-                <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.7 }}>
-                  If <strong>Marquee Brand = Yes</strong>, segment is automatically set to <strong style={{ color: "#16a34a" }}>High</strong> regardless of total score.
-                </div>
-              </div>
-              <div style={{ padding: "14px 18px", background: "#ecfdf5", borderRadius: 12, border: "1.5px solid #99f6e4" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#0d9488", marginBottom: 6 }}>Mid-High Override</div>
-                <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.7 }}>
-                  If an <strong>Operator</strong> scores <strong>Medium</strong> (4–6 pts) but has <strong>Deal Value {'>'} 5,000 USD</strong>, segment upgrades to <strong style={{ color: "#0d9488" }}>Mid-High</strong>.
-                </div>
-              </div>
-              <div style={{ padding: "14px 18px", background: "#fafaf9", borderRadius: 12, border: "1.5px solid #e4e4e7" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#52525b", marginBottom: 6 }}>Score Range</div>
-                <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.7 }}>
-                  <div>Thailand: <strong>0 – 10 points</strong> (no route bonus)</div>
-                  <div>Other markets: <strong>0 – 11 points</strong> (with route bonus)</div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* ─── QUICK REFERENCE EXAMPLE ────────────────────── */}
-          <Card accent="linear-gradient(90deg, #3b82f6, #60a5fa)">
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>8. Quick Examples</div>
-            <div className="grid-3col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-              <div style={{ background: "#eff6ff", borderRadius: 12, padding: "16px 18px" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#3b82f6", marginBottom: 10 }}>Scenario: Thai Operator</div>
-                <div style={{ fontSize: 12, color: "#52525b", lineHeight: 2 }}>
-                  <div>Country: <strong>Thailand</strong> (Group A)</div>
-                  <div>Ticket Volume: <strong>15,000</strong> → <strong style={{ color: "#a855f7" }}>3 pts</strong></div>
-                  <div>Deal Value: <strong>5,270 USD</strong> → <strong style={{ color: "#14b8a6" }}>3 pts</strong></div>
-                  <div>Operator Type: <strong>Operator</strong> → <strong style={{ color: "#f97316" }}>2 pts</strong></div>
-                  <div>Top Route Bonus: <strong>N/A</strong></div>
-                  <div style={{ marginTop: 6, padding: "6px 10px", background: "#dcfce7", borderRadius: 8, fontWeight: 700, color: "#16a34a" }}>
-                    Total = 8 → Segment: High
+              {/* DEAL VALUE CALCULATION */}
+              <Card accent="linear-gradient(90deg, #f97316, #fb923c)">
+                <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>Deal Value Calculation</div>
+                <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                  <div style={{ background: "#fafaf9", borderRadius: 12, padding: "16px 18px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#f97316", marginBottom: 8 }}>Model 1: Per Ticket</div>
+                    <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.8 }}>
+                      <div><strong>Online Variable</strong> = Online Ticket Volume × Online Conv. Fee</div>
+                      <div><strong>Offline Variable</strong> = Offline Ticket Volume × Offline Conv. Fee</div>
+                      <div><strong>Fixed Fees</strong> = Implementation Fee + (Monthly Fee × 12)</div>
+                      <div style={{ marginTop: 6, padding: "6px 10px", background: "#fff7ed", borderRadius: 8, fontWeight: 600, color: "#ea580c" }}>
+                        Deal Value = Online Variable + Offline Variable + Fixed Fees
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ background: "#fafaf9", borderRadius: 12, padding: "16px 18px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#f97316", marginBottom: 8 }}>Model 2: Percentage Commission</div>
+                    <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.8 }}>
+                      <div><strong>Variable Value</strong> = (GMV − Revenue) × Commission %</div>
+                      <div><strong>Fixed Fees</strong> = Implementation Fee + (Monthly Fee × 12)</div>
+                      <div style={{ marginTop: 6, padding: "6px 10px", background: "#fff7ed", borderRadius: 8, fontWeight: 600, color: "#ea580c" }}>
+                        Deal Value = Variable Value + Fixed Fees
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div style={{ background: "#eff6ff", borderRadius: 12, padding: "16px 18px" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#3b82f6", marginBottom: 10 }}>Scenario: Mid-High Upgrade</div>
-                <div style={{ fontSize: 12, color: "#52525b", lineHeight: 2 }}>
-                  <div>Country: <strong>Indonesia</strong> (Group A)</div>
-                  <div>Ticket Volume: <strong>8,000</strong> → <strong style={{ color: "#a855f7" }}>2 pts</strong></div>
-                  <div>Deal Value: <strong>6,200 USD</strong> → <strong style={{ color: "#14b8a6" }}>3 pts</strong></div>
-                  <div>Operator Type: <strong>Operator</strong> → <strong style={{ color: "#f97316" }}>2 pts</strong></div>
-                  <div>Score = 7 → High? No wait...</div>
-                  <div style={{ marginTop: 6, padding: "6px 10px", background: "#dcfce7", borderRadius: 8, fontWeight: 700, color: "#16a34a" }}>
-                    Total = 7 → Segment: High
-                  </div>
-                  <div style={{ marginTop: 6, fontSize: 11, color: "#71717a", fontStyle: "italic" }}>
-                    But if ticket volume was 2,000 (0 pts) → Total = 5 → Medium → Deal {'>'} 5K → <strong style={{ color: "#0d9488" }}>Mid-High</strong>
-                  </div>
+                <div style={{ marginTop: 14, fontSize: 12, color: "#71717a", lineHeight: 1.7 }}>
+                  Default fees: Implementation 150 USD · Monthly 60 USD/mo (Philippines 30 USD/mo) · Online Conv. Fee 0.3 USD/ticket or 3% commission · Offline Conv. Fee 0.3 USD/ticket (waived by default).
                 </div>
-              </div>
-              <div style={{ background: "#eff6ff", borderRadius: 12, padding: "16px 18px" }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#3b82f6", marginBottom: 10 }}>Scenario: Vietnam Agency</div>
-                <div style={{ fontSize: 12, color: "#52525b", lineHeight: 2 }}>
-                  <div>Country: <strong>Vietnam</strong> (Group A)</div>
-                  <div>Ticket Volume: <strong>2,000</strong> → <strong style={{ color: "#a855f7" }}>0 pts</strong></div>
-                  <div>Deal Value: <strong>3,500 USD</strong> → <strong style={{ color: "#14b8a6" }}>2 pts</strong></div>
-                  <div>Operator Type: <strong>Agency</strong> → <strong style={{ color: "#f97316" }}>0 pts</strong></div>
-                  <div>Top Route Bonus: <strong>Yes</strong> → <strong style={{ color: "#7c3aed" }}>1 pt</strong></div>
-                  <div style={{ marginTop: 6, padding: "6px 10px", background: "#ffe4e6", borderRadius: 8, fontWeight: 700, color: "#e11d48" }}>
-                    Total = 3 → Segment: Low
-                  </div>
-                  <div style={{ marginTop: 6, fontSize: 11, color: "#71717a", fontStyle: "italic" }}>
-                    Agency with deal {'>'} 5K stays Medium (Mid-High is Operator only)
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
+              </Card>
 
-          {/* Footer */}
-          <div style={{ textAlign: "center", padding: "20px 0 10px", fontSize: 11, color: "#a1a1aa" }}>
-            SeatOS BD Deal Calculator — Internal Tool for Business Development Team
-          </div>
+              {/* 1. DEAL VALUE SCORE */}
+              <Card accent="#14b8a6">
+                <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 8 }}>1. Deal Value Score (Existing 50 / New 35)</div>
+                <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.8, marginBottom: 14 }}>
+                  <div><strong>Existing operators:</strong> Actual Monthly Revenue × 12 (weight 50)</div>
+                  <div><strong>New operators:</strong> Projected Deal Value is pulled from the <strong>Deal Value Calculator</strong> on the left (weight 35).</div>
+                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, maxWidth: 520 }}>
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid #e4e4e7" }}>
+                      <th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Annual Value (USD)</th>
+                      <th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Existing (50)</th>
+                      <th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>New (35)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      ["< 5,000", "0", "0"],
+                      ["5,000 – 19,999", "15", "11"],
+                      ["20,000 – 49,999", "30", "21"],
+                      ["50,000 – 99,999", "40", "28"],
+                      ["≥ 100,000", "50", "35"],
+                    ].map(([range, ex, nw], i) => (
+                      <tr key={i} style={{ borderBottom: "1px solid #f4f4f5" }}>
+                        <td style={{ padding: "8px" }}>{range}</td>
+                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: "#14b8a6" }}>{ex}</td>
+                        <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: "#f97316" }}>{nw}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+
+              {/* 2. EXISTING VS NEW */}
+              <Card accent="#e11d48">
+                <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>2. Existing vs New — Why Different</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {[
+                    { who: "Existing Operator", rule: "Actual revenue already shows importance — no monthly tickets, no Top Route. Deal Value 50 / Expansion 30 / Strategic 20.", color: "#14b8a6", bg: "#f0fdfa" },
+                    { who: "New Operator", rule: "No real revenue yet, so Travelier Demand Signal becomes its own heavy factor (30). Deal 35 / Demand 30 / Expansion 20 / Strategic 15.", color: "#f97316", bg: "#fff7ed" },
+                    { who: "Travel Agency", rule: "Auto-classified Dormant / reactive only, regardless of score.", color: "#71717a", bg: "#f4f4f5" },
+                  ].map((r, i) => (
+                    <div key={i} style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: 12, padding: "10px 14px", background: r.bg, borderRadius: 10 }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: r.color }}>{r.who}</div>
+                      <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.6 }}>{r.rule}</div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* 3 & 4. EXPANSION & STRATEGIC */}
+              <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                <Card accent="#f97316">
+                  <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>3. Expansion Potential (Existing 30 / New 20)</div>
+                  <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.6, marginBottom: 10 }}>
+                    Same 3 criteria for both. Top Route is <strong>not</strong> here (New: own factor · Existing: not scored).
+                  </div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ borderBottom: "2px solid #e4e4e7" }}>
+                        <th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Criteria</th>
+                        <th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Score</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ["Fleet > 20", "10"],
+                        ["POS / Kiosk / White-label", "10"],
+                        ["Multi-route / multi-branch potential", "10"],
+                      ].map(([type, score], i) => (
+                        <tr key={i} style={{ borderBottom: "1px solid #f4f4f5" }}>
+                          <td style={{ padding: "7px 8px" }}>{type}</td>
+                          <td style={{ padding: "7px 8px", textAlign: "center", fontWeight: 700, color: "#f97316" }}>{score}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Card>
+
+                <Card accent="#7c3aed">
+                  <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12 }}>4. Strategic Value (Existing 20 / New 15)</div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ borderBottom: "2px solid #e4e4e7" }}>
+                        <th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Criteria</th>
+                        <th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Score</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ["Marquee Brand", "5"],
+                        ["Case Study Potential", "5"],
+                        ["Market Leverage", "5"],
+                      ].map(([type, score], i) => (
+                        <tr key={i} style={{ borderBottom: "1px solid #f4f4f5" }}>
+                          <td style={{ padding: "8px" }}>{type}</td>
+                          <td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: "#7c3aed" }}>{score}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Card>
+              </div>
+
+              {/* 5. SEGMENT MAPPING */}
+              <Card accent="linear-gradient(90deg, #16a34a, #22c55e)">
+                <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>5. Segment Mapping</div>
+                <div className="grid-4col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 14, marginBottom: 16 }}>
+                  {[
+                    { segment: "High", rule: "80 – 100", color: "#16a34a", bg: "#dcfce7" },
+                    { segment: "Mid", rule: "50 – 79", color: "#0d9488", bg: "#ccfbf1" },
+                    { segment: "Low", rule: "20 – 49", color: "#ea8c00", bg: "#fef9c3" },
+                    { segment: "Dormant", rule: "0 – 19", color: "#71717a", bg: "#f4f4f5" },
+                  ].map((s, i) => (
+                    <div key={i} style={{ background: s.bg, borderRadius: 12, padding: "16px", textAlign: "center" }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.segment}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: s.color, marginTop: 4 }}>{s.rule} pts</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding: "14px 18px", background: "#fef2f2", borderRadius: 12, border: "1px solid #fecdd3", fontSize: 12, color: "#52525b", lineHeight: 1.7 }}>
+                  <strong style={{ color: "#e11d48" }}>Travel Agency Rule:</strong> All Travel Agencies are automatically classified as <strong>Dormant</strong> (reactive only), regardless of their commercial score.
+                </div>
+                <div style={{ marginTop: 12, fontSize: 12, color: "#71717a", lineHeight: 1.7 }}>
+                  <strong>Review frequency:</strong> Quarterly for existing customers · during onboarding for new customers · after major business changes.
+                </div>
+              </Card>
+
+              {/* Footer */}
+              <div style={{ textAlign: "center", padding: "20px 0 10px", fontSize: 11, color: "#a1a1aa" }}>
+                SeatOS Commercial Score V2 — Internal Tool for Business Development Team
+              </div>
             </div>
           </div>
         </div>
