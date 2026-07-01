@@ -6,20 +6,21 @@ const REGIONS = {
   Philippines: "C", Laos: "B", EMEA: "B", "Rest of World": "B",
 };
 
-// Existing raw weights sum to 70 (Deal 30 + Expansion 20 + Strategic 20);
-// the total is rescaled ×100/70 so the displayed score still lands on 0–100.
+// Both operator types sum to 100 directly (no rescaling needed).
+// Existing: Deal 45 + Expansion 30 + Strategic 25.
+// New:      Deal 35 + Demand 30 + Expansion 20 + Strategic 15.
 const WEIGHTS = {
-  existing: { deal: 30, topRoute: 0, expansion: 20, strategic: 20 },
+  existing: { deal: 45, topRoute: 0, expansion: 30, strategic: 25 },
   new: { deal: 35, topRoute: 30, expansion: 20, strategic: 15 },
 };
-const EXISTING_RAW_MAX = 70; // Deal 30 + Expansion 20 + Strategic 20
-const EXISTING_RESCALE = 100 / EXISTING_RAW_MAX;
 
+// Annual revenue → fraction of the Deal Value weight.
+// Calibrated to real customer sizes: 3k ≈ good, 5k ≈ major, 10k+ = full.
 const DEAL_VALUE_TIERS = [
-  { max: 4999, frac: 0 },
-  { max: 19999, frac: 0.3 },
-  { max: 49999, frac: 0.6 },
-  { max: 99999, frac: 0.8 },
+  { max: 999, frac: 0.2 },
+  { max: 2999, frac: 0.5 },
+  { max: 4999, frac: 0.75 },
+  { max: 9999, frac: 0.9 },
   { max: Infinity, frac: 1 },
 ];
 
@@ -232,7 +233,7 @@ export default function App() {
   const [operatorType, setOperatorType] = useState("Operator");
   const [customerType, setCustomerType] = useState("new");
   const [vehicleType, setVehicleType] = useState("busVan");
-  const [monthlyRevenue, setMonthlyRevenue] = useState("");
+  const [annualRevenue, setAnnualRevenue] = useState("");
   const [demandSignal, setDemandSignal] = useState("none");
   const [expFleet, setExpFleet] = useState(false);
   const [expPosKiosk, setExpPosKiosk] = useState(false);
@@ -286,7 +287,7 @@ export default function App() {
   const seg = useMemo(() => {
     const isNew = customerType === "new";
     const W = WEIGHTS[isNew ? "new" : "existing"];
-    const annualDealValue = isNew ? calc.deal : safe(monthlyRevenue) * 12;
+    const annualDealValue = isNew ? calc.deal : safe(annualRevenue);
     const dealFrac = getFrac(DEAL_VALUE_TIERS, annualDealValue);
     const dealScore = Math.round(dealFrac * W.deal);
     const demandFrac = (DEMAND_SIGNAL_LEVELS.find((l) => l.value === demandSignal) || DEMAND_SIGNAL_LEVELS[0]).frac;
@@ -295,9 +296,7 @@ export default function App() {
     const expansionScore = Math.round((expansionRaw / EXPANSION_RAW_MAX) * W.expansion);
     const strategicRaw = (stratMarquee ? 5 : 0) + (stratCaseStudy ? 5 : 0) + (stratMarketLeverage ? 5 : 0);
     const strategicScore = Math.round((strategicRaw / STRATEGIC_RAW_MAX) * W.strategic);
-    const rawTotal = dealScore + topRouteScore + expansionScore + strategicScore;
-    // Existing raw maxes at 70, so rescale to 0–100. New already sums to 100.
-    const total = isNew ? rawTotal : Math.round(rawTotal * EXISTING_RESCALE);
+    const total = dealScore + topRouteScore + expansionScore + strategicScore;
     const factors = [
       { key: "deal", label: isNew ? "Proj. Deal Value" : "Deal Value", score: dealScore, max: W.deal, color: "#14b8a6" },
       ...(isNew ? [{ key: "topRoute", label: "Demand Signal", score: topRouteScore, max: W.topRoute, color: "#a855f7" }] : []),
@@ -306,10 +305,13 @@ export default function App() {
     ];
     const band = SEGMENT_BANDS.find((b) => total >= b.min).name;
     const isAgency = operatorType === "Agency";
-    const segment = isAgency ? "Dormant" : band;
+    // High-Value rule: annual deal value >= 10,000 always needs special care,
+    // so force High regardless of the point total. Agency (Not ICP) still wins.
+    const isHighValue = !isAgency && annualDealValue >= 10000;
+    const segment = isAgency ? "Dormant" : isHighValue ? "High" : band;
     const notICP = segment === "Low" || segment === "Dormant";
-    return { isNew, W, annualDealValue, dealScore, topRouteScore, expansionRaw, expansionScore, strategicRaw, strategicScore, factors, total, band, segment, isAgency, notICP };
-  }, [customerType, monthlyRevenue, calc.deal, demandSignal, expFleet, expPosKiosk, expMultiRoute, stratMarquee, stratCaseStudy, stratMarketLeverage, operatorType]);
+    return { isNew, W, annualDealValue, dealScore, topRouteScore, expansionRaw, expansionScore, strategicRaw, strategicScore, factors, total, band, segment, isAgency, isHighValue, notICP };
+  }, [customerType, annualRevenue, calc.deal, demandSignal, expFleet, expPosKiosk, expMultiRoute, stratMarquee, stratCaseStudy, stratMarketLeverage, operatorType]);
 
 
   const formula = useMemo(() => {
@@ -581,26 +583,13 @@ export default function App() {
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             <Card accent="linear-gradient(90deg, #a855f7, #7c3aed)">
               <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Segmentation Inputs</div>
-              <div style={{ fontSize: 12, color: "#71717a", marginBottom: 18 }}>SeatOS Commercial Score V2 · {seg.isNew ? "New: Deal 35 / Demand 30 / Exp 20 / Strat 15" : "Existing: Deal 30 / Exp 20 / Strat 20 → rescaled to 100"}</div>
+              <div style={{ fontSize: 12, color: "#71717a", marginBottom: 18 }}>SeatOS Commercial Score V2 · {seg.isNew ? "New: Deal 35 / Demand 30 / Exp 20 / Strat 15" : "Existing: Deal 45 / Exp 30 / Strat 25"}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <Select label="Operator Type" value={operatorType} onChange={setOperatorType} options={["Operator", "Agency"]} />
                   <Select label="Customer Type" value={customerType} onChange={setCustomerType} options={[{ value: "existing", label: "Existing" }, { value: "new", label: "New" }]} />
                 </div>
-                <Select label="Vehicle Type" value={vehicleType} onChange={setVehicleType} options={VEHICLE_TYPES.map((v) => ({ value: v.value, label: `${v.label} — fleet > ${v.threshold}` }))} />
-                {seg.notICP && (
-                  <div style={{ padding: "12px 16px", background: "linear-gradient(135deg, #fff1f2, #ffe4e6)", borderRadius: 10, border: "1.5px solid #fda4af", display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    <span style={{ fontSize: 18, lineHeight: 1.2 }}>⚠️</span>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: "#e11d48", marginBottom: 2 }}>Not ICP</div>
-                      <div style={{ fontSize: 12, fontWeight: 500, color: "#9f1239", lineHeight: 1.5 }}>
-                        {seg.isAgency
-                          ? <>Travel Agency does not match the Ideal Customer Profile — auto-classified as <strong>Dormant</strong> (reactive only), no score applied.</>
-                          : <>This <strong>{seg.segment}</strong> segment falls outside the Ideal Customer Profile — treat as reactive only, not a priority target.</>}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <Select label="Vehicle Type" value={vehicleType} onChange={setVehicleType} options={VEHICLE_TYPES.map((v) => ({ value: v.value, label: v.label }))} />
                 <div style={{ borderTop: "1px solid #f4f4f5", paddingTop: 14 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                     <div style={{ fontSize: 12, fontWeight: 800, color: "#14b8a6" }}>{seg.isNew ? "Projected Deal Value" : "Deal Value / Revenue"} <span style={{ color: "#a1a1aa", fontWeight: 600 }}>· {seg.W.deal} pts</span></div>
@@ -608,8 +597,8 @@ export default function App() {
                   </div>
                   {customerType === "existing" ? (
                     <>
-                      <Input label="Actual Monthly Revenue (USD)" value={monthlyRevenue} onChange={setMonthlyRevenue} prefix="$" placeholder="e.g. 4000" />
-                      <div style={{ marginTop: 8, fontSize: 12, color: "#52525b" }}>Annualized (× 12): <strong style={{ color: "#14b8a6" }}>{fmtUSD(seg.annualDealValue)}</strong></div>
+                      <Input label="Actual Annual Revenue (USD)" value={annualRevenue} onChange={setAnnualRevenue} prefix="$" placeholder="e.g. 6000" />
+                      <div style={{ marginTop: 8, fontSize: 12, color: "#52525b" }}>Annual value: <strong style={{ color: "#14b8a6" }}>{fmtUSD(seg.annualDealValue)}</strong></div>
                     </>
                   ) : (
                     <div style={{ padding: "12px 14px", background: "#f0fdfa", borderRadius: 10, border: "1px solid #99f6e4" }}>
@@ -672,9 +661,20 @@ export default function App() {
                     <span>⚠️</span> NOT ICP
                   </div>
                 )}
+                {seg.isHighValue && (
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 10, padding: "5px 14px", borderRadius: 100, background: "#16a34a", fontSize: 12, fontWeight: 800, color: "#fff", letterSpacing: 0.4 }}>
+                    <span>⭐</span> HIGH-VALUE · SPECIAL CARE
+                  </div>
+                )}
                 <div style={{ fontSize: 52, fontWeight: 800, color: segmentColor(seg.segment), lineHeight: 1, letterSpacing: -1 }}>{seg.segment}</div>
-                <div style={{ marginTop: 14, fontSize: 13, fontWeight: 500, color: "#52525b", lineHeight: 1.6 }}>{seg.isAgency ? "Travel Agency does not match ICP — auto-classified as Dormant" : `Assigned ${seg.segment} because total score is ${seg.total}`}</div>
-                <div style={{ marginTop: 16, display: "inline-flex", padding: "6px 16px", borderRadius: 100, background: segmentColor(seg.segment) + "18", fontSize: 12, fontWeight: 700, color: segmentColor(seg.segment) }}>{seg.isAgency ? "Not ICP · Agency rule" : seg.segment === "High" ? "80–100 points" : seg.segment === "Mid" ? "50–79 points" : seg.segment === "Low" ? "20–49 points · Not ICP" : "0–19 points · Not ICP"}</div>
+                <div style={{ marginTop: 14, fontSize: 13, fontWeight: 500, color: "#52525b", lineHeight: 1.6 }}>{seg.isAgency ? "Travel Agency does not match ICP — auto-classified as Dormant" : seg.isHighValue ? `Annual deal value ≥ 10,000 USD — auto-classified High (score is ${seg.total})` : `Assigned ${seg.segment} because total score is ${seg.total}`}</div>
+                {seg.notICP && (
+                  <div style={{ marginTop: 8, fontSize: 12, fontWeight: 500, color: "#9f1239", lineHeight: 1.5 }}>Falls outside the Ideal Customer Profile — treat as reactive only, not a priority target.</div>
+                )}
+                {seg.isHighValue && (
+                  <div style={{ marginTop: 8, fontSize: 12, fontWeight: 500, color: "#15803d", lineHeight: 1.5 }}>High-value account — requires special care regardless of score.</div>
+                )}
+                <div style={{ marginTop: 16, display: "inline-flex", padding: "6px 16px", borderRadius: 100, background: segmentColor(seg.segment) + "18", fontSize: 12, fontWeight: 700, color: segmentColor(seg.segment) }}>{seg.isAgency ? "Not ICP · Agency rule" : seg.isHighValue ? "High-Value rule · ≥ 10,000 USD" : seg.segment === "High" ? "80–100 points" : seg.segment === "Mid" ? "50–79 points" : seg.segment === "Low" ? "20–49 points · Not ICP" : "0–19 points · Not ICP"}</div>
               </div>
             </div>
             <Card accent="linear-gradient(90deg, #f97316, #ea580c)" style={{ textAlign: "center" }}>
@@ -728,7 +728,7 @@ export default function App() {
                 </div>
                 <div className="grid-2col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                   {[
-                    { who: "Existing Operator", color: "#14b8a6", rows: [["Deal Value / Revenue", 30], ["Expansion Potential", 20], ["Strategic Value", 20]], note: "Raw 70 → rescaled ×100/70 to a 0–100 score" },
+                    { who: "Existing Operator", color: "#14b8a6", rows: [["Deal Value / Revenue", 45], ["Expansion Potential", 30], ["Strategic Value", 25]] },
                     { who: "New Operator", color: "#f97316", rows: [["Projected Deal Value", 35], ["Travelier Demand Signal", 30], ["Expansion Potential", 20], ["Strategic Value", 15]] },
                   ].map((col, i) => (
                     <div key={i}>
@@ -769,15 +769,15 @@ export default function App() {
                 <div style={{ marginTop: 14, fontSize: 12, color: "#71717a", lineHeight: 1.7 }}>Default fees: Implementation 150 USD · Monthly 60 USD/mo (Philippines 30 USD/mo) · Online Conv. Fee 0.3 USD/ticket or 3% commission · Offline Conv. Fee 0.3 USD/ticket (waived by default).</div>
               </Card>
               <Card accent="#14b8a6">
-                <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 8 }}>1. Deal Value Score (Existing 30 / New 35)</div>
+                <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 8 }}>1. Deal Value Score (Existing 45 / New 35)</div>
                 <div style={{ fontSize: 12, color: "#52525b", lineHeight: 1.8, marginBottom: 14 }}>
-                  <div><strong>Existing operators:</strong> Actual Monthly Revenue × 12 (weight 30)</div>
+                  <div><strong>Existing operators:</strong> Actual Annual Revenue (weight 45)</div>
                   <div><strong>New operators:</strong> Projected Deal Value is pulled from the <strong>Deal Value Calculator</strong> on the left (weight 35).</div>
                 </div>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, maxWidth: 520 }}>
-                  <thead><tr style={{ borderBottom: "2px solid #e4e4e7" }}><th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Annual Value (USD)</th><th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Existing (30)</th><th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>New (35)</th></tr></thead>
+                  <thead><tr style={{ borderBottom: "2px solid #e4e4e7" }}><th style={{ textAlign: "left", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Annual Revenue (USD)</th><th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>Existing (45)</th><th style={{ textAlign: "center", padding: "6px 8px", fontWeight: 700, color: "#71717a", fontSize: 11, textTransform: "uppercase" }}>New (35)</th></tr></thead>
                   <tbody>
-                    {[["< 5,000", "0", "0"], ["5,000 – 19,999", "9", "11"], ["20,000 – 49,999", "18", "21"], ["50,000 – 99,999", "24", "28"], ["≥ 100,000", "30", "35"]].map(([range, ex, nw], i) => (
+                    {[["< 1,000", "9", "7"], ["1,000 – 2,999", "23", "18"], ["3,000 – 4,999", "34", "26"], ["5,000 – 9,999", "41", "32"], ["≥ 10,000", "45", "35"]].map(([range, ex, nw], i) => (
                       <tr key={i} style={{ borderBottom: "1px solid #f4f4f5" }}><td style={{ padding: "8px" }}>{range}</td><td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: "#14b8a6" }}>{ex}</td><td style={{ padding: "8px", textAlign: "center", fontWeight: 700, color: "#f97316" }}>{nw}</td></tr>
                     ))}
                   </tbody>
@@ -841,6 +841,9 @@ export default function App() {
                 </div>
                 <div style={{ padding: "14px 18px", background: "#fef2f2", borderRadius: 12, border: "1px solid #fecdd3", fontSize: 12, color: "#52525b", lineHeight: 1.7 }}>
                   <strong style={{ color: "#e11d48" }}>Not ICP:</strong> <strong>Low</strong> and <strong>Dormant</strong> segments fall outside the Ideal Customer Profile — treat as reactive only, not priority targets. Travel Agencies do not match the ICP either and are auto-classified as <strong>Dormant</strong>, regardless of their commercial score.
+                </div>
+                <div style={{ marginTop: 12, padding: "14px 18px", background: "#f0fdf4", borderRadius: 12, border: "1px solid #bbf7d0", fontSize: 12, color: "#52525b", lineHeight: 1.7 }}>
+                  <strong style={{ color: "#16a34a" }}>High-Value Rule:</strong> Any account with an <strong>annual deal value ≥ 10,000 USD</strong> is auto-classified as <strong>High</strong> and requires special care, regardless of its point total. Applies to both existing and new operators (Agencies remain Dormant).
                 </div>
                 <div style={{ marginTop: 12, fontSize: 12, color: "#71717a", lineHeight: 1.7 }}><strong>Review frequency:</strong> Quarterly for existing customers · during onboarding for new customers · after major business changes.</div>
               </Card>
