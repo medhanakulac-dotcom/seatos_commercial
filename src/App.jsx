@@ -34,11 +34,6 @@ const IconAdmin = () => (
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
   </svg>
 );
-const IconPlaybook = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
-  </svg>
-);
 
 // ─── Login Screen (email + magic link) ───────────────────────────
 function LoginScreen() {
@@ -140,7 +135,7 @@ function LoginScreen() {
 export default function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState(() => new URLSearchParams(window.location.search).get("app") || "calculator");
+  const [active, setActive] = useState("calculator");
   const [open, setOpen] = useState(true);
   const [userRole, setUserRole] = useState("member");
 
@@ -202,184 +197,70 @@ export default function App() {
 
   const userEmail = session.user.email;
   const isAdmin = userRole === "admin";
+  const view = new URLSearchParams(window.location.search).get("app") || "playbook";
 
-  const TABS = [
-    { id: "calculator", label: "Deal Calculator", icon: IconCalculator, color: C.purple },
-    { id: "proposal", label: "Proposal Builder", icon: IconProposal, color: C.orange },
-    { id: "contract", label: "Contract Builder", icon: IconContract, color: C.green },
-    { id: "playbook", label: "Playbook", icon: IconPlaybook, color: C.cyan },
-    ...(isAdmin ? [{ id: "admin", label: "Admin", icon: IconAdmin, color: "#e11d48" }] : []),
-  ];
+  // ── Sign out (triggered from inside the Playbook shell) ──
+  if (view === "signout") {
+    handleSignOut();
+    window.history.replaceState({}, "", "/");
+    return (
+      <div style={{ minHeight: "100vh", background: C.dark, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontFamily: "sans-serif", fontSize: 14 }}>
+        Signing out…
+      </div>
+    );
+  }
+
+  // ── Playbook is the primary shell: full-screen, its own navigation ──
+  if (view === "playbook") {
+    return <PlaybookApp role={isAdmin ? "admin" : "member"} email={userEmail} />;
+  }
+
+  // ── A tool page: full-screen, with a slim bar to return to the Playbook ──
+  const TOOL_TITLES = {
+    calculator: "Deal Calculator",
+    proposal: "Proposal Builder",
+    contract: "Contract Builder",
+    admin: "Admin",
+  };
 
   return (
-    <>
-      <style>{`
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{background:${C.bg}}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-        .sidebar{display:flex}
-        .mobile-top{display:none}
-        .mobile-bottom{display:none}
-        .main-area{margin-left:${open ? 248 : 68}px;transition:margin-left 0.25s ease}
-        @media(max-width:768px){
-          .sidebar{display:none!important}
-          .mobile-top{display:flex!important}
-          .mobile-bottom{display:flex!important}
-          .main-area{margin-left:0!important;padding-top:56px!important;padding-bottom:64px!important}
-        }
-      `}</style>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Segoe UI',-apple-system,sans-serif" }}>
+      <style>{`*{box-sizing:border-box;margin:0;padding:0}body{background:${C.bg}}@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
-      <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Segoe UI',-apple-system,sans-serif" }}>
-
-        {/* ─── MOBILE: Top Header ─── */}
-        <div className="mobile-top" style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
-          height: 56, background: C.dark, alignItems: "center",
-          padding: "0 16px", justifyContent: "space-between",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src={LOGO_THUMB} alt="seatOS" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover" }} />
-            <span style={{ fontWeight: 800, fontSize: 16, color: "#fff" }}>seat<span style={{ color: C.orange }}>O</span>S</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{userEmail.split("@")[0]}</span>
-            <button onClick={handleSignOut} style={{
-              background: "rgba(255,255,255,0.08)", border: "none", color: "rgba(255,255,255,0.5)",
-              padding: "6px 10px", borderRadius: 8, cursor: "pointer", fontSize: 11, fontWeight: 600,
-            }}>Out</button>
-          </div>
+      <div style={{
+        position: "sticky", top: 0, zIndex: 300, height: 52, background: C.dark,
+        display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px",
+      }}>
+        <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, color: "#fff", textDecoration: "none", fontWeight: 700, fontSize: 14 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Playbook
+        </a>
+        <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 600 }}>{TOOL_TITLES[view] || ""}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{userEmail.split("@")[0]}</span>
+          <button onClick={handleSignOut} style={{
+            background: "rgba(255,255,255,0.08)", border: "none", color: "rgba(255,255,255,0.5)",
+            padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 11, fontWeight: 600,
+          }}>Sign Out</button>
         </div>
-
-        {/* ─── MOBILE: Bottom Tab Bar ─── */}
-        <div className="mobile-bottom" style={{
-          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 200,
-          height: 64, background: C.dark, alignItems: "stretch",
-          borderTop: "1px solid rgba(255,255,255,0.08)",
-        }}>
-          {TABS.map(tab => {
-            const isActive = active === tab.id;
-            const Icon = tab.icon;
-            return (
-              <button key={tab.id} onClick={() => handleTabSwitch(tab.id)} style={{
-                flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-                justifyContent: "center", gap: 4, border: "none", cursor: "pointer",
-                background: isActive ? "rgba(255,255,255,0.06)" : "transparent",
-                color: isActive ? "#fff" : "rgba(255,255,255,0.35)",
-                position: "relative", padding: "8px 0",
-              }}>
-                {isActive && <div style={{ position: "absolute", top: 0, left: "20%", right: "20%", height: 3, borderRadius: "0 0 3px 3px", background: tab.color }} />}
-                <span style={{ color: isActive ? tab.color : "inherit", display: "flex" }}><Icon /></span>
-                <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500 }}>{tab.label.split(" ")[0]}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ─── DESKTOP: Sidebar ─── */}
-        <aside className="sidebar" style={{
-          width: open ? 248 : 68, background: C.dark, color: "#fff",
-          flexDirection: "column", transition: "width 0.25s ease",
-          position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100, overflow: "hidden",
-        }}>
-          {/* Logo */}
-          <div style={{
-            padding: open ? "20px 18px" : "20px 12px", display: "flex", alignItems: "center",
-            justifyContent: open ? "flex-start" : "center", gap: 12,
-            borderBottom: "1px solid rgba(255,255,255,0.08)", minHeight: 76,
-          }}>
-            <img src={LOGO_THUMB} alt="seatOS" crossOrigin="anonymous" style={{
-              width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0,
-              border: "2px solid rgba(255,255,255,0.1)",
-            }} />
-            {open && (
-              <div style={{ overflow: "hidden", whiteSpace: "nowrap" }}>
-                <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: -0.3, color: "#fff" }}>
-                  seat<span style={{ color: C.orange }}>O</span>S
-                </div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 1 }}>Deal Suite</div>
-              </div>
-            )}
-          </div>
-
-          {/* Toggle */}
-          <div style={{ padding: "10px 10px 4px", display: "flex", justifyContent: open ? "flex-end" : "center" }}>
-            <button onClick={() => setOpen(!open)} style={{
-              background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.4)",
-              width: 30, height: 30, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", fontSize: 12, transition: "all 0.15s",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "#fff"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
-            >{open ? "◂" : "▸"}</button>
-          </div>
-
-          {/* Nav */}
-          <nav style={{ padding: "4px 8px", flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-            {TABS.map(tab => {
-              const isActive = active === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button key={tab.id} onClick={() => handleTabSwitch(tab.id)} style={{
-                  display: "flex", alignItems: "center", gap: 14,
-                  padding: open ? "13px 16px" : "13px 0", justifyContent: open ? "flex-start" : "center",
-                  borderRadius: 12, border: "none", cursor: "pointer",
-                  background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
-                  color: isActive ? "#fff" : "rgba(255,255,255,0.4)",
-                  fontWeight: isActive ? 700 : 500, fontSize: 14, transition: "all 0.15s",
-                  width: "100%", textAlign: "left", position: "relative",
-                }}
-                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}}
-                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}}
-                >
-                  {isActive && <div style={{ position: "absolute", left: 0, top: 8, bottom: 8, width: 3, borderRadius: "0 3px 3px 0", background: tab.color }} />}
-                  <span style={{ flexShrink: 0, display: "flex", alignItems: "center", color: isActive ? tab.color : "inherit" }}><Icon /></span>
-                  {open && <span>{tab.label}</span>}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* User info + Sign Out */}
-          <div style={{
-            padding: open ? "14px 16px" : "14px 8px", borderTop: "1px solid rgba(255,255,255,0.06)",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-          }}>
-            {open && (
-              <div style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", borderRadius: 8, marginBottom: 4 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {userEmail}
-                </div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
-                  {isAdmin ? "Admin" : "Member"}
-                </div>
-              </div>
-            )}
-            <button onClick={handleSignOut} style={{
-              background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.4)",
-              padding: open ? "8px 16px" : "8px", borderRadius: 8, cursor: "pointer",
-              fontSize: 12, fontWeight: 600, width: open ? "100%" : "auto",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.15s",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(231,76,60,0.15)"; e.currentTarget.style.color = "#e74c3c"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              {open && "Sign Out"}
-            </button>
-          </div>
-        </aside>
-
-        {/* ─── MAIN CONTENT ─── */}
-        <main className="main-area" style={{ flex: 1, minHeight: "100vh", background: C.bg }}>
-          <div key={active} style={{ animation: "fadeIn 0.2s ease-out" }}>
-            {active === "calculator" && <CalculatorApp />}
-            {active === "proposal" && <ProposalApp />}
-            {active === "contract" && <ContractApp />}
-            {active === "playbook" && <PlaybookApp />}
-            {active === "admin" && isAdmin && <AdminApp currentUser={userEmail} />}
-          </div>
-        </main>
       </div>
-    </>
+
+      <div key={view} style={{ animation: "fadeIn 0.2s ease-out" }}>
+        {view === "calculator" && <CalculatorApp />}
+        {view === "proposal" && <ProposalApp />}
+        {view === "contract" && <ContractApp />}
+        {view === "admin" && isAdmin && <AdminApp currentUser={userEmail} />}
+        {view === "admin" && !isAdmin && (
+          <div style={{ padding: 60, textAlign: "center", color: C.gray }}>
+            Not authorized. <a href="/" style={{ color: C.orange }}>Back to Playbook</a>
+          </div>
+        )}
+        {!["calculator", "proposal", "contract", "admin"].includes(view) && (
+          <div style={{ padding: 60, textAlign: "center", color: C.gray }}>
+            Unknown page. <a href="/" style={{ color: C.orange }}>Back to Playbook</a>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
