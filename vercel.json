@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/((?!playbook\\.html|assets/|.*\\.[a-zA-Z0-9]+$).*)", "destination": "/" }
   ]
 }
