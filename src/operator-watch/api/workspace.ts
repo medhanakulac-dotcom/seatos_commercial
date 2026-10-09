@@ -5,6 +5,10 @@ import type {
   ActivityItem,
   ChatMessage,
   CrmActivity,
+  WeeklySummary,
+  WeeklyTickets,
+  WeeklyUploadResult,
+  WeeklyUsage,
   CurrentUser,
   Decision,
   Language,
@@ -49,6 +53,7 @@ export const workspaceApi = {
   resolveTmsLink: (id: string) => http.post<AccountDetail>(`${account(id)}/tms-link/resolve`, {}),
   conversation: (id: string) => http.get<{ sessionId: string | null; messages: ChatMessage[] }>(`${account(id)}/assistant`),
   crmActivity: (id: string) => http.get<{ connected: boolean; items: CrmActivity[] }>(`${account(id)}/hubspot-activity`),
+  weekly: (id: string) => http.get<{ usage: WeeklyUsage[]; tickets: WeeklyTickets[] }>(`${account(id)}/weekly`),
   ask: (id: string, question: string) => http.post<{ connected: boolean; messages: ChatMessage[] }>(`${account(id)}/assistant`, { question }),
 };
 
@@ -60,4 +65,7 @@ export const adminApi = {
   startRun: () => http.post<{ run: AdminRun | null }>('/admin/runs'),
   verifySmtp: () => http.post<{ ok: boolean; error?: string }>('/admin/sending/verify'),
   testEmail: (channel: SendChannel, to: string) => http.post<{ ok: boolean; error?: string }>('/admin/sending/test', { channel, to }),
+  weeklyData: () => http.get<WeeklySummary>('/admin/weekly-data'),
+  uploadWeekly: (kind: 'usage' | 'tickets', csv: string, week?: string) => http.post<WeeklyUploadResult>('/admin/weekly-data', { kind, csv, ...(week ? { week } : {}) }),
+  linkWeeklyName: (name: string, accountId: string | null) => http.put<WeeklySummary>('/admin/weekly-data/links', { name, accountId }),
 };

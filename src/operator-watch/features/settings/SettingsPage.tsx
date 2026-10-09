@@ -5,6 +5,7 @@ import type { AgentMode, SendChannel, ServerStatus, WorkspaceSettings } from '..
 import { adminApi } from '../../api/workspace';
 import { useToast } from '../../components/Toast';
 import { formatEventTime } from '../../lib/format';
+import { WeeklyData } from './WeeklyData';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const adminKeys = { settings: ['admin', 'settings'] as const, runs: ['admin', 'runs'] as const };
@@ -279,6 +280,8 @@ export function SettingsPage() {
           <Toggle checked={draft.guards.blockHealthy} onChange={(v) => set('guards', { blockHealthy: v })} label="Never send proactive email" />
         </Field>
       </div>
+
+      <WeeklyData />
 
       <div className="card">
         <h2 className="st">

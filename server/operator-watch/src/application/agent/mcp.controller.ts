@@ -1,9 +1,10 @@
 import { timingSafeEqual } from 'node:crypto';
-import { All, Controller, Inject, Logger, Req, Res } from '@nestjs/common';
+import { All, Controller, Inject, Logger, Optional, Req, Res } from '@nestjs/common';
+import { WeeklyDataService } from '../../domain/workspace/services/weekly-data.service';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { RunService } from '../../domain/workspace/services/run.service';
-import { AGENT_HARNESS, AgentHarness, WORKSPACE_STORE, WorkspaceStore } from '../../domain/workspace/types/repositories/workspace.ports';
+import { AGENT_HARNESS, AgentHarness, CRM_ACTIVITY, CrmActivitySource, WORKSPACE_STORE, WorkspaceStore } from '../../domain/workspace/types/repositories/workspace.ports';
 import { buildMcpServer } from './mcp.tools';
 
 interface FastifyLikeRequest {
@@ -28,8 +29,9 @@ export function agentAuthorized(header: string | string[] | undefined, token = p
 }
 
 /**
- * MCP endpoint (Streamable HTTP, stateless) for Hermes: `POST /mcp` with `Authorization: Bearer <AGENT_API_TOKEN>`.
- * Behind the proxy it is `/api/mcp`. Disabled (503) until AGENT_API_TOKEN is set.
+ * MCP endpoint (Streamable HTTP, stateless) for agents — Hermes, or Claude Desktop/Code as a connector:
+ * `POST /mcp` with `Authorization: Bearer <AGENT_API_TOKEN>`. On the site it is `/api/ow/mcp`. Disabled (503) until
+ * AGENT_API_TOKEN is set.
  */
 @Controller('mcp')
 export class McpController {
@@ -39,6 +41,8 @@ export class McpController {
     private readonly runs: RunService,
     @Inject(WORKSPACE_STORE) private readonly store: WorkspaceStore,
     @Inject(AGENT_HARNESS) private readonly harness: AgentHarness,
+    @Optional() private readonly weekly?: WeeklyDataService,
+    @Optional() @Inject(CRM_ACTIVITY) private readonly crmActivity?: CrmActivitySource,
   ) {}
 
   @All()
@@ -47,7 +51,7 @@ export class McpController {
     if (!agentAuthorized(req.headers.authorization)) return reply.status(401).send({ error: 'Unauthorized' });
     if (req.method !== 'POST') return reply.status(405).send({ error: 'Use POST (stateless MCP)' });
 
-    const server = buildMcpServer(this.runs, this.store, this.harness.author.id);
+    const server = buildMcpServer(this.runs, this.store, this.harness.author.id, { weekly: this.weekly, crmActivity: this.crmActivity });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     reply.hijack();
     reply.raw.on('close', () => {

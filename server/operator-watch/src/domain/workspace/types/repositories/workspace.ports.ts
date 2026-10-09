@@ -20,6 +20,7 @@ import {
 } from '../../entities/workspace.entities';
 import { FeatureKey } from '../../services/playbook.rules';
 import { WorkspaceSettings } from '../../services/settings';
+import { TicketRow, UsageRow, WeeklyKind } from '../../services/weekly-data';
 
 export interface CrmSnapshot {
   readonly meta: CrmSnapshotMeta;
@@ -365,3 +366,45 @@ export interface AgentJobQueue {
   recentRuns(since: string): Promise<string[]>;
 }
 export const AGENT_JOB_QUEUE = Symbol('AGENT_JOB_QUEUE');
+
+/** A stored weekly usage row (one operator, one week), with the account it was matched to. */
+export interface WeeklyUsageRecord extends UsageRow {
+  readonly week: string;
+  readonly nameKey: string;
+  readonly accountId: string | null;
+}
+
+/** A stored weekly tickets/GMV row. */
+export interface WeeklyTicketRecord extends TicketRow {
+  readonly week: string;
+  readonly nameKey: string;
+  readonly accountId: string | null;
+}
+
+export interface WeeklyUpload {
+  readonly kind: WeeklyKind;
+  readonly week: string;
+  readonly rows: number;
+  readonly matched: number;
+  readonly uploadedAt: string;
+  readonly uploadedBy: string;
+}
+
+/** The weekly numbers the team uploads (Looker CSV exports). Uploading a week replaces that week for that kind. */
+export interface WeeklyDataStore {
+  replaceUsage(week: string, rows: readonly WeeklyUsageRecord[], by: string): Promise<void>;
+  replaceTickets(week: string, rows: readonly WeeklyTicketRecord[], by: string): Promise<void>;
+  /** Newest week first. */
+  usageFor(accountId: string, limit: number): Promise<WeeklyUsageRecord[]>;
+  ticketsFor(accountId: string, limit: number): Promise<WeeklyTicketRecord[]>;
+  /** All rows of one week (the latest uploaded week when omitted). */
+  usageWeek(week?: string): Promise<WeeklyUsageRecord[]>;
+  ticketsWeek(week?: string): Promise<WeeklyTicketRecord[]>;
+  /** One entry per uploaded (kind, week), newest first. */
+  uploads(limit: number): Promise<WeeklyUpload[]>;
+  /** Hand-made matches: name key → account id (null = ignore this name). */
+  nameLinks(): Promise<Map<string, string | null>>;
+  /** Saves a hand-made match and applies it to every stored row with that name. */
+  setNameLink(nameKey: string, accountId: string | null, by: string): Promise<void>;
+}
+export const WEEKLY_DATA_STORE = Symbol('WEEKLY_DATA_STORE');

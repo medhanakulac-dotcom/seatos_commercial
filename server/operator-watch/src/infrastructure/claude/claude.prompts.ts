@@ -28,6 +28,10 @@ Base every statement on the data you are given. Never invent numbers, bookings, 
   next_step: the concrete action. signals: e.g. {detector: "HubSpot health", text: "Health status: Unhealthy"}.
 - The team's memory lists earlier decisions on this operator and team-wide lessons (rejections and their reasons, how
   people edited drafts). Follow them.
+- The message also carries the operator's weekly SeatOS numbers uploaded by the team (newest first): WAO = how
+  many of the 7 features it used that week, which ones, and tickets sold and GMV (USD). Use the trend (rising,
+  falling, stopped) as evidence; an operator with no ticket row sold nothing that week. Never invent numbers that
+  are not there.
 - The message also carries the operator's recent HubSpot activity: notes, meetings, calls, emails, tasks and logged
   LINE/WhatsApp/SMS messages, newest first. Read it. Ground the analysis and the email in what was actually discussed,
   promised or complained about; don't ask for something the operator just did or was just asked; when the last real
@@ -56,6 +60,9 @@ Focus
 Facts
 - Each question comes with a "Context" block: the current CRM/workspace picture. Prefer it over memory when they differ.
 - For more (previous cases, the workspace activity log, the current email draft) call get_operator_context.
+- Weekly SeatOS numbers the team uploads (WAO feature usage of 7 features, tickets sold, GMV in USD, per week) come
+  from get_weekly_numbers (one operator, several weeks) and list_weekly_numbers (every operator in one week, for
+  rankings and comparisons). Say which week a number is for.
 - What was discussed with the operator — HubSpot notes, meetings (with their notes), calls, emails, tasks and logged
   LINE/WhatsApp/SMS messages — comes from get_hubspot_activity. Use it for questions about history, promises,
   complaints, meetings or "what did we last talk about"; filter by type when the question is about one kind.
@@ -116,6 +123,23 @@ export function formatActivity(items: readonly { type: string; at: string; title
       const head = [a.at.slice(0, 10), a.type.toUpperCase(), a.detail, a.owner ? `by ${a.owner}` : null].filter(Boolean).join(' · ');
       const body = a.body ? (a.body.length > maxBody ? `${a.body.slice(0, maxBody)}…` : a.body) : '';
       return `- ${head}${a.title ? ` — ${a.title}` : ''}${body ? `\n  ${body.replace(/\n/g, '\n  ')}` : ''}`;
+    })
+    .join('\n');
+}
+
+/** Uploaded weekly SeatOS numbers for one operator, newest week first. */
+export function formatWeekly(data: {
+  usage: readonly { week: string; featureCount: number; features: Readonly<Record<string, boolean>> }[];
+  tickets: readonly { week: string; tickets: number; gmvUsd: number }[];
+}): string {
+  const weeks = [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week)])].sort().reverse();
+  if (!weeks.length) return 'No weekly SeatOS numbers uploaded for this operator.';
+  return weeks
+    .map((w) => {
+      const u = data.usage.find((x) => x.week === w);
+      const t = data.tickets.find((x) => x.week === w);
+      const used = u ? Object.entries(u.features).filter(([, on]) => on).map(([f]) => f.replace('_management', '')).join(', ') : '';
+      return `- week of ${w}: ${u ? `WAO ${u.featureCount}/7 (${used || 'no features used'})` : 'no usage row'}; ${t ? `${t.tickets} tickets, GMV $${t.gmvUsd.toFixed(2)}` : 'no ticket row (no sales recorded)'}`;
     })
     .join('\n');
 }

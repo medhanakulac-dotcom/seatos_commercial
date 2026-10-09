@@ -3,6 +3,7 @@ import { displayNameOf } from '../../../auth/display-name';
 import { AuthenticatedUser, RbacGuard, RequirePermission, SessionGuard } from '../../../auth/guards';
 import { Actor, HEALTHS, Language, RewriteMode } from '../../../domain/workspace/entities/workspace.entities';
 import { DORMANT_PLAYBOOK, PLAYBOOK_MATRIX } from '../../../domain/workspace/services/playbook.rules';
+import { WeeklyDataService } from '../../../domain/workspace/services/weekly-data.service';
 import { WorkspaceService } from '../../../domain/workspace/services/workspace.service';
 import { LANGUAGE_NAMES } from '../../../domain/workspace/services/workspace.shared';
 import {
@@ -31,7 +32,10 @@ interface AuthedRequest { user?: AuthenticatedUser }
 @RequirePermission('workspace:read')
 @UseFilters(WorkspaceErrorFilter)
 export class WorkspaceController {
-  constructor(private readonly workspace: WorkspaceService) {}
+  constructor(
+    private readonly workspace: WorkspaceService,
+    private readonly weeklyData: WeeklyDataService,
+  ) {}
 
   @Get('meta')
   async meta() {
@@ -162,6 +166,12 @@ export class WorkspaceController {
   async resolveTmsLink(@Param('id', AccountIdPipe) id: string) {
     await this.workspace.resolveTmsLink(id);
     return this.detail(id);
+  }
+
+  /** Uploaded weekly numbers for the account: feature usage (WAO) and tickets/GMV, newest week first. */
+  @Get('accounts/:id/weekly')
+  weekly(@Param('id', AccountIdPipe) id: string) {
+    return this.weeklyData.forAccount(id);
   }
 
   /** Notes, meetings, calls, emails, tasks and logged messages from HubSpot, newest first. */

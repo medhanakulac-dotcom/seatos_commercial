@@ -10,6 +10,7 @@ import { useDecision, useGenerateDraft, useGeneratingIds, useNotes, useRewriteDr
 import { AssistantChat } from './AssistantChat';
 import { HubSpotActivity } from './HubSpotActivity';
 import { TmsLinkRow } from './TmsLinkRow';
+import { WeeklyNumbers } from './WeeklyNumbers';
 
 type Tab = 'overview' | 'activity' | 'email';
 
@@ -378,6 +379,7 @@ export function AccountRecordPage() {
       <div className="rl">
         <div className="grid" style={{ gap: 18, minWidth: 0 }}>
           {props}
+          <WeeklyNumbers accountId={a.id} />
           {deals}
           {owner}
           {approval}

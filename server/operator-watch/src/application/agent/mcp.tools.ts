@@ -1,10 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod/v4';
-import { LANGUAGES } from '../../domain/workspace/entities/workspace.entities';
+import { CRM_ACTIVITY_TYPES, LANGUAGES } from '../../domain/workspace/entities/workspace.entities';
 import { WorkspaceError } from '../../domain/workspace/errors/workspace.errors';
-import { operatorContext } from '../../domain/workspace/services/operator-context';
+import { operatorActivity, operatorContext } from '../../domain/workspace/services/operator-context';
+import { nameKey } from '../../domain/workspace/services/weekly-data';
+import { WeeklyDataService } from '../../domain/workspace/services/weekly-data.service';
 import { RunService } from '../../domain/workspace/services/run.service';
-import { WorkspaceStore } from '../../domain/workspace/types/repositories/workspace.ports';
+import { CrmActivitySource, WorkspaceStore } from '../../domain/workspace/types/repositories/workspace.ports';
 
 type ToolResult = { content: { type: 'text'; text: string }[]; isError?: boolean };
 
@@ -25,8 +27,77 @@ const safely = async (fn: () => Promise<unknown>): Promise<ToolResult> => {
  * The Operator Watch tool contract for Hermes (Context 2 → Context 1 boundary).
  * Hermes never touches the database: it reads the frozen snapshot and submits one case per operator.
  */
-export function buildMcpServer(runs: RunService, store: WorkspaceStore, authorId: string): McpServer {
+export function buildMcpServer(
+  runs: RunService,
+  store: WorkspaceStore,
+  authorId: string,
+  extra: { weekly?: WeeklyDataService; crmActivity?: CrmActivitySource } = {},
+): McpServer {
   const server = new McpServer({ name: 'commercial-workspace', version: '1.0.0' });
+
+  server.registerTool(
+    'find_operators',
+    {
+      description: 'Find operators (SeatOS customers) by name in the latest run. Returns operator_id, which every other tool takes.',
+      inputSchema: { name: z.string().min(1).max(200) },
+      annotations: { readOnlyHint: true },
+    },
+    ({ name }) =>
+      safely(async () => {
+        const run = await runs.latestRun();
+        if (!run) return { operators: [] };
+        const { snapshot } = await runs.operatorsForRun(run.id);
+        const key = nameKey(name);
+        const hits = snapshot.accounts.filter((a) => nameKey(a.name).includes(key));
+        return { operators: hits.slice(0, 20).map((a) => ({ operator_id: a.id, name: a.name, segment: a.segment, health: a.crmHealth, owner: a.owner, country: a.country })) };
+      }),
+  );
+
+  if (extra.weekly) {
+    const weekly = extra.weekly;
+    server.registerTool(
+      'get_weekly_numbers',
+      {
+        description:
+          "One operator's weekly SeatOS numbers uploaded by the team, newest week first: WAO (features used of 7, and which), tickets sold and GMV (USD).",
+        inputSchema: { operator_id: z.string().min(1).max(64), weeks: z.number().int().min(1).max(52).default(8) },
+        annotations: { readOnlyHint: true },
+      },
+      ({ operator_id, weeks }) => safely(() => weekly.forAccount(operator_id, weeks)),
+    );
+    server.registerTool(
+      'list_weekly_numbers',
+      {
+        description:
+          'Every operator in one uploaded week, for rankings and comparisons. kind "usage": WAO per operator (high to low); kind "tickets": tickets and GMV in USD (high to low). Defaults to the latest week.',
+        inputSchema: { kind: z.enum(['usage', 'tickets']), week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Monday of the week') },
+        annotations: { readOnlyHint: true },
+      },
+      ({ kind, week }) => safely(async () => ({ rows: await weekly.week(kind, week) })),
+    );
+  }
+
+  if (extra.crmActivity) {
+    const source = extra.crmActivity;
+    server.registerTool(
+      'get_hubspot_activity',
+      {
+        description:
+          'What was logged with an operator in HubSpot, newest first: notes, meetings (with meeting notes), calls, emails, tasks and logged LINE/WhatsApp/SMS messages ("message").',
+        inputSchema: {
+          operator_id: z.string().min(1).max(64),
+          type: z.enum(CRM_ACTIVITY_TYPES).optional(),
+          limit: z.number().int().min(1).max(100).default(30),
+        },
+        annotations: { readOnlyHint: true },
+      },
+      ({ operator_id, type, limit }) =>
+        safely(async () => {
+          const { connected, items } = await operatorActivity(runs, source, operator_id, type ? 100 : limit);
+          return { connected, items: (type ? items.filter((i) => i.type === type) : items).slice(0, limit) };
+        }),
+    );
+  }
 
   server.registerTool(
     'get_current_run',

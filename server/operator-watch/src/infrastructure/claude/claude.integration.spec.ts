@@ -155,7 +155,7 @@ describe('Claude agent HTTP integration', () => {
     await call('POST', `/workspace/accounts/${id}/assistant`, 'admin', { question: 'And their deals?' });
 
     const second = claude.chats[1];
-    expect(second.tools).toEqual(['get_operator_context', 'get_hubspot_activity']);
+    expect(second.tools).toEqual(['get_operator_context', 'get_hubspot_activity', 'get_weekly_numbers', 'list_weekly_numbers']);
     const sent = JSON.stringify(second.messages);
     expect(sent).toContain('Analyst User: How are they doing?');
     expect(sent).toContain('Answer 1');

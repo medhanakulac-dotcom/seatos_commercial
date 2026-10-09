@@ -169,7 +169,7 @@ describe('Workspace HTTP integration', () => {
     expect((await mcp({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, 'wrong-token')).statusCode).toBe(401);
     const list = await mcp({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
     expect(list.statusCode).toBe(200);
-    expect(list.json().result.tools.map((t: { name: string }) => t.name)).toEqual(['get_current_run', 'list_operators', 'get_operator', 'get_operator_context', 'submit_case', 'submit_cases', 'complete_run', 'fail_run']);
+    expect(list.json().result.tools.map((t: { name: string }) => t.name)).toEqual(['find_operators', 'get_weekly_numbers', 'list_weekly_numbers', 'get_hubspot_activity', 'get_current_run', 'list_operators', 'get_operator', 'get_operator_context', 'submit_case', 'submit_cases', 'complete_run', 'fail_run']);
 
     // Switch to Hermes mode so the run stays open for agent submissions.
     const { settings } = (await call('GET', '/admin/settings', 'admin')).json();

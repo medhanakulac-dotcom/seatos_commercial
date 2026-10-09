@@ -17,6 +17,7 @@ import {
   AgentMemoryStore,
   CRM_ACTIVITY,
   CrmActivitySource,
+  WEEKLY_DATA_STORE,
   AGENT_NOTIFIER,
   AgentHarness,
   CHAT_EVENTS,
@@ -61,6 +62,10 @@ import { MockHubSpotAccountSource, MockHubSpotNoteSync } from '../../infrastruct
 import { AdminController } from '../admin/admin.controller';
 import { McpController } from '../agent/mcp.controller';
 import { InternalController } from '../internal/internal.controller';
+import { WeeklyDataController } from '../weekly/weekly-data.controller';
+import { WeeklyDataService } from '../../domain/workspace/services/weekly-data.service';
+import { PgWeeklyDataStore } from '../../infrastructure/database/pg-weekly-data.store';
+import { InMemoryWeeklyDataStore } from '../../infrastructure/workspace-mocks/in-memory-weekly-data.store';
 import { WorkspaceController } from './controllers/workspace.controller';
 
 const AGENT_STORE = Symbol('AGENT_STORE');
@@ -72,7 +77,7 @@ const AGENT_STORE = Symbol('AGENT_STORE');
  */
 @Module({
   imports: [AuthModule, DatabaseModule, EmailModule],
-  controllers: [WorkspaceController, AdminController, McpController, InternalController],
+  controllers: [WorkspaceController, AdminController, McpController, InternalController, WeeklyDataController],
   providers: [
     {
       provide: WORKSPACE_STORE,
@@ -124,6 +129,8 @@ const AGENT_STORE = Symbol('AGENT_STORE');
     { provide: CLAUDE, useFactory: (): ClaudeLike | null => { const config = loadClaudeConfig(); return config && new ClaudeClient(config); } },
     { provide: AGENT_STORE, inject: [PG_POOL], useFactory: (pool: Pool | null) => (pool ? new PgAgentStore(pool) : new InMemoryAgentStore()) },
     { provide: AGENT_MEMORY_STORE, useExisting: AGENT_STORE },
+    { provide: WEEKLY_DATA_STORE, inject: [PG_POOL], useFactory: (pool: Pool | null) => (pool ? new PgWeeklyDataStore(pool) : new InMemoryWeeklyDataStore()) },
+    WeeklyDataService,
     { provide: AGENT_JOB_QUEUE, useExisting: AGENT_STORE },
     { provide: ClaudeMemory, inject: [AGENT_MEMORY_STORE, CLAUDE], useFactory: (store: AgentMemoryStore, claude: ClaudeLike | null) => claude && new ClaudeMemory(store, claude) },
     { provide: SeatosTools, useFactory: () => new SeatosTools() },
@@ -144,17 +151,17 @@ const AGENT_STORE = Symbol('AGENT_STORE');
     },
     {
       provide: ACCOUNT_ASSISTANT,
-      inject: [AGENT_HARNESS, CLAUDE, ClaudeMemory, SeatosTools, RunService, WORKSPACE_STORE, CRM_ACTIVITY],
-      useFactory: (h: AgentHarness, claude: ClaudeLike | null, memory: ClaudeMemory | null, seatos: SeatosTools, runs: RunService, store: WorkspaceStore, activity: CrmActivitySource) =>
+      inject: [AGENT_HARNESS, CLAUDE, ClaudeMemory, SeatosTools, RunService, WORKSPACE_STORE, CRM_ACTIVITY, WeeklyDataService],
+      useFactory: (h: AgentHarness, claude: ClaudeLike | null, memory: ClaudeMemory | null, seatos: SeatosTools, runs: RunService, store: WorkspaceStore, activity: CrmActivitySource, weekly: WeeklyDataService) =>
         claude && memory
-          ? new ClaudeAccountAssistant(claude, memory, seatos, (id) => operatorContext(runs, store, id), (id, limit) => operatorActivity(runs, activity, id, limit))
+          ? new ClaudeAccountAssistant(claude, memory, seatos, (id) => operatorContext(runs, store, id), (id, limit) => operatorActivity(runs, activity, id, limit), weekly)
           : h.assistant,
     },
     {
       provide: ClaudeRunWorker,
-      inject: [RunService, WORKSPACE_STORE, AGENT_JOB_QUEUE, CLAUDE, ClaudeMemory, CRM_ACTIVITY],
-      useFactory: (runs: RunService, store: WorkspaceStore, queue: AgentJobQueue, claude: ClaudeLike | null, memory: ClaudeMemory | null, activity: CrmActivitySource) =>
-        new ClaudeRunWorker(runs, store, queue, claude, memory, activity),
+      inject: [RunService, WORKSPACE_STORE, AGENT_JOB_QUEUE, CLAUDE, ClaudeMemory, CRM_ACTIVITY, WeeklyDataService],
+      useFactory: (runs: RunService, store: WorkspaceStore, queue: AgentJobQueue, claude: ClaudeLike | null, memory: ClaudeMemory | null, activity: CrmActivitySource, weekly: WeeklyDataService) =>
+        new ClaudeRunWorker(runs, store, queue, claude, memory, activity, weekly),
     },
     ChatHub,
     { provide: CHAT_EVENTS, useExisting: ChatHub },
@@ -168,6 +175,6 @@ const AGENT_STORE = Symbol('AGENT_STORE');
     SendingService,
     WorkspaceWorkers,
   ],
-  exports: [WorkspaceService, RunService, SendingService, SettingsService, WORKSPACE_STORE],
+  exports: [WorkspaceService, RunService, SendingService, SettingsService, WeeklyDataService, WORKSPACE_STORE],
 })
 export class WorkspaceModule {}

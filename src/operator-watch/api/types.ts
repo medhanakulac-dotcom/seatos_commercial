@@ -290,3 +290,36 @@ export interface CrmActivity {
   owner: string | null;
   url: string | null;
 }
+
+export type Feature = 'inventory_management' | 'distribution_management' | 'reservation_management' | 'trip_management' | 'fleet_management' | 'analytics' | 'accounting';
+
+export interface WeeklyUsage {
+  week: string;
+  operatorName: string;
+  accountId: string | null;
+  features: Record<Feature, boolean>;
+  featureCount: number;
+}
+
+export interface WeeklyTickets {
+  week: string;
+  operatorName: string;
+  accountId: string | null;
+  gmvUsd: number;
+  tickets: number;
+}
+
+export interface WeeklyUploadResult {
+  kind: 'usage' | 'tickets';
+  weeks: string[];
+  rows: number;
+  matched: number;
+  unmatched: { name: string; key: string }[];
+}
+
+export interface WeeklySummary {
+  uploads: { kind: 'usage' | 'tickets'; week: string; rows: number; matched: number; uploadedAt: string; uploadedBy: string }[];
+  unmatched: { name: string; key: string; in: ('usage' | 'tickets')[] }[];
+  ignored: string[];
+  accounts: { id: string; name: string }[];
+}

@@ -14,16 +14,24 @@ import {
   ChatTurn,
   EmailRewriter,
   RunStartedEvent,
+  WeeklyTicketRecord,
+  WeeklyUsageRecord,
 } from '../../domain/workspace/types/repositories/workspace.ports';
 import { buildOperatorBrief } from '../hermes/operator-chat/operator-chat.brief';
 import { renderHermesEvent } from '../hermes/hermes-agent.notifier';
 import { background } from '../runtime/background';
 import { ClaudeLike } from './claude.client';
 import { ClaudeMemory } from './claude.memory';
-import { CHAT_SYSTEM, REWRITE_SYSTEM } from './claude.prompts';
+import { CHAT_SYSTEM, formatWeekly, REWRITE_SYSTEM } from './claude.prompts';
 import { SeatosTools } from './seatos.tools';
 
 export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
+
+/** Uploaded weekly numbers (WeeklyDataService). */
+export interface WeeklyLookup {
+  forAccount(accountId: string, weeks: number): Promise<{ usage: WeeklyUsageRecord[]; tickets: WeeklyTicketRecord[] }>;
+  week(kind: 'usage' | 'tickets', week?: string): Promise<(WeeklyUsageRecord | WeeklyTicketRecord)[]>;
+}
 
 /** Chat turns kept in the prompt; older ones live on in memory. */
 const HISTORY_TURNS = 20;
@@ -69,6 +77,7 @@ export class ClaudeAccountAssistant implements AccountAssistant {
     private readonly seatos: SeatosTools,
     private readonly operatorContext: (operatorId: string) => Promise<unknown>,
     private readonly crmActivity: (operatorId: string, limit: number) => Promise<{ connected: boolean; items: CrmActivity[] }> = async () => ({ connected: false, items: [] }),
+    private readonly weekly: WeeklyLookup | null = null,
   ) {}
 
   async ask({ account, question, asker, history }: { account: AccountContext; question: string; asker: string; history: readonly ChatTurn[] }): Promise<string> {
@@ -124,10 +133,55 @@ export class ClaudeAccountAssistant implements AccountAssistant {
       },
     });
 
+    const weekly = this.weekly;
+    const weeklyTools = weekly
+      ? [
+          betaZodTool({
+            name: 'get_weekly_numbers',
+            description:
+              "One operator's weekly SeatOS numbers uploaded by the team, newest week first: WAO (features used of 7, and which), " +
+              'tickets sold and GMV in USD. Defaults to the operator this chat is about.',
+            inputSchema: z.object({
+              operator_id: z.string().optional().describe('Only when a user explicitly asks about a different operator'),
+              weeks: z.number().int().min(1).max(52).optional().describe('How many weeks back (default 8)'),
+            }),
+            run: async ({ operator_id, weeks }) => {
+              const data = await weekly.forAccount(operator_id || account.id, weeks ?? 8);
+              return formatWeekly(data);
+            },
+          }),
+          betaZodTool({
+            name: 'list_weekly_numbers',
+            description:
+              'Every operator in one uploaded week, for rankings and comparisons: kind "usage" (WAO, sorted high to low) or "tickets" ' +
+              '(tickets and GMV in USD, sorted high to low). Defaults to the latest uploaded week.',
+            inputSchema: z.object({
+              kind: z.enum(['usage', 'tickets']),
+              week: z.string().optional().describe('Monday of the week, YYYY-MM-DD'),
+            }),
+            run: async ({ kind, week }) => {
+              try {
+                const rows = await weekly.week(kind, week);
+                if (!rows.length) return 'Nothing uploaded for that week.';
+                return JSON.stringify(
+                  rows.map((r) =>
+                    'tickets' in r
+                      ? { week: r.week, operator: r.operatorName, operator_id: r.accountId, tickets: r.tickets, gmv_usd: r.gmvUsd }
+                      : { week: r.week, operator: r.operatorName, operator_id: r.accountId, wao: r.featureCount },
+                  ),
+                );
+              } catch (error) {
+                return `Could not read that week: ${error instanceof Error ? error.message : String(error)}`;
+              }
+            },
+          }),
+        ]
+      : [];
+
     const answer = await this.claude.converse({
       system: CHAT_SYSTEM,
       messages,
-      tools: [lookup, activityTool, ...(await this.seatos.tools())],
+      tools: [lookup, activityTool, ...weeklyTools, ...(await this.seatos.tools())],
       effort: 'medium',
       maxIterations: MAX_TOOL_STEPS,
     });
