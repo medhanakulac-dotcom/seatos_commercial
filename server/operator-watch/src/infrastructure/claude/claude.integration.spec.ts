@@ -5,6 +5,7 @@ import { AppModule } from '../../app.module';
 import { AUTH_REPOSITORY, InMemoryAuthRepository, Role } from '../../auth/auth.repository';
 import { IDENTITY_VERIFIER, StaticIdentityVerifier } from '../../auth/identity.verifier';
 import { AGENT_MEMORY_STORE, TMS_DIRECTORY } from '../../domain/workspace/types/repositories/workspace.ports';
+import { WeeklyDataService } from '../../domain/workspace/services/weekly-data.service';
 import { InMemoryAgentStore } from '../workspace-mocks/in-memory-agent.store';
 import { ClaudeLike } from './claude.client';
 import { ASSESS_SYSTEM, CHAT_SYSTEM, MEMORY_SYSTEM, REWRITE_SYSTEM } from './claude.prompts';
@@ -108,6 +109,8 @@ describe('Claude agent HTTP integration', () => {
     const { settings } = (await call('GET', '/admin/settings', 'admin')).json();
     const put = await call('PUT', '/admin/settings', 'admin', { settings: { ...settings, agent: { ...settings.agent, mode: 'claude' } } });
     expect(put.statusCode).toBe(200);
+    // Weekly numbers are optional context: an unreadable store (e.g. a migration not applied yet) must not fail cases.
+    const weekly = jest.spyOn(app.get(WeeklyDataService), 'forAccount').mockRejectedValue(new Error('relation "weekly_usage" does not exist'));
 
     const started = await call('POST', '/admin/runs', 'admin', {});
     expect(started.statusCode).toBe(200);
@@ -119,6 +122,8 @@ describe('Claude agent HTTP integration', () => {
     const run = await runOf();
     expect(run.status).toBe('completed');
     expect(run.summary).toMatch(/^Claude assessed (\d+) of \1 operators\.$/);
+    expect(weekly).toHaveBeenCalled();
+    weekly.mockRestore();
 
     const assessed = claude.calls.filter((c) => c.system === ASSESS_SYSTEM);
     expect(assessed.length).toBe(run.cases);

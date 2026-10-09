@@ -109,7 +109,13 @@ export class ClaudeRunWorker {
       }
       const history = (await this.store.casesForOperator(job.operatorId)).filter((c) => c.runId !== run.id).slice(0, 5);
       const remembered = (await this.memory?.recall(job.operatorId, RECALL_FOR_CASE)) ?? '';
-      const weeklyNumbers = this.weekly ? formatWeekly(await this.weekly.forAccount(job.operatorId, WEEKS_FOR_CASE)) : '';
+      // Optional context, like HubSpot activity: a missing upload table or a read error must not fail the assessment.
+      const weeklyNumbers = this.weekly
+        ? await this.weekly.forAccount(job.operatorId, WEEKS_FOR_CASE).then(formatWeekly, (error) => {
+            this.logger.warn(`Weekly numbers for ${job.operatorId} could not be read: ${error instanceof Error ? error.message : String(error)}`);
+            return '';
+          })
+        : '';
       const activity = this.activity?.connected
         ? await this.activity.activity(account, ACTIVITY_FOR_CASE).then(formatActivity, (error) => `HubSpot activity could not be read (${error instanceof Error ? error.message : String(error)}).`)
         : '';
