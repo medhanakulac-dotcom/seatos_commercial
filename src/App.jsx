@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient.js";
 import { logActivity } from "./activityLogger.js";
 import ProposalApp from "./apps/ProposalApp.jsx";
 import CalculatorApp from "./apps/CalculatorApp.jsx";
 import ContractApp from "./apps/ContractApp.jsx";
 import AdminApp from "./apps/AdminApp.jsx";
+import PlaybookShell from "./playbook/PlaybookShell.jsx";
 
 const C = {
   bg: "#F5EFE7", orange: "#F5A623", green: "#2ECC71", pink: "#E84C88",
@@ -138,30 +139,6 @@ export default function App() {
   const [open, setOpen] = useState(true);
   const [userRole, setUserRole] = useState("member");
   const [activeTool, setActiveTool] = useState(null);
-  const [sidebarW, setSidebarW] = useState(248);
-  const playbookRef = useRef(null);
-
-  // Messages from the embedded Playbook shell (tool launch, sidebar width, sign out)
-  useEffect(() => {
-    const onMsg = (e) => {
-      const d = (e && e.data) || {};
-      if (d.source !== "playbook") return;
-      if (d.type === "openTool") setActiveTool(d.tool);
-      else if (d.type === "closeTool") setActiveTool(null);
-      else if (d.type === "sidebarWidth") setSidebarW(d.width);
-      else if (d.type === "signout") handleSignOut();
-    };
-    window.addEventListener("message", onMsg);
-    return () => window.removeEventListener("message", onMsg);
-  }, []);
-
-  const toggleSidebarFromTool = () => {
-    const collapse = sidebarW !== 0;
-    setSidebarW(collapse ? 0 : 248);
-    if (playbookRef.current && playbookRef.current.contentWindow) {
-      playbookRef.current.contentWindow.postMessage({ source: "shell", type: "setSidebar", collapsed: collapse }, "*");
-    }
-  };
 
   // Listen to auth state
   useEffect(() => {
@@ -222,69 +199,28 @@ export default function App() {
   const userEmail = session.user.email;
   const isAdmin = userRole === "admin";
 
-  const TOOL_TITLES = {
-    calculator: "Deal Calculator",
-    proposal: "Proposal Builder",
-    contract: "Contract Builder",
-    admin: "Admin",
+  const renderTool = (tool) => {
+    if (tool === "calculator") return <CalculatorApp />;
+    if (tool === "proposal") return <ProposalApp />;
+    if (tool === "contract") return <ContractApp />;
+    if (tool === "admin") {
+      return isAdmin
+        ? <AdminApp currentUser={userEmail} />
+        : <div style={{ padding: 60, textAlign: "center", color: C.gray }}>Not authorized.</div>;
+    }
+    return null;
   };
 
-  const playbookSrc = `/playbook.html?role=${isAdmin ? "admin" : "member"}&email=${encodeURIComponent(userEmail)}`;
-
+  // The Playbook shell's sidebar is the app's single navigation; tools open inside it.
   return (
-    <div style={{ position: "fixed", inset: 0, background: C.bg, fontFamily: "'Segoe UI',-apple-system,sans-serif" }}>
-      <style>{`*{box-sizing:border-box}@keyframes fadeIn{from{opacity:0}to{opacity:1}}`}</style>
-
-      {/* The Playbook shell is always mounted — its sidebar is the app's single navigation */}
-      <iframe
-        ref={playbookRef}
-        title="seatOS Playbook"
-        src={playbookSrc}
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", display: "block" }}
-      />
-
-      {/* A tool is layered over the content area, to the right of the persistent sidebar */}
-      {activeTool && (
-        <div style={{
-          position: "absolute", top: 0, bottom: 0, right: 0, left: sidebarW,
-          background: C.bg, display: "flex", flexDirection: "column", zIndex: 100,
-          animation: "fadeIn 0.15s ease-out", transition: "left 0.18s ease",
-        }}>
-          <div style={{
-            flexShrink: 0, height: 52, background: C.dark, display: "flex",
-            alignItems: "center", justifyContent: "space-between", padding: "0 14px",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <button onClick={toggleSidebarFromTool} title="Toggle sidebar" style={{
-                width: 32, height: 32, borderRadius: 8, border: "none", cursor: "pointer",
-                background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-              </button>
-              <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>{TOOL_TITLES[activeTool] || ""}</span>
-            </div>
-            <button onClick={() => setActiveTool(null)} style={{
-              display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.08)",
-              border: "none", color: "rgba(255,255,255,0.6)", padding: "7px 13px", borderRadius: 8,
-              cursor: "pointer", fontSize: 12, fontWeight: 600,
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-              Back to Playbook
-            </button>
-          </div>
-
-          <div style={{ flex: 1, overflow: "auto" }}>
-            {activeTool === "calculator" && <CalculatorApp />}
-            {activeTool === "proposal" && <ProposalApp />}
-            {activeTool === "contract" && <ContractApp />}
-            {activeTool === "admin" && isAdmin && <AdminApp currentUser={userEmail} />}
-            {activeTool === "admin" && !isAdmin && (
-              <div style={{ padding: 60, textAlign: "center", color: C.gray }}>Not authorized.</div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+    <PlaybookShell
+      userEmail={userEmail}
+      isAdmin={isAdmin}
+      activeTool={activeTool}
+      onOpenTool={setActiveTool}
+      onCloseTool={() => setActiveTool(null)}
+      onSignOut={handleSignOut}
+      renderTool={renderTool}
+    />
   );
 }
