@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { supabase } from "./supabaseClient.js";
 import { logActivity } from "./activityLogger.js";
 import ProposalApp from "./apps/ProposalApp.jsx";
@@ -6,6 +6,9 @@ import CalculatorApp from "./apps/CalculatorApp.jsx";
 import ContractApp from "./apps/ContractApp.jsx";
 import AdminApp from "./apps/AdminApp.jsx";
 import PlaybookShell from "./playbook/PlaybookShell.jsx";
+
+// Loaded on first open so the rest of the site does not download it.
+const OperatorWatch = lazy(() => import("./operator-watch/OperatorWatch.tsx"));
 
 const C = {
   bg: "#F5EFE7", orange: "#F5A623", green: "#2ECC71", pink: "#E84C88",
@@ -203,6 +206,13 @@ export default function App() {
     if (tool === "calculator") return <CalculatorApp />;
     if (tool === "proposal") return <ProposalApp />;
     if (tool === "contract") return <ContractApp />;
+    if (tool.startsWith("ow-")) {
+      return (
+        <Suspense fallback={<div style={{ padding: 60, textAlign: "center", color: C.gray }}>Loading Operator Watch…</div>}>
+          <OperatorWatch page={tool.slice(3)} onPageChange={(page) => setActiveTool(`ow-${page}`)} />
+        </Suspense>
+      );
+    }
     if (tool === "admin") {
       return isAdmin
         ? <AdminApp currentUser={userEmail} />

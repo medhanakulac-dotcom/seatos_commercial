@@ -1,5 +1,18 @@
 {
+  "functions": {
+    "api/ow.js": {
+      "maxDuration": 300,
+      "includeFiles": "server/operator-watch/{dist,migrations}/**"
+    }
+  },
   "rewrites": [
-    { "source": "/((?!playbook\\.html|assets/|.*\\.[a-zA-Z0-9]+$).*)", "destination": "/" }
+    {
+      "source": "/api/ow/:path*",
+      "destination": "/api/ow"
+    },
+    {
+      "source": "/((?!api/|playbook\\.html|assets/|.*\\.[a-zA-Z0-9]+$).*)",
+      "destination": "/"
+    }
   ]
 }

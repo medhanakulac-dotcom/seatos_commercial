@@ -4,6 +4,7 @@
 import {
   icHome, icSales, icToolkit, icOnboarding, icTraining, icCS, icCSTools, icCSAuto,
   icPricing, icCalc, icProposal, icContract, icTemplates, icAdmin,
+  icOwHome, icOwAccounts, icOwApprovals, icOwSent, icOwLeader, icOwSettings,
 } from "./ui.jsx";
 import Home from "./sections/Home.jsx";
 import SalesProcess from "./sections/SalesProcess.jsx";
@@ -36,6 +37,13 @@ export const TOOLS = {
   proposal: { title: "Proposal Builder" },
   contract: { title: "Contract Builder" },
   admin: { title: "Admin" },
+  // CS Operator Watch (src/operator-watch): one app, each item opens one of its pages.
+  "ow-home": { title: "Operator Watch" },
+  "ow-accounts": { title: "Operator Watch · Accounts" },
+  "ow-approvals": { title: "Operator Watch · Approvals" },
+  "ow-sent": { title: "Operator Watch · Sent" },
+  "ow-leader": { title: "Operator Watch · Leader dashboard" },
+  "ow-settings": { title: "Operator Watch · Settings" },
 };
 
 const Q3 = { text: "Q3", bg: "#F5A623" };
@@ -57,6 +65,17 @@ export const NAV = [
       { section: "cstk", label: "CS Toolkit", icon: icCSTools, accent: "#1aa897", iconAccent: "#2DD4BF" },
       { section: "csauto", label: "CS Automation", icon: icCSAuto, accent: "#2DD4BF", badge: Q3 },
       { section: "pricing", label: "Pricing & Packages", icon: icPricing, accent: "#E84C88" },
+    ],
+  },
+  {
+    group: "Operator Watch",
+    items: [
+      { tool: "ow-home", label: "Overview", icon: icOwHome, accent: "#2DD4BF" },
+      { tool: "ow-accounts", label: "Accounts", icon: icOwAccounts, accent: "#2DD4BF" },
+      { tool: "ow-approvals", label: "Approvals", icon: icOwApprovals, accent: "#2DD4BF" },
+      { tool: "ow-sent", label: "Sent", icon: icOwSent, accent: "#2DD4BF" },
+      { tool: "ow-leader", label: "Leader dashboard", icon: icOwLeader, accent: "#2DD4BF" },
+      { tool: "ow-settings", label: "Settings", icon: icOwSettings, accent: "#2DD4BF" },
     ],
   },
   {
