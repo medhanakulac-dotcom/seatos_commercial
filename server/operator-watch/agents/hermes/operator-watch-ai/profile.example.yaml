@@ -1,0 +1,13 @@
+# Settings this agent needs in <profile>/config.yaml (merge by hand; the real file also holds MCP servers,
+# platforms and model settings that stay machine-specific).
+
+memory:
+  # Built-in MEMORY.md is shared by every operator session (untagged) — keep it off; operator memory goes to Hindsight.
+  memory_enabled: false
+  user_profile_enabled: true
+  provider: operator-hindsight
+
+skills:
+  # Only the commercial skills in ./skills should be enabled. Disable everything else Hermes ships or installs, e.g.
+  # list them with `hermes skills list` and add each name here.
+  disabled: []

@@ -1,0 +1,5 @@
+name: operator-hindsight
+version: 0.1.0
+description: "Hindsight memory scoped per operator from the backend's envelope header (operator-watch-ai)."
+requires_env:
+  - HINDSIGHT_API_URL

@@ -1,0 +1,61 @@
+[
+  {
+    "name": "chat with brief, asker and seatos id",
+    "envelope": { "operatorId": "D-1", "kind": "chat", "tmsOperatorId": 26281, "asker": "Chris", "context": "Context — Acme (operator_id D-1).\nBookings: 123", "text": "what did they ask for last call?" },
+    "message": "[[operator:D-1]] [[kind:chat]] [[seatos:26281]]\n\nContext — Acme (operator_id D-1).\nBookings: 123\n\nChris asks: what did they ask for last call?",
+    "parsed": { "operator": "D-1", "kind": "chat", "seatos": "26281", "asker": "Chris", "said": "what did they ask for last call?" }
+  },
+  {
+    "name": "chat without seatos id or brief",
+    "envelope": { "operatorId": "D-1", "kind": "chat", "asker": "Ann", "text": "hello" },
+    "message": "[[operator:D-1]] [[kind:chat]]\n\nAnn asks: hello",
+    "parsed": { "operator": "D-1", "kind": "chat", "seatos": null, "asker": "Ann", "said": "hello" }
+  },
+  {
+    "name": "operator watch case",
+    "envelope": { "operatorId": "D-2", "kind": "case", "tmsOperatorId": 7, "text": "Operator Watch run W40 (run_id r1) has started. Assess THIS operator only." },
+    "message": "[[operator:D-2]] [[kind:case]] [[seatos:7]]\n\nOperator Watch run W40 (run_id r1) has started. Assess THIS operator only.",
+    "parsed": { "operator": "D-2", "kind": "case", "seatos": "7", "asker": null, "said": "Operator Watch run W40 (run_id r1) has started. Assess THIS operator only." }
+  },
+  {
+    "name": "decision note",
+    "envelope": { "operatorId": "D-1", "kind": "decision", "text": "Record only — do not call tools.\nDecision on case M1: REJECTED by Pim. Reason: call already booked" },
+    "message": "[[operator:D-1]] [[kind:decision]]\n\nRecord only — do not call tools.\nDecision on case M1: REJECTED by Pim. Reason: call already booked",
+    "parsed": { "operator": "D-1", "kind": "decision", "seatos": null, "asker": null, "said": "Record only — do not call tools.\nDecision on case M1: REJECTED by Pim. Reason: call already booked" }
+  },
+  {
+    "name": "unknown key is ignored",
+    "message": "[[operator:D-1]] [[kind:chat]] [[intent:live_data]] [[seatos:26281]]\n\nChris asks: how are they doing?",
+    "parsed": { "operator": "D-1", "kind": "chat", "seatos": "26281", "asker": "Chris", "said": "how are they doing?" }
+  },
+  {
+    "name": "token order does not matter",
+    "message": "[[kind:email]] [[operator:D-3]]\n\nRecord only — reply briefly.\nEmail SENT (case M9): Subject X",
+    "parsed": { "operator": "D-3", "kind": "email", "seatos": null, "asker": null, "said": "Record only — reply briefly.\nEmail SENT (case M9): Subject X" }
+  },
+  {
+    "name": "headerless (e.g. Slack)",
+    "message": "how is Phi Phi doing?",
+    "parsed": { "operator": null, "kind": null, "seatos": null, "asker": null, "said": "how is Phi Phi doing?" }
+  },
+  {
+    "name": "header missing kind is headerless",
+    "message": "[[operator:D-1]]\n\nhi",
+    "parsed": { "operator": null, "kind": null, "seatos": null, "asker": null, "said": "[[operator:D-1]]\n\nhi" }
+  },
+  {
+    "name": "header not on the first line is not a header",
+    "message": "Chris asks: [[operator:D-2]] [[kind:chat]]\n\nhi",
+    "parsed": { "operator": null, "kind": null, "seatos": null, "asker": null, "said": "Chris asks: [[operator:D-2]] [[kind:chat]]\n\nhi" }
+  },
+  {
+    "name": "text after the tokens on line 1 is not a header",
+    "message": "[[operator:D-1]] [[kind:chat]] please\n\nhi",
+    "parsed": { "operator": null, "kind": null, "seatos": null, "asker": null, "said": "[[operator:D-1]] [[kind:chat]] please\n\nhi" }
+  },
+  {
+    "name": "duplicate key: first wins",
+    "message": "[[operator:D-1]] [[kind:chat]] [[operator:D-9]]\n\nAnn asks: hi there",
+    "parsed": { "operator": "D-1", "kind": "chat", "seatos": null, "asker": "Ann", "said": "hi there" }
+  }
+]

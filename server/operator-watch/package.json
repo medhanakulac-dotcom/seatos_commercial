@@ -1,0 +1,6 @@
+{
+  "name": "operator-watch-server",
+  "private": true,
+  "description": "CS Operator Watch API. Dependencies live in the repository root package.json; this file only marks the folder as CommonJS.",
+  "type": "commonjs"
+}
