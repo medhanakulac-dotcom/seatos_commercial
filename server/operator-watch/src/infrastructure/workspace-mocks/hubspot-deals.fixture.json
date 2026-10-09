@@ -1,0 +1,1334 @@
+{
+ "meta": {
+  "portal": "SeatOS (mock)",
+  "pulledAt": "2026-09-29",
+  "source": "Synthetic HubSpot deals with health_status",
+  "dealCount": 67
+ },
+ "accounts": [
+  {
+   "id": "671037",
+   "hsid": "30946671037",
+   "op": "Mekong Gate Transport",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 1925,
+   "created": "2023-03-08",
+   "mod": "2026-09-25",
+   "note": "2026-06-08",
+   "deals": [
+    {
+     "id": "30946671037",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1925,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "132499",
+   "hsid": "30973132499",
+   "op": "Samui Blue Speedboat",
+   "seg": "High",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Rafael Santos",
+   "amount": 9738,
+   "created": "2020-10-12",
+   "mod": "2026-09-23",
+   "note": "2026-09-21",
+   "deals": [
+    {
+     "id": "30973132499",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 9738,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "435316",
+   "hsid": "30918435316",
+   "op": "Kanchanaburi River Link",
+   "seg": "Low",
+   "hh": "Healthy",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 1802,
+   "created": "2025-08-02",
+   "mod": "2026-09-25",
+   "note": "2026-09-20",
+   "deals": [
+    {
+     "id": "30918435316",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1802,
+     "health": "Healthy"
+    }
+   ]
+  },
+  {
+   "id": "408407",
+   "hsid": "30922408407",
+   "op": "Da Nang Coastline Van",
+   "seg": "Low",
+   "hh": "Watchlist",
+   "country": "Vietnam",
+   "owner": "Duc Pham",
+   "amount": 1626,
+   "created": "2022-01-17",
+   "mod": "2026-09-24",
+   "note": "2026-09-26",
+   "deals": [
+    {
+     "id": "30922408407",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1626,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "946832",
+   "hsid": "30917946832",
+   "op": "Rayong Harbour Line",
+   "seg": "Low",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 1425,
+   "created": "2023-10-29",
+   "mod": "2026-09-20",
+   "note": "2026-09-17",
+   "deals": [
+    {
+     "id": "335521552458",
+     "pipe": "Customer Adoption Pipeline",
+     "stage": "Validation",
+     "amount": 1425,
+     "health": "Watchlist"
+    },
+    {
+     "id": "30917946832",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1425,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "149042",
+   "hsid": "30944149042",
+   "op": "Andaman Wave Ferry",
+   "seg": "High",
+   "hh": "Healthy",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 7686,
+   "created": "2020-01-12",
+   "mod": "2026-09-25",
+   "note": "2026-09-27",
+   "deals": [
+    {
+     "id": "30944149042",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 7686,
+     "health": "Healthy"
+    },
+    {
+     "id": "335018625393",
+     "pipe": "Customer Adoption Pipeline",
+     "stage": "Plan Agreed",
+     "amount": 7686,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "572050",
+   "hsid": "30900572050",
+   "op": "Kampot Pepper Coast",
+   "seg": "Mid",
+   "hh": "Healthy",
+   "country": "Cambodia",
+   "owner": "Duc Pham",
+   "amount": 7041,
+   "created": "2020-05-26",
+   "mod": "2026-09-20",
+   "note": "2026-09-18",
+   "deals": [
+    {
+     "id": "30900572050",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 7041,
+     "health": "Healthy"
+    }
+   ]
+  },
+  {
+   "id": "411467",
+   "hsid": "30935411467",
+   "op": "Hua Hin Coastal Shuttle",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 1981,
+   "created": "2024-06-22",
+   "mod": "2026-09-20",
+   "note": "2026-09-03",
+   "deals": [
+    {
+     "id": "335454701402",
+     "pipe": "Customer Adoption Pipeline",
+     "stage": "Assessment",
+     "amount": 1981,
+     "health": "Unhealthy"
+    },
+    {
+     "id": "30935411467",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1981,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "296813",
+   "hsid": "30900296813",
+   "op": "Lombok Gili Fastboat",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Indonesia",
+   "owner": "Mali Chaiyo",
+   "amount": 1667,
+   "created": "2020-03-08",
+   "mod": "2026-09-24",
+   "note": "2026-09-25",
+   "deals": [
+    {
+     "id": "30900296813",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1667,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "748802",
+   "hsid": "30951748802",
+   "op": "Chanthaburi Gem Travel",
+   "seg": "Mid",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Unassigned",
+   "amount": 3040,
+   "created": "2024-11-29",
+   "mod": "2026-09-20",
+   "note": "2026-09-20",
+   "deals": [
+    {
+     "id": "335350107052",
+     "pipe": "Customer Adoption Pipeline",
+     "stage": "Identified",
+     "amount": 3040,
+     "health": "Unhealthy"
+    },
+    {
+     "id": "30951748802",
+     "pipe": "Client Pipeline",
+     "stage": "API Enable",
+     "amount": 3040,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "881272",
+   "hsid": "30943881272",
+   "op": "Hanoi Lantern Bus",
+   "seg": "Low",
+   "hh": "Watchlist",
+   "country": "Vietnam",
+   "owner": "Mali Chaiyo",
+   "amount": 1817,
+   "created": "2025-08-27",
+   "mod": "2026-09-26",
+   "note": "2026-05-26",
+   "deals": [
+    {
+     "id": "30943881272",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1817,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "082526",
+   "hsid": "30945082526",
+   "op": "Bali Frangipani Transfer",
+   "seg": "Low",
+   "hh": "Watchlist",
+   "country": "Indonesia",
+   "owner": "Mali Chaiyo",
+   "amount": 1152,
+   "created": "2022-11-17",
+   "mod": "2026-09-21",
+   "note": "2026-09-11",
+   "deals": [
+    {
+     "id": "30945082526",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1152,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "110834",
+   "hsid": "30947110834",
+   "op": "Hue Imperial Transfer",
+   "seg": "Dormant",
+   "hh": "Unhealthy",
+   "country": "Vietnam",
+   "owner": "Duc Pham",
+   "amount": 0,
+   "created": "2021-01-30",
+   "mod": "2026-09-25",
+   "note": "2026-09-05",
+   "deals": [
+    {
+     "id": "30947110834",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 0,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "440261",
+   "hsid": "30930440261",
+   "op": "Nan Valley Minibus",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Duc Pham",
+   "amount": 1728,
+   "created": "2020-06-15",
+   "mod": "2026-09-21",
+   "note": "2026-09-17",
+   "deals": [
+    {
+     "id": "30930440261",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1728,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "390823",
+   "hsid": "30914390823",
+   "op": "Lopburi Ridge Coaches",
+   "seg": "Dormant",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 0,
+   "created": "2021-04-11",
+   "mod": "2026-09-21",
+   "note": "2026-06-19",
+   "deals": [
+    {
+     "id": "30914390823",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 0,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "436698",
+   "hsid": "30983436698",
+   "op": "Ha Long Pearl Cruise",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Vietnam",
+   "owner": "Mali Chaiyo",
+   "amount": 1356,
+   "created": "2021-08-17",
+   "mod": "2026-09-23",
+   "note": "2026-09-07",
+   "deals": [
+    {
+     "id": "30983436698",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1356,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "625640",
+   "hsid": "30916625640",
+   "op": "Nile Crescent Travel",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Egypt",
+   "owner": "Rafael Santos",
+   "amount": 954,
+   "created": "2024-11-26",
+   "mod": "2026-09-20",
+   "note": "2026-09-01",
+   "deals": [
+    {
+     "id": "30916625640",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 954,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "539370",
+   "hsid": "30949539370",
+   "op": "Red Sea Coral Transfer",
+   "seg": "Mid",
+   "hh": "Watchlist",
+   "country": "Egypt",
+   "owner": "Rafael Santos",
+   "amount": 6961,
+   "created": "2022-06-25",
+   "mod": "2026-09-25",
+   "note": "2026-06-26",
+   "deals": [
+    {
+     "id": "30949539370",
+     "pipe": "Client Pipeline",
+     "stage": "After go-live 14 days",
+     "amount": 6961,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "355427",
+   "hsid": "30987355427",
+   "op": "Lanna Hill Van",
+   "seg": "Mid",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Duc Pham",
+   "amount": 5064,
+   "created": "2024-11-08",
+   "mod": "2026-09-24",
+   "note": "2026-09-10",
+   "deals": [
+    {
+     "id": "30987355427",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 5064,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "989590",
+   "hsid": "30984989590",
+   "op": "Palawan Island Ferry",
+   "seg": "Low",
+   "hh": "Watchlist",
+   "country": "Philippines",
+   "owner": "Rafael Santos",
+   "amount": 2096,
+   "created": "2025-08-05",
+   "mod": "2026-09-24",
+   "note": "2026-09-22",
+   "deals": [
+    {
+     "id": "30984989590",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 2096,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "655600",
+   "hsid": "30918655600",
+   "op": "Chao Phraya Coachlines",
+   "seg": "High",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 6630,
+   "created": "2021-10-12",
+   "mod": "2026-09-26",
+   "note": "2026-09-08",
+   "deals": [
+    {
+     "id": "30918655600",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 6630,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "295168",
+   "hsid": "30952295168",
+   "op": "Yala Southern Coach",
+   "seg": "Dormant",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 0,
+   "created": "2024-01-19",
+   "mod": "2026-09-25",
+   "note": "2026-06-08",
+   "deals": [
+    {
+     "id": "30952295168",
+     "pipe": "Client Pipeline",
+     "stage": "Churn Risk",
+     "amount": 0,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "387744",
+   "hsid": "30910387744",
+   "op": "Cebu Seaside Transit",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Philippines",
+   "owner": "Rafael Santos",
+   "amount": 1932,
+   "created": "2021-06-05",
+   "mod": "2026-09-21",
+   "note": "2026-09-22",
+   "deals": [
+    {
+     "id": "30910387744",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1932,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "584236",
+   "hsid": "30944584236",
+   "op": "Ratchaburi Road Lines",
+   "seg": "Dormant",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Duc Pham",
+   "amount": 0,
+   "created": "2021-04-30",
+   "mod": "2026-09-22",
+   "note": "2026-09-26",
+   "deals": [
+    {
+     "id": "30944584236",
+     "pipe": "Client Pipeline",
+     "stage": "Churned",
+     "amount": 0,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "548479",
+   "hsid": "30904548479",
+   "op": "Khao Lak Shuttle",
+   "seg": "High",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 12483,
+   "created": "2023-12-14",
+   "mod": "2026-09-20",
+   "note": "2026-09-01",
+   "deals": [
+    {
+     "id": "30904548479",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 12483,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "210108",
+   "hsid": "30935210108",
+   "op": "Trang Island Hopper",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 1545,
+   "created": "2020-04-02",
+   "mod": "2026-09-22",
+   "note": "2026-09-21",
+   "deals": [
+    {
+     "id": "30935210108",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1545,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "627422",
+   "hsid": "30941627422",
+   "op": "Surin Coast Express",
+   "seg": "Dormant",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 0,
+   "created": "2025-05-31",
+   "mod": "2026-09-20",
+   "note": "2026-06-23",
+   "deals": [
+    {
+     "id": "30941627422",
+     "pipe": "Client Pipeline",
+     "stage": "Churn Risk",
+     "amount": 0,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "788422",
+   "hsid": "30969788422",
+   "op": "Krabi Sunrise Boat",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 241,
+   "created": "2024-05-24",
+   "mod": "2026-09-22",
+   "note": "2026-06-27",
+   "deals": [
+    {
+     "id": "30969788422",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 241,
+     "health": "Unhealthy"
+    },
+    {
+     "id": "335149546939",
+     "pipe": "Customer Adoption Pipeline",
+     "stage": "Won (Healthy)",
+     "amount": 241,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "263377",
+   "hsid": "30972263377",
+   "op": "Songkhla Lagoon Boats",
+   "seg": "Mid",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 6466,
+   "created": "2021-01-11",
+   "mod": "2026-09-26",
+   "note": "2026-09-17",
+   "deals": [
+    {
+     "id": "335140167441",
+     "pipe": "Customer Adoption Pipeline",
+     "stage": "Assessment",
+     "amount": 6466,
+     "health": "Unhealthy"
+    },
+    {
+     "id": "30972263377",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 6466,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "700234",
+   "hsid": "30980700234",
+   "op": "Java Merapi Travel",
+   "seg": "Low",
+   "hh": "Healthy",
+   "country": "Indonesia",
+   "owner": "Anong Srisuk",
+   "amount": 1474,
+   "created": "2024-09-23",
+   "mod": "2026-09-24",
+   "note": "2026-09-20",
+   "deals": [
+    {
+     "id": "30980700234",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1474,
+     "health": "Healthy"
+    }
+   ]
+  },
+  {
+   "id": "825258",
+   "hsid": "30911825258",
+   "op": "Saigon Delta Express",
+   "seg": "Mid",
+   "hh": "Unhealthy",
+   "country": "Vietnam",
+   "owner": "Duc Pham",
+   "amount": 4927,
+   "created": "2025-06-27",
+   "mod": "2026-09-22",
+   "note": "2026-09-23",
+   "deals": [
+    {
+     "id": "30911825258",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 4927,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "692604",
+   "hsid": "30922692604",
+   "op": "Golden Lotus Transport",
+   "seg": "Low",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Rafael Santos",
+   "amount": 2054,
+   "created": "2025-05-08",
+   "mod": "2026-09-22",
+   "note": "2026-09-28",
+   "deals": [
+    {
+     "id": "30922692604",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 2054,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "262263",
+   "hsid": "30952262263",
+   "op": "Isan Express Bus",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 1562,
+   "created": "2025-04-15",
+   "mod": "2026-09-21",
+   "note": "2026-09-04",
+   "deals": [
+    {
+     "id": "30952262263",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1562,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "192414",
+   "hsid": "30974192414",
+   "op": "Loei Mist Tours",
+   "seg": "Low",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 667,
+   "created": "2021-11-24",
+   "mod": "2026-09-21",
+   "note": "2026-09-26",
+   "deals": [
+    {
+     "id": "30974192414",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 667,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "681194",
+   "hsid": "30953681194",
+   "op": "Luxor Sunboat Tours",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Egypt",
+   "owner": "Rafael Santos",
+   "amount": 1725,
+   "created": "2022-01-08",
+   "mod": "2026-09-22",
+   "note": "2026-09-24",
+   "deals": [
+    {
+     "id": "335231916478",
+     "pipe": "Customer Adoption Pipeline",
+     "stage": "Assessment",
+     "amount": 1725,
+     "health": "Unhealthy"
+    },
+    {
+     "id": "30953681194",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1725,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "968167",
+   "hsid": "30984968167",
+   "op": "Angkor Road Express",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Cambodia",
+   "owner": "Duc Pham",
+   "amount": 509,
+   "created": "2022-11-19",
+   "mod": "2026-09-27",
+   "note": "2026-09-05",
+   "deals": [
+    {
+     "id": "30984968167",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 509,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "306170",
+   "hsid": "30909306170",
+   "op": "Pai Mountain Transfer",
+   "seg": "Mid",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Rafael Santos",
+   "amount": 4823,
+   "created": "2022-04-22",
+   "mod": "2026-09-20",
+   "note": "2026-09-05",
+   "deals": [
+    {
+     "id": "30909306170",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 4823,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "886036",
+   "hsid": "30918886036",
+   "op": "Flores Komodo Boats",
+   "seg": "Dormant",
+   "hh": "Unhealthy",
+   "country": "Indonesia",
+   "owner": "Anong Srisuk",
+   "amount": 0,
+   "created": "2023-08-04",
+   "mod": "2026-09-27",
+   "note": "2026-06-28",
+   "deals": [
+    {
+     "id": "30918886036",
+     "pipe": "Client Pipeline",
+     "stage": "Churned",
+     "amount": 0,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "052942",
+   "hsid": "30930052942",
+   "op": "Udon Lakeside Van",
+   "seg": "Mid",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 1783,
+   "created": "2025-10-10",
+   "mod": "2026-09-23",
+   "note": "2026-09-10",
+   "deals": [
+    {
+     "id": "30930052942",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1783,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "873001",
+   "hsid": "30964873001",
+   "op": "Phang Nga Longtail Co.",
+   "seg": "Mid",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 4696,
+   "created": "2022-05-15",
+   "mod": "2026-09-26",
+   "note": "2026-09-19",
+   "deals": [
+    {
+     "id": "30964873001",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 4696,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "190344",
+   "hsid": "30971190344",
+   "op": "Satun Marine Ferry",
+   "seg": "Mid",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Duc Pham",
+   "amount": 6754,
+   "created": "2022-08-20",
+   "mod": "2026-09-24",
+   "note": "2026-06-01",
+   "deals": [
+    {
+     "id": "30971190344",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 6754,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "079357",
+   "hsid": "30923079357",
+   "op": "Siargao Wave Boats",
+   "seg": "Mid",
+   "hh": "Unhealthy",
+   "country": "Philippines",
+   "owner": "Rafael Santos",
+   "amount": 3441,
+   "created": "2020-08-04",
+   "mod": "2026-09-21",
+   "note": "2026-09-11",
+   "deals": [
+    {
+     "id": "30923079357",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 3441,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "029230",
+   "hsid": "30955029230",
+   "op": "Koh Lipe Star Ferry",
+   "seg": "Mid",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Mali Chaiyo",
+   "amount": 4985,
+   "created": "2021-03-21",
+   "mod": "2026-09-20",
+   "note": "2026-09-20",
+   "deals": [
+    {
+     "id": "30955029230",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 4985,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "398637",
+   "hsid": "30906398637",
+   "op": "Nusa Penida Seaways",
+   "seg": "Dormant",
+   "hh": "Watchlist",
+   "country": "Indonesia",
+   "owner": "Anong Srisuk",
+   "amount": 0,
+   "created": "2021-08-10",
+   "mod": "2026-09-24",
+   "note": "2026-06-13",
+   "deals": [
+    {
+     "id": "30906398637",
+     "pipe": "Client Pipeline",
+     "stage": "Churn Risk",
+     "amount": 0,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "955368",
+   "hsid": "30977955368",
+   "op": "Bandung Highland Bus",
+   "seg": "Mid",
+   "hh": "Watchlist",
+   "country": "Indonesia",
+   "owner": "Anong Srisuk",
+   "amount": 6836,
+   "created": "2020-03-04",
+   "mod": "2026-09-25",
+   "note": "2026-05-14",
+   "deals": [
+    {
+     "id": "30977955368",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 6836,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "289427",
+   "hsid": "30970289427",
+   "op": "Tapi River Transfer",
+   "seg": "Dormant",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 0,
+   "created": "2020-09-22",
+   "mod": "2026-09-28",
+   "note": "2026-09-24",
+   "deals": [
+    {
+     "id": "30970289427",
+     "pipe": "Client Pipeline",
+     "stage": "Churn Risk",
+     "amount": 0,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "839609",
+   "hsid": "30937839609",
+   "op": "Langkawi Strait Ferry",
+   "seg": "Mid",
+   "hh": "Unhealthy",
+   "country": "Malaysia",
+   "owner": "Unassigned",
+   "amount": 2659,
+   "created": "2025-07-13",
+   "mod": "2026-09-24",
+   "note": "2026-09-26",
+   "deals": [
+    {
+     "id": "30937839609",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 2659,
+     "health": "Unhealthy"
+    },
+    {
+     "id": "335383377602",
+     "pipe": "Customer Adoption Pipeline",
+     "stage": "Plan Agreed",
+     "amount": 2659,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "412749",
+   "hsid": "30986412749",
+   "op": "Sumba Horizon Tours",
+   "seg": "Dormant",
+   "hh": "Unhealthy",
+   "country": "Indonesia",
+   "owner": "Mali Chaiyo",
+   "amount": 0,
+   "created": "2020-01-07",
+   "mod": "2026-09-26",
+   "note": "2026-06-18",
+   "deals": [
+    {
+     "id": "30986412749",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 0,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "507253",
+   "hsid": "30947507253",
+   "op": "Siam Orchid Travel",
+   "seg": "Low",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 1027,
+   "created": "2023-07-17",
+   "mod": "2026-09-21",
+   "note": "2026-09-16",
+   "deals": [
+    {
+     "id": "30947507253",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 1027,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "561919",
+   "hsid": "30960561919",
+   "op": "Sapa Terrace Shuttle",
+   "seg": "High",
+   "hh": "Unhealthy",
+   "country": "Vietnam",
+   "owner": "Mali Chaiyo",
+   "amount": 9547,
+   "created": "2024-12-22",
+   "mod": "2026-09-22",
+   "note": "2026-09-03",
+   "deals": [
+    {
+     "id": "30960561919",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 9547,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "154410",
+   "hsid": "30966154410",
+   "op": "Vientiane Mekong Van",
+   "seg": "Mid",
+   "hh": "Watchlist",
+   "country": "Laos",
+   "owner": "Duc Pham",
+   "amount": 6692,
+   "created": "2025-03-04",
+   "mod": "2026-09-22",
+   "note": "2026-09-27",
+   "deals": [
+    {
+     "id": "30966154410",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 6692,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "951992",
+   "hsid": "30964951992",
+   "op": "Phetchaburi Palm Transport",
+   "seg": "High",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 5554,
+   "created": "2021-10-13",
+   "mod": "2026-09-25",
+   "note": "2026-09-19",
+   "deals": [
+    {
+     "id": "30964951992",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 5554,
+     "health": "Watchlist"
+    },
+    {
+     "id": "335429763081",
+     "pipe": "Customer Adoption Pipeline",
+     "stage": "Assessment",
+     "amount": 5554,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "625255",
+   "hsid": "30982625255",
+   "op": "Bang Saen Beach Bus",
+   "seg": "High",
+   "hh": "Watchlist",
+   "country": "Thailand",
+   "owner": "Duc Pham",
+   "amount": 6449,
+   "created": "2024-12-18",
+   "mod": "2026-09-25",
+   "note": "2026-09-09",
+   "deals": [
+    {
+     "id": "30982625255",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 6449,
+     "health": "Watchlist"
+    },
+    {
+     "id": "335077772420",
+     "pipe": "Customer Adoption Pipeline",
+     "stage": "Plan Agreed",
+     "amount": 6449,
+     "health": "Watchlist"
+    }
+   ]
+  },
+  {
+   "id": "603861",
+   "hsid": "30911603861",
+   "op": "Luang Prabang River Co.",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Laos",
+   "owner": "Duc Pham",
+   "amount": 535,
+   "created": "2025-05-23",
+   "mod": "2026-09-21",
+   "note": "2026-09-17",
+   "deals": [
+    {
+     "id": "30911603861",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 535,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "514036",
+   "hsid": "30919514036",
+   "op": "Sukhothai Heritage Tours",
+   "seg": "Mid",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Anong Srisuk",
+   "amount": 6174,
+   "created": "2025-10-30",
+   "mod": "2026-09-28",
+   "note": "2026-07-27",
+   "deals": [
+    {
+     "id": "30919514036",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 6174,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "436058",
+   "hsid": "30972436058",
+   "op": "Similan Diver Boats",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Thailand",
+   "owner": "Duc Pham",
+   "amount": 2084,
+   "created": "2021-02-14",
+   "mod": "2026-09-22",
+   "note": "2026-09-05",
+   "deals": [
+    {
+     "id": "30972436058",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 2084,
+     "health": "Unhealthy"
+    }
+   ]
+  },
+  {
+   "id": "315908",
+   "hsid": "30939315908",
+   "op": "Phnom Penh Riverline",
+   "seg": "Low",
+   "hh": "Unhealthy",
+   "country": "Cambodia",
+   "owner": "Mali Chaiyo",
+   "amount": 497,
+   "created": "2021-01-13",
+   "mod": "2026-09-25",
+   "note": "2026-09-17",
+   "deals": [
+    {
+     "id": "30939315908",
+     "pipe": "Client Pipeline",
+     "stage": "Fully Live",
+     "amount": 497,
+     "health": "Unhealthy"
+    }
+   ]
+  }
+ ]
+}
