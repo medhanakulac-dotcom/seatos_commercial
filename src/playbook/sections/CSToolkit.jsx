@@ -1,5 +1,6 @@
 // CS Toolkit — the 10 CS golden rules and the 30 CS tips.
-// Edit the content arrays at the top; the component below lays them out.
+// Edit the content arrays at the top; the component below lays them out. The Operator Watch AI advises from a copy in
+// server/operator-watch/src/infrastructure/claude/cs-toolkit.ts: change both (CSToolkit.sync.test.ts checks they match).
 import { useEffect, useState } from "react";
 
 export const csGoldenRules = [
