@@ -1,5 +1,5 @@
 import { WorkspaceError } from '../errors/workspace.errors';
-import { WorkspaceStore } from '../types/repositories/workspace.ports';
+import { CrmActivitySource, WorkspaceStore } from '../types/repositories/workspace.ports';
 import { RunService } from './run.service';
 
 /**
@@ -24,4 +24,15 @@ export async function operatorContext(runs: RunService, store: WorkspaceStore, o
     latest_draft: draft ? { case_ref: latest.caseRef, version: draft.version, language: draft.language, subject: draft.subject, body: draft.body } : null,
     activity: events.map((e) => ({ at: e.at, kind: e.kind, origin: e.origin, text: e.text })),
   };
+}
+
+/** HubSpot activity (notes, meetings, calls, emails, tasks, messages) for one operator of the latest run, newest first. */
+export async function operatorActivity(runs: RunService, source: CrmActivitySource, operatorId: string, limit: number) {
+  if (!source.connected) return { connected: false, items: [] };
+  const run = await runs.latestRun();
+  if (!run) throw new WorkspaceError('No run yet, so there is no operator data');
+  const { snapshot } = await runs.operatorsForRun(run.id);
+  const account = snapshot.accounts.find((a) => a.id === operatorId);
+  if (!account) throw new WorkspaceError(`Operator ${operatorId} is not in the latest run (${run.label})`);
+  return { connected: true, items: await source.activity(account, limit) };
 }

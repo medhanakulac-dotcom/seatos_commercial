@@ -126,6 +126,7 @@ export class HubSpotAccountSource implements CrmAccountSource {
         modifiedAt: day(latest(...group.map((d) => d.properties.hs_lastmodifieddate))) ?? day(primary.properties.createdate) ?? '1970-01-01',
         lastNoteAt: day(latest(company?.notes_last_updated, ...group.map((d) => d.properties.notes_last_updated))),
         closeDate: day(primary.properties.closedate),
+        companyId: companyId ?? null,
         deals: group.map(toDeal),
         contacts: contacts.get(primary.id) ?? [],
       });

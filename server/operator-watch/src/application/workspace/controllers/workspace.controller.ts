@@ -164,6 +164,12 @@ export class WorkspaceController {
     return this.detail(id);
   }
 
+  /** Notes, meetings, calls, emails, tasks and logged messages from HubSpot, newest first. */
+  @Get('accounts/:id/hubspot-activity')
+  crmActivity(@Param('id', AccountIdPipe) id: string) {
+    return this.workspace.crmActivityFor(id);
+  }
+
   @Get('accounts/:id/assistant')
   conversation(@Param('id', AccountIdPipe) id: string) {
     return this.workspace.conversation(id);

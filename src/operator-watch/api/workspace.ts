@@ -4,6 +4,7 @@ import type {
   AccountSummary,
   ActivityItem,
   ChatMessage,
+  CrmActivity,
   CurrentUser,
   Decision,
   Language,
@@ -47,6 +48,7 @@ export const workspaceApi = {
   confirmTmsLink: (id: string, tmsOperatorId: number) => http.post<AccountDetail>(`${account(id)}/tms-link`, { tmsOperatorId }),
   resolveTmsLink: (id: string) => http.post<AccountDetail>(`${account(id)}/tms-link/resolve`, {}),
   conversation: (id: string) => http.get<{ sessionId: string | null; messages: ChatMessage[] }>(`${account(id)}/assistant`),
+  crmActivity: (id: string) => http.get<{ connected: boolean; items: CrmActivity[] }>(`${account(id)}/hubspot-activity`),
   ask: (id: string, question: string) => http.post<{ connected: boolean; messages: ChatMessage[] }>(`${account(id)}/assistant`, { question }),
 };
 

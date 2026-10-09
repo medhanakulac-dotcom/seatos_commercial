@@ -1,7 +1,7 @@
 import { betaZodTool } from '@anthropic-ai/sdk/helpers/beta/zod';
 import type Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod/v4';
-import { Actor } from '../../domain/workspace/entities/workspace.entities';
+import { Actor, CRM_ACTIVITY_TYPES, CrmActivity } from '../../domain/workspace/entities/workspace.entities';
 import { WorkspaceSettings } from '../../domain/workspace/services/settings';
 import {
   AccountAssistant,
@@ -68,6 +68,7 @@ export class ClaudeAccountAssistant implements AccountAssistant {
     private readonly memory: ClaudeMemory,
     private readonly seatos: SeatosTools,
     private readonly operatorContext: (operatorId: string) => Promise<unknown>,
+    private readonly crmActivity: (operatorId: string, limit: number) => Promise<{ connected: boolean; items: CrmActivity[] }> = async () => ({ connected: false, items: [] }),
   ) {}
 
   async ask({ account, question, asker, history }: { account: AccountContext; question: string; asker: string; history: readonly ChatTurn[] }): Promise<string> {
@@ -101,10 +102,32 @@ export class ClaudeAccountAssistant implements AccountAssistant {
       },
     });
 
+    const activityTool = betaZodTool({
+      name: 'get_hubspot_activity',
+      description:
+        'What was logged with the operator in HubSpot, newest first: notes, meetings (with meeting notes), calls, emails, tasks and ' +
+        'logged LINE/WhatsApp/SMS messages ("message"). Defaults to the operator this chat is about.',
+      inputSchema: z.object({
+        operator_id: z.string().optional().describe('Only when a user explicitly asks about a different operator'),
+        type: z.enum(CRM_ACTIVITY_TYPES).optional().describe('Only this kind of activity'),
+        limit: z.number().int().min(1).max(100).optional().describe('How many items (default 30)'),
+      }),
+      run: async ({ operator_id, type, limit }) => {
+        try {
+          const { connected, items } = await this.crmActivity(operator_id || account.id, type ? 100 : (limit ?? 30));
+          if (!connected) return 'HubSpot is not connected, so there is no logged activity to read.';
+          const picked = (type ? items.filter((i) => i.type === type) : items).slice(0, limit ?? 30);
+          return JSON.stringify(picked.map(({ id: _id, url: _url, ...rest }) => rest));
+        } catch (error) {
+          return `HubSpot activity could not be read: ${error instanceof Error ? error.message : String(error)}`;
+        }
+      },
+    });
+
     const answer = await this.claude.converse({
       system: CHAT_SYSTEM,
       messages,
-      tools: [lookup, ...(await this.seatos.tools())],
+      tools: [lookup, activityTool, ...(await this.seatos.tools())],
       effort: 'medium',
       maxIterations: MAX_TOOL_STEPS,
     });

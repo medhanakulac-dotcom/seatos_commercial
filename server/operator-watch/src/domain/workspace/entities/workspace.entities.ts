@@ -58,9 +58,29 @@ export interface CrmAccount {
   readonly lastNoteAt: string | null;
   /** Close date (YYYY-MM-DD) of the main Client Pipeline deal, when set in HubSpot. */
   readonly closeDate?: string | null;
+  /** HubSpot company of the main deal, when associated (activity is often logged there). */
+  readonly companyId?: string | null;
   readonly deals: readonly CrmDeal[];
   /** Contacts associated with the main deal; the first one is the default recipient. */
   readonly contacts?: readonly CrmContact[];
+}
+
+export const CRM_ACTIVITY_TYPES = ['note', 'meeting', 'call', 'email', 'task', 'message'] as const;
+export type CrmActivityType = (typeof CRM_ACTIVITY_TYPES)[number];
+
+/** One engagement logged in the CRM (a note, meeting, call, email, task or logged message), read live. */
+export interface CrmActivity {
+  readonly id: string;
+  readonly type: CrmActivityType;
+  /** When it happened (ISO). */
+  readonly at: string;
+  readonly title: string | null;
+  /** Plain text (HTML stripped), clipped. */
+  readonly body: string | null;
+  /** e.g. meeting outcome, call disposition, task status, email direction, message channel. */
+  readonly detail: string | null;
+  readonly owner: string | null;
+  readonly url: string | null;
 }
 
 export interface CrmSnapshotMeta {

@@ -8,6 +8,7 @@ import { LanguageBar } from '../drafts/LanguageBar';
 import { draftBadge, MailHeader, qaLabel } from '../drafts/MailHeader';
 import { useDecision, useGenerateDraft, useGeneratingIds, useNotes, useRewriteDraft } from '../drafts/useDraftActions';
 import { AssistantChat } from './AssistantChat';
+import { HubSpotActivity } from './HubSpotActivity';
 import { TmsLinkRow } from './TmsLinkRow';
 
 type Tab = 'overview' | 'activity' | 'email';
@@ -266,29 +267,32 @@ export function AccountRecordPage() {
     );
   } else if (tab === 'activity') {
     center = (
-      <div className="card">
-        <div className="notein">
-          <input
-            id="notein"
-            placeholder={`Log a note about ${a.name}…`}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addNote()}
-          />
-          <button className="b pri" disabled={notes.add.isPending} onClick={addNote}>
-            Add note
-          </button>
+      <>
+        <div className="card">
+          <div className="notein">
+            <input
+              id="notein"
+              placeholder={`Log a note about ${a.name}…`}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addNote()}
+            />
+            <button className="b pri" disabled={notes.add.isPending} onClick={addNote}>
+              Add note
+            </button>
+          </div>
+          <div className="tl">
+            {[...a.events].reverse().map((e) => (
+              <div key={e.id} className={`ev ${e.kind}`}>
+                <div className="t">{formatEventTime(e.at)}</div>
+                {e.text}
+                <SyncTag event={e} hasDeal={a.deals.length > 0} onRetry={() => notes.retry.mutate({ id: a.id, eventId: e.id })} />
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="tl">
-          {[...a.events].reverse().map((e) => (
-            <div key={e.id} className={`ev ${e.kind}`}>
-              <div className="t">{formatEventTime(e.at)}</div>
-              {e.text}
-              <SyncTag event={e} hasDeal={a.deals.length > 0} onRetry={() => notes.retry.mutate({ id: a.id, eventId: e.id })} />
-            </div>
-          ))}
-        </div>
-      </div>
+        <HubSpotActivity accountId={a.id} />
+      </>
     );
   } else if (a.noSend) {
     center = (

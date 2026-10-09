@@ -3,12 +3,12 @@ import { z } from 'zod/v4';
 import { LANGUAGES } from '../../domain/workspace/entities/workspace.entities';
 import { CaseStateError } from '../../domain/workspace/errors/workspace.errors';
 import { CaseSubmission, RunService } from '../../domain/workspace/services/run.service';
-import { AgentJob, AgentJobQueue, WorkspaceStore } from '../../domain/workspace/types/repositories/workspace.ports';
+import { AgentJob, AgentJobQueue, CrmActivitySource, WorkspaceStore } from '../../domain/workspace/types/repositories/workspace.ports';
 import { MAX_ATTEMPTS } from '../database/pg-agent.store';
 import { CLAUDE_AUTHOR } from './claude.agent';
 import { ClaudeLike } from './claude.client';
 import { ClaudeMemory } from './claude.memory';
-import { ASSESS_SYSTEM } from './claude.prompts';
+import { ASSESS_SYSTEM, formatActivity } from './claude.prompts';
 
 /** Operators assessed side by side. */
 const CONCURRENCY = Math.max(1, Number(process.env.OW_AGENT_CONCURRENCY) || 4);
@@ -17,6 +17,8 @@ const DEFAULT_BUDGET_MS = Number(process.env.OW_AGENT_TICK_BUDGET_MS) || 50_000;
 /** A claimed job is retried by a later tick if it is not finished by then (e.g. the function was stopped). */
 const LEASE_MS = 5 * 60_000;
 const RECALL_FOR_CASE = 'past assessments, outreach outcomes, decisions and the reasons behind them';
+/** HubSpot engagements shown to Claude per assessment. */
+const ACTIVITY_FOR_CASE = 20;
 
 /** The case Claude returns for one operator: the submit_case contract the Hermes skill used. */
 export const AssessedCase = z.object({
@@ -62,6 +64,7 @@ export class ClaudeRunWorker {
     private readonly queue: AgentJobQueue,
     private readonly claude: ClaudeLike | null,
     private readonly memory: ClaudeMemory | null,
+    private readonly activity: CrmActivitySource | null = null,
   ) {}
 
   async processDue(budgetMs = DEFAULT_BUDGET_MS): Promise<{ assessed: number; failed: number; closed: number }> {
@@ -98,10 +101,14 @@ export class ClaudeRunWorker {
       }
       const history = (await this.store.casesForOperator(job.operatorId)).filter((c) => c.runId !== run.id).slice(0, 5);
       const remembered = (await this.memory?.recall(job.operatorId, RECALL_FOR_CASE)) ?? '';
+      const activity = this.activity?.connected
+        ? await this.activity.activity(account, ACTIVITY_FOR_CASE).then(formatActivity, (error) => `HubSpot activity could not be read (${error instanceof Error ? error.message : String(error)}).`)
+        : '';
       const user = [
         `Operator Watch run ${run.label}. HubSpot snapshot pulled ${snapshot.meta.pulledAt}; today is ${new Date().toISOString().slice(0, 10)}.`,
         job.tmsOperatorId != null ? `SeatOS operator_id: ${job.tmsOperatorId}` : '',
         `Operator record:\n${JSON.stringify(account)}`,
+        activity ? `Recent HubSpot activity (newest first):\n${activity}` : '',
         `Previous cases:\n${history.length ? JSON.stringify(history.map((c) => ({ case_ref: c.caseRef, playbook: c.playbook, outcome: c.outcome, state: c.state, analysis: c.analysis, created_at: c.createdAt }))) : 'none'}`,
         remembered,
       ]

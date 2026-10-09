@@ -4,6 +4,7 @@ import {
   CaseRecord,
   ChatMessage,
   CrmAccount,
+  CrmActivity,
   CrmSnapshotMeta,
   DecisionRecord,
   DraftMods,
@@ -307,6 +308,14 @@ export const AGENT_TRIGGER = Symbol('AGENT_TRIGGER');
 export const EMAIL_SENDERS = Symbol('EMAIL_SENDERS');
 export const WORKSPACE_CLOCK = Symbol('WORKSPACE_CLOCK');
 
+
+/** Notes, meetings, calls, emails, tasks and logged messages for one account, read live from the CRM. */
+export interface CrmActivitySource {
+  readonly connected: boolean;
+  /** Newest first, at most `limit`. */
+  activity(account: CrmAccount, limit: number): Promise<CrmActivity[]>;
+}
+export const CRM_ACTIVITY = Symbol('CRM_ACTIVITY');
 
 /** One thing the agent remembers. `operatorId` null = a team-wide lesson that applies to every operator. */
 export interface MemoryFact {

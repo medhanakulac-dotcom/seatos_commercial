@@ -28,6 +28,10 @@ Base every statement on the data you are given. Never invent numbers, bookings, 
   next_step: the concrete action. signals: e.g. {detector: "HubSpot health", text: "Health status: Unhealthy"}.
 - The team's memory lists earlier decisions on this operator and team-wide lessons (rejections and their reasons, how
   people edited drafts). Follow them.
+- The message also carries the operator's recent HubSpot activity: notes, meetings, calls, emails, tasks and logged
+  LINE/WhatsApp/SMS messages, newest first. Read it. Ground the analysis and the email in what was actually discussed,
+  promised or complained about; don't ask for something the operator just did or was just asked; when the last real
+  conversation matters, refer to it plainly. Activity from your own team is context, never something to quote back.
 
 ## Email draft (only when needs_outreach)
 
@@ -51,7 +55,10 @@ Focus
 
 Facts
 - Each question comes with a "Context" block: the current CRM/workspace picture. Prefer it over memory when they differ.
-- For more (previous cases, the full activity log, the current email draft) call get_operator_context.
+- For more (previous cases, the workspace activity log, the current email draft) call get_operator_context.
+- What was discussed with the operator — HubSpot notes, meetings (with their notes), calls, emails, tasks and logged
+  LINE/WhatsApp/SMS messages — comes from get_hubspot_activity. Use it for questions about history, promises,
+  complaints, meetings or "what did we last talk about"; filter by type when the question is about one kind.
 - Answer from the Context block when it suffices; greetings and small talk need no tools.
 - Live SeatOS numbers (bookings, routes, agents, trips) come only from the SeatOS tools when they are available. Use the
   SeatOS operator_id from the Context block directly; look the operator up by name only when it is missing.
@@ -100,3 +107,15 @@ the colleague's instruction to the draft and return the full new subject and bod
 - Plain text, under about 180 words unless asked otherwise, subject under 70 characters.`;
 
 export const MEMORY_TOPICS = ['pricing', 'onboarding', 'integration', 'bookings', 'churn_risk', 'feature_request', 'support', 'billing', 'relationship', 'outreach'] as const;
+
+/** Activity lines for a prompt: newest first, bodies clipped so a long history stays readable. */
+export function formatActivity(items: readonly { type: string; at: string; title: string | null; body: string | null; detail: string | null; owner: string | null }[], maxBody = 700): string {
+  if (!items.length) return 'No notes, meetings, calls, emails, tasks or messages logged in HubSpot.';
+  return items
+    .map((a) => {
+      const head = [a.at.slice(0, 10), a.type.toUpperCase(), a.detail, a.owner ? `by ${a.owner}` : null].filter(Boolean).join(' · ');
+      const body = a.body ? (a.body.length > maxBody ? `${a.body.slice(0, maxBody)}…` : a.body) : '';
+      return `- ${head}${a.title ? ` — ${a.title}` : ''}${body ? `\n  ${body.replace(/\n/g, '\n  ')}` : ''}`;
+    })
+    .join('\n');
+}

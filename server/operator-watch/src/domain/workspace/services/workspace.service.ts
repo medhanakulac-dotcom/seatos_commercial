@@ -6,6 +6,7 @@ import {
   CaseState,
   ChatMessage,
   CrmAccount,
+  CrmActivity,
   DraftMods,
   DraftRecord,
   DraftWriterKind,
@@ -26,6 +27,8 @@ import {
   AgentEvent,
   AgentNotifier,
   CHAT_EVENTS,
+  CRM_ACTIVITY,
+  CrmActivitySource,
   ChatEvents,
   AccountAssistant,
   AccountContext,
@@ -124,6 +127,7 @@ export class WorkspaceService {
     @Optional() @Inject(CHAT_EVENTS) private readonly chatEvents?: ChatEvents,
     @Optional() @Inject(AGENT_NOTIFIER) private readonly notifier?: AgentNotifier,
     @Optional() private readonly operatorLinks?: OperatorLinkService,
+    @Optional() @Inject(CRM_ACTIVITY) private readonly crmActivity?: CrmActivitySource,
   ) {}
 
   /** With the local agent, the very first request opens a run so a fresh install shows cases. */
@@ -461,6 +465,13 @@ export class WorkspaceService {
   async confirmTmsLink(operatorId: string, tmsOperatorId: number, actor: Actor): Promise<void> {
     const { account } = await this.get(operatorId);
     await this.links().confirm(account, tmsOperatorId, actor);
+  }
+
+  /** Notes, meetings, calls, emails, tasks and logged messages for the account, read live from the CRM. */
+  async crmActivityFor(operatorId: string, limit = 50): Promise<{ connected: boolean; items: CrmActivity[] }> {
+    const { account } = await this.get(operatorId);
+    if (!this.crmActivity?.connected) return { connected: false, items: [] };
+    return { connected: true, items: await this.crmActivity.activity(account, limit) };
   }
 
   /** Looks the SeatOS operator up again, ignoring the 24h cache. */

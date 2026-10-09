@@ -7,7 +7,7 @@ import { RunService } from '../../domain/workspace/services/run.service';
 import { SendingService } from '../../domain/workspace/services/sending.service';
 import { SettingsService } from '../../domain/workspace/services/workspace.shared';
 import { WorkspaceService } from '../../domain/workspace/services/workspace.service';
-import { operatorContext } from '../../domain/workspace/services/operator-context';
+import { operatorActivity, operatorContext } from '../../domain/workspace/services/operator-context';
 import {
   ACCOUNT_ASSISTANT,
   AGENT_HARNESS,
@@ -15,6 +15,8 @@ import {
   AGENT_MEMORY_STORE,
   AgentJobQueue,
   AgentMemoryStore,
+  CRM_ACTIVITY,
+  CrmActivitySource,
   AGENT_NOTIFIER,
   AgentHarness,
   CHAT_EVENTS,
@@ -49,6 +51,7 @@ import { HubSpotAccountSource } from '../../infrastructure/hubspot/hubspot-accou
 import { HubSpotClient, HUBSPOT_FETCH } from '../../infrastructure/hubspot/hubspot.client';
 import { crmSourceMode, HUBSPOT_CONFIG, HubSpotConfig, loadHubSpotConfig } from '../../infrastructure/hubspot/hubspot.config';
 import { HubSpotNoteSync } from '../../infrastructure/hubspot/hubspot-note.sync';
+import { HubSpotActivitySource, NoCrmActivity } from '../../infrastructure/hubspot/hubspot-activity.source';
 import { McpTmsDirectory } from '../../infrastructure/tms/mcp-tms.directory';
 import { WorkspaceWorkers } from '../../infrastructure/scheduling/workspace.workers';
 import { TemplateDraftWriter } from '../../infrastructure/workspace-drafts/template-draft.writer';
@@ -99,6 +102,12 @@ const AGENT_STORE = Symbol('AGENT_STORE');
         crmSourceMode() === 'hubspot' && config && client ? new HubSpotNoteSync(client, config) : mock,
     },
     {
+      provide: CRM_ACTIVITY,
+      inject: [HUBSPOT_CONFIG, HubSpotClient],
+      useFactory: (config: HubSpotConfig | null, client: HubSpotClient | null): CrmActivitySource =>
+        crmSourceMode() === 'hubspot' && config && client ? new HubSpotActivitySource(client) : new NoCrmActivity(),
+    },
+    {
       provide: EMAIL_SENDERS,
       inject: [SmtpEmailSender, HubSpotClient],
       useFactory: (smtp: SmtpEmailSender, client: HubSpotClient | null) => [smtp, new HubSpotEmailSender(client)],
@@ -135,15 +144,17 @@ const AGENT_STORE = Symbol('AGENT_STORE');
     },
     {
       provide: ACCOUNT_ASSISTANT,
-      inject: [AGENT_HARNESS, CLAUDE, ClaudeMemory, SeatosTools, RunService, WORKSPACE_STORE],
-      useFactory: (h: AgentHarness, claude: ClaudeLike | null, memory: ClaudeMemory | null, seatos: SeatosTools, runs: RunService, store: WorkspaceStore) =>
-        claude && memory ? new ClaudeAccountAssistant(claude, memory, seatos, (id) => operatorContext(runs, store, id)) : h.assistant,
+      inject: [AGENT_HARNESS, CLAUDE, ClaudeMemory, SeatosTools, RunService, WORKSPACE_STORE, CRM_ACTIVITY],
+      useFactory: (h: AgentHarness, claude: ClaudeLike | null, memory: ClaudeMemory | null, seatos: SeatosTools, runs: RunService, store: WorkspaceStore, activity: CrmActivitySource) =>
+        claude && memory
+          ? new ClaudeAccountAssistant(claude, memory, seatos, (id) => operatorContext(runs, store, id), (id, limit) => operatorActivity(runs, activity, id, limit))
+          : h.assistant,
     },
     {
       provide: ClaudeRunWorker,
-      inject: [RunService, WORKSPACE_STORE, AGENT_JOB_QUEUE, CLAUDE, ClaudeMemory],
-      useFactory: (runs: RunService, store: WorkspaceStore, queue: AgentJobQueue, claude: ClaudeLike | null, memory: ClaudeMemory | null) =>
-        new ClaudeRunWorker(runs, store, queue, claude, memory),
+      inject: [RunService, WORKSPACE_STORE, AGENT_JOB_QUEUE, CLAUDE, ClaudeMemory, CRM_ACTIVITY],
+      useFactory: (runs: RunService, store: WorkspaceStore, queue: AgentJobQueue, claude: ClaudeLike | null, memory: ClaudeMemory | null, activity: CrmActivitySource) =>
+        new ClaudeRunWorker(runs, store, queue, claude, memory, activity),
     },
     ChatHub,
     { provide: CHAT_EVENTS, useExisting: ChatHub },

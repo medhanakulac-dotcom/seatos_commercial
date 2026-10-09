@@ -278,3 +278,15 @@ export interface AdminRun extends RunInfo {
   cases: number;
   outreach: number;
 }
+
+/** One note, meeting, call, email, task or logged message from HubSpot. */
+export interface CrmActivity {
+  id: string;
+  type: 'note' | 'meeting' | 'call' | 'email' | 'task' | 'message';
+  at: string;
+  title: string | null;
+  body: string | null;
+  detail: string | null;
+  owner: string | null;
+  url: string | null;
+}
