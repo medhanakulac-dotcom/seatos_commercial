@@ -15,7 +15,7 @@ export function buildOperatorBrief(a: AccountContext): OperatorBrief {
     ...(a.tmsOperatorId != null ? [`SeatOS operator_id: ${a.tmsOperatorId} (use it directly with SeatOS tools; do not look the operator up by name)`] : []),
     `Segment: ${a.segment} · Health: ${a.health} · Playbook: ${a.playbook} · Case state: ${a.state}`,
     `Owner: ${a.owner} · Country: ${a.country ?? 'unknown'}`,
-    `Deals: ${a.deals.length ? a.deals.map((d) => `${d.pipeline} / ${d.stage}${d.amount != null ? ` ($${d.amount})` : ''}`).join('; ') : 'none'}`,
+    `Deals: ${a.deals.length ? a.deals.map((d) => `${d.pipeline} / ${d.stage}${d.amount != null ? ` ($${d.amount})` : ''}${d.closeDate ? `, close date ${d.closeDate}` : ''}`).join('; ') : 'none'}`,
     `Signals: ${a.signals.length ? a.signals.join('; ') : 'none'}`,
     `Recent activity: ${a.activity.length ? a.activity.slice(-MAX_ACTIVITY).join(' | ') : 'none'}`,
   ].join('\n');

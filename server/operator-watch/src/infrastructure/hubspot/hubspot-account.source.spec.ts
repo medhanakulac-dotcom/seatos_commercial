@@ -74,7 +74,7 @@ describe('HubSpotAccountSource', () => {
       'POST /crm/v3/objects/deals/search': () =>
         ++page === 1
           ? {
-              results: [deal('d1', { dealname: 'Andaman Ferry - adoption', pipeline: 'p-adopt', dealstage: 's-assess', health_status: 'Watchlist' }), deal('d2', { dealname: ' Andaman Ferry ', country: 'Thailand' })],
+              results: [deal('d1', { dealname: 'Andaman Ferry - adoption', pipeline: 'p-adopt', dealstage: 's-assess', health_status: 'Watchlist' }), deal('d2', { dealname: ' Andaman Ferry ', country: 'Thailand', closedate: '2024-06-15T10:00:00Z' })],
               paging: { next: { after: '2' } },
             }
           : {
@@ -101,11 +101,13 @@ describe('HubSpotAccountSource', () => {
       amount: 1000,
       createdAt: '2024-05-01',
       lastNoteAt: '2026-09-25',
+      closeDate: '2024-06-15', // the Client Pipeline deal's close date
     });
     expect(andaman.deals.map((d) => [d.id, d.pipeline, d.stage, d.health])).toEqual([
       ['d2', 'Client Pipeline', 'Fully Live', 'Unhealthy'],
       ['d1', 'Customer Adoption Pipeline', 'Assessment', 'Watchlist'],
     ]);
+    expect(andaman.deals.map((d) => d.closeDate)).toEqual(['2024-06-15', null]);
     expect(andaman.deals[0].url).toBe('https://app-na2.hubspot.com/contacts/123/record/0-3/d2');
     // Contacts with an email become recipients; ones without are dropped.
     expect(andaman.contacts).toEqual([{ id: '501', name: 'Somchai K.', email: 'ops@andaman.example' }]);

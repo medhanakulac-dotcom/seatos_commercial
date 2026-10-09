@@ -648,7 +648,7 @@ export function accountContext(v: AccountDetailView): AccountContext {
     country: v.account.country,
     state: v.state,
     signals: v.signals.map((s) => s.text),
-    deals: v.account.deals.map((d) => ({ pipeline: d.pipeline, stage: d.stage, amount: d.amount })),
+    deals: v.account.deals.map((d) => ({ pipeline: d.pipeline, stage: d.stage, amount: d.amount, closeDate: d.closeDate ?? null })),
     activity: v.events.map((e) => `${e.at} · ${e.text}`),
     ...(v.tmsLink?.status === 'linked' && v.tmsLink.tmsOperatorId != null ? { tmsOperatorId: v.tmsLink.tmsOperatorId } : {}),
   };

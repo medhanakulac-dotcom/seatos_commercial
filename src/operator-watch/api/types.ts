@@ -92,6 +92,7 @@ export interface Deal {
   amount: number | null;
   health: CrmHealth;
   url: string | null;
+  closeDate?: string | null;
 }
 
 export interface CaseEvent {
@@ -150,6 +151,8 @@ export interface AccountDetail extends AccountSummary {
   createdAt: string;
   modifiedAt: string;
   lastNoteAt: string | null;
+  /** Close date of the Client Pipeline deal. */
+  closeDate: string | null;
   signals: Signal[];
   deals: Deal[];
   events: CaseEvent[];

@@ -111,6 +111,8 @@ export function AccountRecordPage() {
         <span>{a.country ?? '—'}</span>
         <b>Deal amount</b>
         <span>{money(a.amount) ?? '—'}</span>
+        <b>Close date</b>
+        <span>{a.closeDate ?? '—'}</span>
         <b>Segment</b>
         <SegTag segment={a.segment} style={{ justifySelf: 'start' }} />
         <b>Health</b>
@@ -147,6 +149,7 @@ export function AccountRecordPage() {
             <span className="d">
               {d.stage}
               {d.amount != null ? ` · ${money(d.amount)}` : ''}
+              {d.closeDate ? ` · closes ${d.closeDate}` : ''}
             </span>
           </div>
           {d.url && (

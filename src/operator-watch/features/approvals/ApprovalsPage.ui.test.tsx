@@ -13,7 +13,7 @@ const summary = (id: string, name: string): AccountSummary => ({
   outbox: 'OUT-1', priority: 20, language: 'en', noSend: false, drafted: true, state: 'pending', signalCount: 1, summary: '', author: 'agent:local',
 });
 const detail = (s: AccountSummary): AccountDetail => ({
-  ...s, next: '', amount: 0, createdAt: '2024-01-01', modifiedAt: '2026-09-28', lastNoteAt: null, deals: [], events: [], cases: [],
+  ...s, next: '', amount: 0, createdAt: '2024-01-01', modifiedAt: '2026-09-28', lastNoteAt: null, closeDate: null, deals: [], events: [], cases: [],
   signals: [{ detector: 'HubSpot health', code: 'CRM-1', text: 'Health status: Unhealthy' }],
   draft: { subject: `Hello ${s.name}`, body: `Body for ${s.name}`, from: "Anong Srisuk's mailbox", to: null, version: 1, hash: 'abcd1234',
     mods: { short: false, warm: false, direct: false }, writer: 'template', author: 'agent:local', qa: 'not_run', tokenTtlHours: 72 },

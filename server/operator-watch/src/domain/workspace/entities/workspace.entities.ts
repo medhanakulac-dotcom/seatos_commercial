@@ -33,6 +33,8 @@ export interface CrmDeal {
   readonly amount: number | null;
   readonly health: CrmHealth;
   readonly url: string | null;
+  /** HubSpot close date (YYYY-MM-DD), when set. */
+  readonly closeDate?: string | null;
 }
 
 export interface CrmContact {
@@ -54,6 +56,8 @@ export interface CrmAccount {
   readonly createdAt: string;
   readonly modifiedAt: string;
   readonly lastNoteAt: string | null;
+  /** Close date (YYYY-MM-DD) of the main Client Pipeline deal, when set in HubSpot. */
+  readonly closeDate?: string | null;
   readonly deals: readonly CrmDeal[];
   /** Contacts associated with the main deal; the first one is the default recipient. */
   readonly contacts?: readonly CrmContact[];

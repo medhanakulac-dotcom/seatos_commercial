@@ -77,6 +77,7 @@ export function toAccountDetail(v: AccountDetailView) {
     createdAt: v.account.createdAt,
     modifiedAt: v.account.modifiedAt,
     lastNoteAt: v.account.lastNoteAt,
+    closeDate: v.account.closeDate ?? null,
     signals: v.signals,
     deals: v.account.deals,
     contacts: v.account.contacts ?? [],

@@ -54,7 +54,7 @@ export class HubSpotAccountSource implements CrmAccountSource {
       this.hubspot.listAll<HsOwner>('/crm/v3/owners', { archived: 'false' }),
     ]);
 
-    const dealProps = ['dealname', 'amount', 'pipeline', 'dealstage', 'createdate', 'hs_lastmodifieddate', 'notes_last_updated', 'hubspot_owner_id', c.healthProperty];
+    const dealProps = ['dealname', 'amount', 'pipeline', 'dealstage', 'createdate', 'closedate', 'hs_lastmodifieddate', 'notes_last_updated', 'hubspot_owner_id', c.healthProperty];
     if (c.segmentObject === 'deal') dealProps.push(c.segmentProperty);
     dealProps.push(c.countryProperty);
     const deals = await this.hubspot.searchAll<HsObject>('/crm/v3/objects/deals/search', {
@@ -109,6 +109,7 @@ export class HubSpotAccountSource implements CrmAccountSource {
         amount: num(d.properties.amount),
         health: normaliseHealth(d.properties[c.healthProperty]) ?? 'Unhealthy',
         url: dealUrl(d.id),
+        closeDate: day(d.properties.closedate),
       });
       const ownerId = primary.properties.hubspot_owner_id;
       accounts.push({
@@ -124,6 +125,7 @@ export class HubSpotAccountSource implements CrmAccountSource {
         createdAt: day(primary.properties.createdate) ?? '1970-01-01',
         modifiedAt: day(latest(...group.map((d) => d.properties.hs_lastmodifieddate))) ?? day(primary.properties.createdate) ?? '1970-01-01',
         lastNoteAt: day(latest(company?.notes_last_updated, ...group.map((d) => d.properties.notes_last_updated))),
+        closeDate: day(primary.properties.closedate),
         deals: group.map(toDeal),
         contacts: contacts.get(primary.id) ?? [],
       });

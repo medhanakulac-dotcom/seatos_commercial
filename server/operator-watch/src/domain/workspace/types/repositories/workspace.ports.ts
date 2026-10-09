@@ -141,7 +141,7 @@ export interface AccountContext {
   readonly country: string | null;
   readonly state: string;
   readonly signals: readonly string[];
-  readonly deals: readonly { pipeline: string; stage: string; amount: number | null }[];
+  readonly deals: readonly { pipeline: string; stage: string; amount: number | null; closeDate?: string | null }[];
   readonly activity: readonly string[];
   /** SeatOS operator id, when the account is linked to one. */
   readonly tmsOperatorId?: number;

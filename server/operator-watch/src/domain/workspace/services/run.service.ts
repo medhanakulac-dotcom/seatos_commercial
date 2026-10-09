@@ -55,6 +55,11 @@ export interface SubmissionResult {
 
 /** A scheduled run missed by more than this (e.g. the server was down) waits for the next slot. */
 const CATCH_UP_MS = 6 * 36e5;
+/**
+ * A built-in (local) run still open after this long was cut off — on Vercel a function stops after 300 s — and the
+ * next tick finishes it. Longer than that limit, so the original invocation is surely gone.
+ */
+const RESUME_LOCAL_AFTER_MS = 6 * 60_000;
 const MAX_TEXT = 20_000;
 
 /**
@@ -96,6 +101,7 @@ export class RunService {
 
   /** Scheduler tick: opens the run for the current period once, if the pipeline is enabled. */
   async tick(): Promise<RunRecord | null> {
+    await this.resumeLocalRun();
     const settings = await this.settings.get();
     if (!settings.pipeline.enabled) return null;
     const now = this.clock.now();
@@ -204,13 +210,25 @@ export class RunService {
     }
   }
 
+  /** Assesses every operator that has no case yet in this run, then closes it. Safe to call again on a cut-off run. */
   private async runLocalAgent(run: RunRecord, snapshot: SnapshotRecord): Promise<void> {
-    let outreach = 0;
+    const done = new Set((await this.store.casesForRun(run.id)).map((c) => c.operatorId));
     for (const account of snapshot.accounts) {
-      const result = await this.submitCase(run.id, assessAccount(account, snapshot.meta.pulledAt, this.writer), 'agent:local');
-      if (result.outcome === 'outreach') outreach++;
+      if (done.has(account.id)) continue;
+      await this.submitCase(run.id, assessAccount(account, snapshot.meta.pulledAt, this.writer), 'agent:local');
     }
+    const outreach = (await this.store.casesForRun(run.id)).filter((c) => c.outcome === 'outreach').length;
     await this.completeRun(run.id, `Local playbook assessed ${snapshot.accounts.length} operators; ${outreach} need outreach.`);
+  }
+
+  /** Finishes the latest built-in run if it was cut off before every operator had a case. */
+  private async resumeLocalRun(): Promise<void> {
+    const run = await this.latestRun();
+    if (!run || run.status !== 'running' || run.agent !== 'local') return;
+    if (this.clock.now().getTime() - Date.parse(run.startedAt) < RESUME_LOCAL_AFTER_MS) return;
+    this.logger.warn(`Run ${run.label} was cut off; finishing it`);
+    const { snapshot } = await this.operatorsForRun(run.id);
+    await this.runLocalAgent(run, snapshot);
   }
 
   async operatorsForRun(runId: string): Promise<{ run: RunRecord; snapshot: SnapshotRecord }> {
