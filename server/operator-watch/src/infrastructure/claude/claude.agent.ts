@@ -35,7 +35,7 @@ export interface WeeklyLookup {
 
 /** Chat turns kept in the prompt; older ones live on in memory. */
 const HISTORY_TURNS = 20;
-const MAX_TOOL_STEPS = 8;
+const MAX_TOOL_STEPS = 12; // an advice answer reads several tools, and each resumed web-research pause takes a step
 
 /** Starts a run in Claude mode: one queued job per operator, worked off by the scheduler tick (ClaudeRunWorker). */
 export class ClaudeRunTrigger implements AgentTrigger {
@@ -184,6 +184,7 @@ export class ClaudeAccountAssistant implements AccountAssistant {
       tools: [lookup, activityTool, ...weeklyTools, ...(await this.seatos.tools())],
       effort: 'medium',
       maxIterations: MAX_TOOL_STEPS,
+      web: true,
     });
     background(
       'Chat memory',

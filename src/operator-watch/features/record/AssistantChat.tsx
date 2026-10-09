@@ -223,7 +223,7 @@ export function AssistantChat({ accountId, accountName }: { accountId: string; a
                   {pending.text}
                 </div>
               )}
-              {(pending || answering !== null) && <div className="m a w">{answering ? `Hermes is answering ${answering}…` : '…'}</div>}
+              {(pending || answering !== null) && <div className="m a w">{answering ? `The assistant is answering ${answering}…` : '…'}</div>}
             </>
           ) : (
             <div className="m a">Ask anything about this account. Everyone on the team sees this conversation.</div>

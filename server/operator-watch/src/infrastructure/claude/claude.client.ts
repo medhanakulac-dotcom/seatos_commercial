@@ -36,7 +36,30 @@ export interface ClaudeLike {
     tools: BetaRunnableTool<any>[];
     effort: Effort;
     maxIterations: number;
+    /** Let Claude search and read the public web (Anthropic's server-side web_search / web_fetch tools). */
+    web?: boolean;
   }): Promise<string>;
+}
+
+/** Server-side tools: Anthropic runs them, so there is no `run` function here. Capped per answer to bound cost. */
+export const WEB_TOOLS: Anthropic.Beta.BetaToolUnion[] = [
+  { type: 'web_search_20260209', name: 'web_search', max_uses: 5 },
+  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 5 },
+];
+const MAX_PAUSES = 3;
+
+/** The answer text, plus the web pages it cites (once each) so readers can check them. */
+function answerText(content: Anthropic.Beta.BetaContentBlock[]): string {
+  const texts = content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text');
+  const text = texts
+    .map((b) => b.text)
+    .join('')
+    .trim();
+  const sources = new Map<string, string>();
+  for (const b of texts)
+    for (const c of b.citations ?? []) if (c.type === 'web_search_result_location' && !sources.has(c.url)) sources.set(c.url, c.title ?? c.url);
+  if (!text || !sources.size) return text;
+  return `${text}\n\nSources:\n${[...sources].map(([url, title]) => `- ${title}: ${url}`).join('\n')}`;
 }
 
 /**
@@ -71,7 +94,21 @@ export class ClaudeClient implements ClaudeLike {
     return response.parsed_output as T;
   }
 
-  async converse({ system, messages, tools, effort, maxIterations }: { system: string; messages: Anthropic.Beta.BetaMessageParam[]; tools: BetaRunnableTool<any>[]; effort: Effort; maxIterations: number }): Promise<string> {
+  async converse(input: { system: string; messages: Anthropic.Beta.BetaMessageParam[]; tools: BetaRunnableTool<any>[]; effort: Effort; maxIterations: number; web?: boolean }): Promise<string> {
+    if (!input.web) return this.runConversation(input, []);
+    try {
+      return await this.runConversation(input, WEB_TOOLS);
+    } catch (error) {
+      // Web search can be switched off for the organization in the Claude Console; answer without it rather than fail.
+      if (error instanceof Anthropic.BadRequestError && /web_(search|fetch)/i.test(error.message)) return this.runConversation(input, []);
+      throw error;
+    }
+  }
+
+  private async runConversation(
+    { system, messages, tools, effort, maxIterations }: { system: string; messages: Anthropic.Beta.BetaMessageParam[]; tools: BetaRunnableTool<any>[]; effort: Effort; maxIterations: number },
+    serverTools: Anthropic.Beta.BetaToolUnion[],
+  ): Promise<string> {
     const runner = this.client.beta.messages.toolRunner({
       model: this.config.model,
       max_tokens: 16000,
@@ -80,19 +117,21 @@ export class ClaudeClient implements ClaudeLike {
       cache_control: { type: 'ephemeral' },
       system,
       messages,
-      tools,
+      tools: [...tools, ...serverTools],
       output_config: { effort },
       max_iterations: maxIterations,
     });
-    // Awaiting the runner drives the loop to the end (`.done()` alone waits for someone else to iterate it).
-    const final = await runner;
+    // The runner does not resume a server-tool turn that paused (long web research): hand the paused turn back so the
+    // API continues where it stopped, a few times at most.
+    let pauses = 0;
+    for await (const message of runner) {
+      if (message.stop_reason === 'pause_turn' && pauses++ < MAX_PAUSES) runner.pushMessages({ role: 'assistant', content: message.content });
+    }
+    const final = await runner.done();
     if (final.stop_reason === 'refusal') throw new ClaudeRefusalError(final.stop_details?.category);
-    const text = final.content
-      .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
-      .map((b) => b.text)
-      .join('\n')
-      .trim();
-    if (final.stop_reason === 'tool_use') return text || 'I could not finish looking this up within the step limit. Please ask a narrower question.';
+    const text = answerText(final.content);
+    if (final.stop_reason === 'tool_use' || final.stop_reason === 'pause_turn')
+      return text || 'I could not finish looking this up within the step limit. Please ask a narrower question.';
     return text;
   }
 }
