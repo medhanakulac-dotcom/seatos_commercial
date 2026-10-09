@@ -8,7 +8,7 @@ import { AGENT_MEMORY_STORE, TMS_DIRECTORY } from '../../domain/workspace/types/
 import { WeeklyDataService } from '../../domain/workspace/services/weekly-data.service';
 import { InMemoryAgentStore } from '../workspace-mocks/in-memory-agent.store';
 import { ClaudeLike } from './claude.client';
-import { ASSESS_SYSTEM, CHAT_SYSTEM, MEMORY_SYSTEM, REWRITE_SYSTEM } from './claude.prompts';
+import { ASSESS_SYSTEM, CHAT_SYSTEM, COMPOSE_SYSTEM, MEMORY_SYSTEM, REWRITE_SYSTEM } from './claude.prompts';
 import { CLAUDE } from './claude.tokens';
 
 type Method = 'GET' | 'POST' | 'PUT';
@@ -40,6 +40,7 @@ class FakeClaude implements ClaudeLike {
       return { facts: [{ text: `Remembered: ${what.slice(0, 80)}`, scope: 'operator', topics: ['outreach'] }], supersedes: [] } as T;
     }
     if (system === REWRITE_SYSTEM) return { subject: 'Shorter subject', body: 'Shorter body' } as T;
+    if (system === COMPOSE_SYSTEM) return { subject: 'Quick check-in', body: 'Hello from Claude' } as T;
     throw new Error(`unexpected prompt: ${system.slice(0, 40)}`);
   }
 
@@ -129,9 +130,16 @@ describe('Claude agent HTTP integration', () => {
     expect(assessed.length).toBe(run.cases);
     expect(assessed[0].user).toContain('Operator record:');
 
+    // Auto-drafting is off by default: the run assesses only, and Generate has Claude write the email from the case.
+    expect(assessed[0].user).toContain('No drafts in this run');
     const { items } = (await call('GET', '/workspace/accounts', 'analyst')).json();
-    const drafted = items.find((a: { drafted: boolean; state: string }) => a.drafted && a.state === 'pending');
-    const detail = (await call('GET', `/workspace/accounts/${drafted.id}`, 'analyst')).json();
+    expect(items.some((a: { drafted: boolean }) => a.drafted)).toBe(false);
+    const pending = items.find((a: { state: string }) => a.state === 'pending');
+    expect((await call('POST', `/workspace/accounts/${pending.id}/draft`, 'analyst', {})).statusCode).toBe(200);
+    const composed = claude.calls.filter((c) => c.system === COMPOSE_SYSTEM);
+    expect(composed).toHaveLength(1);
+    expect(composed[0].user).toContain('Analysis: Claude analysis from the snapshot.');
+    const detail = (await call('GET', `/workspace/accounts/${pending.id}`, 'analyst')).json();
     expect(detail.draft).toMatchObject({ subject: 'Quick check-in', body: 'Hello from Claude', writer: 'agent' });
     expect(memory.facts.filter((f) => f.kind === 'case').length).toBe(run.cases);
   });
@@ -172,7 +180,8 @@ describe('Claude agent HTTP integration', () => {
 
   it('rewrites a draft from a prompt and remembers decisions', async () => {
     const { items } = (await call('GET', '/workspace/accounts', 'analyst')).json();
-    const target = items.find((a: { drafted: boolean; state: string }) => a.drafted && a.state === 'pending');
+    const target = items.find((a: { state: string }) => a.state === 'pending');
+    if (!target.drafted) expect((await call('POST', `/workspace/accounts/${target.id}/draft`, 'analyst', {})).statusCode).toBe(200);
     const res = await call('POST', `/workspace/accounts/${target.id}/draft/prompt`, 'analyst', { instruction: 'make it shorter' });
     expect(res.statusCode).toBe(200);
     const detail = (await call('GET', `/workspace/accounts/${target.id}`, 'analyst')).json();

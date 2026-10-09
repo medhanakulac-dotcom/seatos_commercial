@@ -22,6 +22,11 @@ export interface WorkspaceSettings {
     webhookUrl: string;
     /** Label recorded on every case, e.g. the Hermes skill/playbook revision. */
     playbookVersion: string;
+    /**
+     * Write email drafts during runs. Off: runs only assess (analysis, next step); a person writes each email with
+     * the Generate button on the account.
+     */
+    autoDraft: boolean;
   };
   sending: {
     /** Master switch. Approved emails wait in the queue while this is off. */
@@ -45,7 +50,7 @@ export interface WorkspaceSettings {
 
 export const DEFAULT_SETTINGS: WorkspaceSettings = {
   pipeline: { enabled: false, cadence: 'weekly', weekday: 1, time: '05:00', timezone: 'Asia/Bangkok' },
-  agent: { mode: 'local', webhookUrl: '', playbookVersion: '' },
+  agent: { mode: 'local', webhookUrl: '', playbookVersion: '', autoDraft: false },
   sending: {
     enabled: false,
     defaultChannel: 'smtp',
@@ -145,6 +150,7 @@ export function validateSettings(input: unknown, options: ValidateOptions = {}):
       mode: oneOf(a, 'mode', ['claude', 'hermes', 'local'] as const, 'agent'),
       webhookUrl: url(a, 'webhookUrl', 'agent'),
       playbookVersion: str(a, 'playbookVersion', 'agent', 100),
+      autoDraft: a.autoDraft === undefined ? DEFAULT_SETTINGS.agent.autoDraft : bool(a, 'autoDraft', 'agent'),
     },
     sending: {
       enabled: bool(s, 'enabled', 'sending'),

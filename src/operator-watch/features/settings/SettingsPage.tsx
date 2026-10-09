@@ -170,6 +170,9 @@ export function SettingsPage() {
             </Field>
           </>
         )}
+        <Field label="Email drafts" hint="Off: runs only assess (analysis + next step). Each email is written when someone presses Generate draft on the account — by the AI in Claude mode.">
+          <Toggle checked={a.autoDraft} onChange={(v) => set('agent', { autoDraft: v })} label="Write drafts automatically during runs" />
+        </Field>
         <Field label="Playbook version" hint="Recorded on every case so you can tell which playbook produced which email.">
           <input type="text" value={a.playbookVersion} placeholder="e.g. operator-watch-v3" onChange={(e) => set('agent', { playbookVersion: e.target.value })} />
         </Field>

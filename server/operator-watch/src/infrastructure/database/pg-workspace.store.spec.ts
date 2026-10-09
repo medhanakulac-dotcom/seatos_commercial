@@ -64,8 +64,10 @@ describeDb('PgWorkspaceStore (Postgres)', () => {
     await settings.save({ ...DEFAULT_SETTINGS, sending: { ...DEFAULT_SETTINGS.sending, enabled: true, redirectAllTo: 'qa@seatos.test', smtp: { enabled: true, fromName: 'CS', fromAddress: 'cs@seatos.com' }, schedule: { mode: 'immediate', weekday: 2, time: '09:00' } } }, 'test');
     await workspace.ready();
     const views = Object.fromEntries((await workspace.list()).map((v) => [v.account.id, v]));
-    expect(views.a).toMatchObject({ state: 'pending', drafted: true });
+    expect(views.a).toMatchObject({ state: 'pending', drafted: false }); // drafts come from Generate
     expect(views.c).toMatchObject({ state: 'healthy' });
+    await workspace.generateDraft('a', { id: 'u1', name: 'Chris' });
+    expect(await workspace.get('a')).toMatchObject({ draft: { writer: 'template', version: 1 } });
 
     await workspace.decide('a', 'approve', { id: 'u1', name: 'Chris' });
     now = new Date('2026-09-30T03:01:00Z');

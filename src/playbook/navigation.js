@@ -47,6 +47,7 @@ export const TOOLS = {
 };
 
 const Q3 = { text: "Q3", bg: "#F5A623" };
+const Q4 = { text: "Q4", bg: "#B9A6FF" };
 
 // Sidebar. `accent` colours the active bar; `iconAccent` overrides the active icon colour.
 export const NAV = [
@@ -72,8 +73,8 @@ export const NAV = [
     items: [
       { tool: "ow-home", label: "Overview", icon: icOwHome, accent: "#2DD4BF" },
       { tool: "ow-accounts", label: "Accounts", icon: icOwAccounts, accent: "#2DD4BF" },
-      { tool: "ow-approvals", label: "Approvals", icon: icOwApprovals, accent: "#2DD4BF" },
-      { tool: "ow-sent", label: "Sent", icon: icOwSent, accent: "#2DD4BF" },
+      { tool: "ow-approvals", label: "Approvals", icon: icOwApprovals, accent: "#2DD4BF", badge: Q4 },
+      { tool: "ow-sent", label: "Sent", icon: icOwSent, accent: "#2DD4BF", badge: Q4 },
       { tool: "ow-leader", label: "Leader dashboard", icon: icOwLeader, accent: "#2DD4BF" },
       { tool: "ow-settings", label: "Settings", icon: icOwSettings, accent: "#2DD4BF" },
     ],

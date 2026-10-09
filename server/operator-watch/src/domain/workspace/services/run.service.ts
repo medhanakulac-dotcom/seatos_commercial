@@ -82,6 +82,11 @@ export class RunService {
     @Optional() private readonly operatorLinks?: OperatorLinkService,
   ) {}
 
+  /** Whether agents write email drafts during runs (settings.agent.autoDraft); otherwise only on demand. */
+  async draftsDuringRuns(): Promise<boolean> {
+    return (await this.settings.get()).agent.autoDraft;
+  }
+
   async latestRun(): Promise<RunRecord | undefined> {
     return (await this.store.listRuns(1))[0];
   }
@@ -254,6 +259,8 @@ export class RunService {
     const dormant = account.segment === 'Dormant';
     const guard = input.needsOutreach ? guardReason(settings, dormant, health) : null;
     const outreach = input.needsOutreach && !guard;
+    // With auto-drafting off, a submitted draft is dropped: emails are written on demand (Generate) by a person.
+    const submittedDraft = settings.agent.autoDraft ? input.draft : undefined;
     const nowIso = this.clock.now().toISOString();
 
     return this.store.transaction(async (tx) => {
@@ -262,7 +269,7 @@ export class RunService {
         throw new CaseStateError(`Case ${existing.caseRef} is already ${existing.state}; it can no longer be changed by the agent`);
       }
       const caseRef = existing?.caseRef ?? `${caseRefPrefix(run)}-${String(await tx.nextCaseSeq(run.id)).padStart(4, '0')}`;
-      const language = input.draft?.language ?? input.language ?? existing?.language ?? languageForCountry(account.country);
+      const language = submittedDraft?.language ?? input.language ?? existing?.language ?? languageForCountry(account.country);
       const c: CaseRecord = {
         id: existing?.id ?? newId(),
         runId: run.id,
@@ -306,16 +313,16 @@ export class RunService {
       if (guard) await event(`Outreach blocked by guard: ${guard}`, 'bad');
 
       let draftVersion: number | null = null;
-      if (outreach && input.draft) {
+      if (outreach && submittedDraft) {
         draftVersion = (await tx.latestDraftVersion(c.id)) + 1;
         const draft: DraftRecord = {
           id: newId(),
           caseId: c.id,
           version: draftVersion,
           language,
-          subject: input.draft.subject.trim(),
-          body: input.draft.body,
-          draftHash: draftHash(caseRef, input.draft.subject.trim(), input.draft.body),
+          subject: submittedDraft.subject.trim(),
+          body: submittedDraft.body,
+          draftHash: draftHash(caseRef, submittedDraft.subject.trim(), submittedDraft.body),
           author,
           writer: author === 'agent:local' ? 'template' : 'agent',
           mods: { short: false, warm: false, direct: false, variant: 0 },

@@ -127,6 +127,9 @@ export class ClaudeRunWorker {
         activity ? `Recent HubSpot activity (newest first):\n${activity}` : '',
         `Previous cases:\n${history.length ? JSON.stringify(history.map((c) => ({ case_ref: c.caseRef, playbook: c.playbook, outcome: c.outcome, state: c.state, analysis: c.analysis, created_at: c.createdAt }))) : 'none'}`,
         remembered,
+        (await this.runs.draftsDuringRuns())
+          ? 'Drafts are written in this run: include the email draft when outreach is needed.'
+          : 'No drafts in this run: leave draft out. A colleague writes the email later with Generate, from your analysis and next step.',
       ]
         .filter(Boolean)
         .join('\n\n');

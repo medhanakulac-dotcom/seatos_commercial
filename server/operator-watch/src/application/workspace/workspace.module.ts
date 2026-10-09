@@ -146,8 +146,9 @@ const AGENT_STORE = Symbol('AGENT_STORE');
     },
     {
       provide: EMAIL_REWRITER,
-      inject: [AGENT_HARNESS, CLAUDE],
-      useFactory: (h: AgentHarness, claude: ClaudeLike | null) => (claude ? new ClaudeEmailRewriter(claude) : h.rewriter),
+      inject: [AGENT_HARNESS, CLAUDE, ClaudeMemory, RunService, CRM_ACTIVITY, WeeklyDataService],
+      useFactory: (h: AgentHarness, claude: ClaudeLike | null, memory: ClaudeMemory | null, runs: RunService, activity: CrmActivitySource, weekly: WeeklyDataService) =>
+        claude ? new ClaudeEmailRewriter(claude, { memory, crmActivity: (id, limit) => operatorActivity(runs, activity, id, limit), weekly }) : h.rewriter,
     },
     {
       provide: ACCOUNT_ASSISTANT,

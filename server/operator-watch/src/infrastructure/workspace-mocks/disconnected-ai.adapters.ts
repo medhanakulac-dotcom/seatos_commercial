@@ -15,6 +15,9 @@ export class DisconnectedAccountAssistant implements AccountAssistant {
 @Injectable()
 export class DisconnectedEmailRewriter implements EmailRewriter {
   readonly connected = false;
+  async compose(): Promise<{ subject: string; body: string }> {
+    throw new ServiceUnavailableException('Email AI is not connected');
+  }
   async rewrite(): Promise<{ body: string }> {
     throw new ServiceUnavailableException('Email AI is not connected');
   }

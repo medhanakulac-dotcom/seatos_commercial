@@ -80,7 +80,9 @@ describe('Workspace HTTP integration', () => {
 
   it('lets viewers read but not review, and only admins configure', async () => {
     const { items } = (await call('GET', '/workspace/accounts', 'viewer')).json();
-    const target = items.find((a: { drafted: boolean; state: string }) => a.drafted && a.state === 'pending');
+    expect(items.some((a: { drafted: boolean }) => a.drafted)).toBe(false); // runs write no drafts unless auto-drafting is on
+    const target = items.find((a: { state: string }) => a.state === 'pending');
+    expect((await call('POST', `/workspace/accounts/${target.id}/draft`, 'viewer', {})).statusCode).toBe(403);
     expect((await call('POST', `/workspace/accounts/${target.id}/decision`, 'viewer', { decision: 'approve' })).statusCode).toBe(403);
     expect((await call('GET', '/admin/settings', 'analyst')).statusCode).toBe(403);
     expect((await call('GET', '/admin/settings', 'admin')).statusCode).toBe(200);
@@ -88,7 +90,9 @@ describe('Workspace HTTP integration', () => {
 
   it('approves a drafted case to the chosen channel and recipient and lists the queued email', async () => {
     const { items } = (await call('GET', '/workspace/accounts', 'analyst')).json();
-    const target = items.find((a: { drafted: boolean; state: string }) => a.drafted && a.state === 'pending');
+    const target = items.find((a: { state: string }) => a.state === 'pending');
+    expect((await call('POST', `/workspace/accounts/${target.id}/draft`, 'analyst', {})).statusCode).toBe(200); // Generate
+    expect((await call('GET', `/workspace/accounts/${target.id}`, 'analyst')).json().draft).toMatchObject({ writer: 'template' }); // no email AI in this test
     const res = await call('POST', `/workspace/accounts/${target.id}/decision`, 'analyst', { decision: 'approve', channel: 'smtp', recipient: 'owner@operator.example' });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ state: 'approved', sendJobs: [{ channel: 'smtp', recipient: 'owner@operator.example', status: 'queued' }] });
@@ -173,7 +177,7 @@ describe('Workspace HTTP integration', () => {
 
     // Switch to Hermes mode so the run stays open for agent submissions.
     const { settings } = (await call('GET', '/admin/settings', 'admin')).json();
-    await call('PUT', '/admin/settings', 'admin', { settings: { ...settings, agent: { mode: 'hermes', webhookUrl: 'http://hermes.invalid/webhooks/ow', playbookVersion: 'pb-1' } } });
+    await call('PUT', '/admin/settings', 'admin', { settings: { ...settings, agent: { mode: 'hermes', webhookUrl: 'http://hermes.invalid/webhooks/ow', playbookVersion: 'pb-1', autoDraft: true } } });
     const run = (await call('POST', '/admin/runs', 'admin', {})).json().run;
     expect(triggered).toEqual([run.id]);
     expect((await tool('get_current_run', {})).data).toMatchObject({ run_id: run.id, status: 'running', cases_submitted: 0 });

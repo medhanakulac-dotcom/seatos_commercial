@@ -149,9 +149,10 @@ export interface AccountContext {
   readonly tmsOperatorId?: number;
 }
 
-/** Rewrites a draft from a free-text instruction. */
+/** The email AI: writes a case's email on demand (Generate) and rewrites a draft from a free-text instruction. */
 export interface EmailRewriter {
   readonly connected: boolean;
+  compose(input: { account: AccountContext; language: Language; analysis: string; nextStep: string; playbook: string }): Promise<{ subject: string; body: string }>;
   rewrite(input: { account: AccountContext; language: Language; subject: string; body: string; instruction: string }): Promise<{ subject?: string; body: string }>;
 }
 

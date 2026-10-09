@@ -3,7 +3,7 @@ import { TemplateDraftWriter } from '../../../infrastructure/workspace-drafts/te
 import { DisconnectedAccountAssistant, DisconnectedEmailRewriter } from '../../../infrastructure/workspace-mocks/disconnected-ai.adapters';
 import { InMemoryWorkspaceStore } from '../../../infrastructure/workspace-mocks/in-memory-workspace.store';
 import { MockHubSpotNoteSync } from '../../../infrastructure/workspace-mocks/mock-hubspot.adapters';
-import { AgentEvent, AgentNotifier, AgentTrigger, EmailSender, EmailSendError, OutgoingEmail } from '../types/repositories/workspace.ports';
+import { AgentEvent, AgentNotifier, AgentTrigger, EmailRewriter, EmailSender, EmailSendError, OutgoingEmail } from '../types/repositories/workspace.ports';
 import { currentPeriod, nextSlot } from '../value-objects/schedule';
 import { RunService } from './run.service';
 import { SendingService } from './sending.service';
@@ -53,18 +53,21 @@ class FakeSender implements EmailSender {
   }
 }
 
-function setup(opts: { now?: Date; settings?: Partial<WorkspaceSettings>; accounts?: () => CrmAccount[]; notifier?: AgentNotifier } = {}) {
+type SettingsOverride = Partial<Omit<WorkspaceSettings, 'agent'>> & { agent?: Partial<WorkspaceSettings['agent']> };
+
+/** Agents write drafts during runs here unless a test turns it off (agent.autoDraft); on-demand Generate has its own tests. */
+function setup(opts: { now?: Date; settings?: SettingsOverride; accounts?: () => CrmAccount[]; notifier?: AgentNotifier; rewriter?: EmailRewriter } = {}) {
   let now = opts.now ?? new Date('2026-09-30T03:00:00Z'); // Wed 10:00 Bangkok
   const clock = { now: () => now };
   const store = new InMemoryWorkspaceStore();
-  store.settings = { ...DEFAULT_SETTINGS, ...opts.settings, sending: { ...DEFAULT_SETTINGS.sending, ...opts.settings?.sending, smtp: { enabled: true, fromName: 'CS', fromAddress: 'cs@seatos.com' } } };
+  store.settings = { ...DEFAULT_SETTINGS, ...opts.settings, agent: { ...DEFAULT_SETTINGS.agent, autoDraft: true, ...opts.settings?.agent }, sending: { ...DEFAULT_SETTINGS.sending, ...opts.settings?.sending, smtp: { enabled: true, fromName: 'CS', fromAddress: 'cs@seatos.com' } } };
   const crm = { snapshot: async () => ({ meta, accounts: (opts.accounts ?? (() => ACCOUNTS))() }) };
   const triggered: string[] = [];
   const agent: AgentTrigger = { trigger: async (e) => void triggered.push(e.runId) };
   const writer = new TemplateDraftWriter();
   const settings = new SettingsService(store);
   const runs = new RunService(store, crm, agent, writer, clock, settings);
-  const workspace = new WorkspaceService(store, crm, new MockHubSpotNoteSync(), writer, new DisconnectedEmailRewriter(), new DisconnectedAccountAssistant(), clock, runs, settings, undefined, opts.notifier);
+  const workspace = new WorkspaceService(store, crm, new MockHubSpotNoteSync(), writer, opts.rewriter ?? new DisconnectedEmailRewriter(), new DisconnectedAccountAssistant(), clock, runs, settings, undefined, opts.notifier);
   const smtp = new FakeSender('smtp');
   const sending = new SendingService(store, [smtp, new FakeSender('hubspot', false)], clock, settings);
   return { store, runs, workspace, sending, smtp, triggered, setNow: (d: Date) => (now = d), settingsService: settings };
@@ -102,6 +105,51 @@ describe('runs', () => {
     expect(v.dormant).toMatchObject({ state: 'reactive', noSend: true });
     expect(v.rescue.case?.caseRef).toMatch(/^M\d{12}-\d{4}$/);
     expect(store.runs[0]).toMatchObject({ status: 'completed', agent: 'local', trigger: 'manual' });
+  });
+
+  it('writes no drafts during runs when auto-drafting is off: emails come only from Generate', async () => {
+    const local = setup({ settings: { agent: { autoDraft: false } } });
+    await local.workspace.ready();
+    const v = await byId(local.workspace);
+    expect(v.auto).toMatchObject({ state: 'pending', drafted: false });
+    expect(local.store.drafts.size).toBe(0);
+
+    const { runs, store } = setup({ settings: { agent: { mode: 'hermes', webhookUrl: 'http://h/x', autoDraft: false } } });
+    const run = (await runs.startRun('manual', 'admin'))!;
+    const r = await runs.submitCase(run.id, { operatorId: 'rescue', needsOutreach: true, analysis: 'Bookings down', nextStep: 'Call', draft: { subject: 'Hi', body: 'B', language: 'th' } }, 'agent:hermes');
+    expect(r).toMatchObject({ outcome: 'outreach', state: 'pending', draftVersion: null });
+    expect(store.drafts.size).toBe(0);
+    expect(await runs.draftsDuringRuns()).toBe(false);
+  });
+
+  it('Generate has the email AI write the draft from the case when it is connected', async () => {
+    const asked: Parameters<EmailRewriter['compose']>[0][] = [];
+    const rewriter: EmailRewriter = {
+      connected: true,
+      compose: async (input) => {
+        asked.push(input);
+        return { subject: ' Your routes this week ', body: 'Hi team, …' };
+      },
+      rewrite: async () => ({ body: 'x' }),
+    };
+    const { runs, workspace, store } = setup({ rewriter, settings: { agent: { mode: 'hermes', webhookUrl: 'http://h/x', autoDraft: false } } });
+    const run = (await runs.startRun('manual', 'admin'))!;
+    await runs.submitCase(run.id, { operatorId: 'rescue', needsOutreach: true, analysis: 'Bookings down 40%', nextStep: 'Tip 6: call the owner this week', playbook: 'Rescue' }, 'agent:hermes');
+    await workspace.generateDraft('rescue', chris);
+    await workspace.generateDraft('rescue', chris); // already drafted: no second call
+    expect(asked).toHaveLength(1);
+    expect(asked[0]).toMatchObject({ analysis: 'Bookings down 40%', nextStep: 'Tip 6: call the owner this week', playbook: 'Rescue', account: expect.objectContaining({ id: 'rescue' }) });
+    expect([...store.drafts.values()].map((d) => [d.writer, d.subject, d.body])).toEqual([['agent', 'Your routes this week', 'Hi team, …']]);
+    expect((await workspace.get('rescue')).events.map((e) => e.text)).toContain('Draft written by AI for Chris · v1');
+  });
+
+  it('Generate reports an email AI failure and leaves the case undrafted', async () => {
+    const rewriter: EmailRewriter = { connected: true, compose: async () => Promise.reject(new Error('credit balance too low')), rewrite: async () => ({ body: 'x' }) };
+    const { runs, workspace, store } = setup({ rewriter, settings: { agent: { mode: 'hermes', webhookUrl: 'http://h/x', autoDraft: false } } });
+    const run = (await runs.startRun('manual', 'admin'))!;
+    await runs.submitCase(run.id, { operatorId: 'rescue', needsOutreach: true, analysis: 'x' }, 'agent:hermes');
+    await expect(workspace.generateDraft('rescue', chris)).rejects.toThrow('The email AI could not write the draft: credit balance too low');
+    expect(store.drafts.size).toBe(0);
   });
 
   it('hands hermes runs to the agent and accepts idempotent submissions', async () => {

@@ -236,7 +236,7 @@ export interface ChatTurn {
 
 export interface WorkspaceSettings {
   pipeline: { enabled: boolean; cadence: 'daily' | 'weekly'; weekday: number; time: string; timezone: string };
-  agent: { mode: AgentMode; webhookUrl: string; playbookVersion: string };
+  agent: { mode: AgentMode; webhookUrl: string; playbookVersion: string; autoDraft: boolean };
   sending: {
     enabled: boolean;
     defaultChannel: SendChannel;

@@ -22,7 +22,7 @@ import { renderHermesEvent } from '../hermes/hermes-agent.notifier';
 import { background } from '../runtime/background';
 import { ClaudeLike } from './claude.client';
 import { ClaudeMemory } from './claude.memory';
-import { CHAT_SYSTEM, formatWeekly, REWRITE_SYSTEM } from './claude.prompts';
+import { CHAT_SYSTEM, COMPOSE_SYSTEM, formatActivity, formatWeekly, REWRITE_SYSTEM } from './claude.prompts';
 import { SeatosTools } from './seatos.tools';
 
 export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
@@ -210,11 +210,47 @@ export class ClaudeAgentNotifier implements AgentNotifier {
 
 const Rewritten = z.object({ subject: z.string(), body: z.string() });
 
-/** "Prompt" box on a draft: Claude applies a colleague's instruction to the current email. */
+/** What Generate reads besides the account: the same sources an assessment uses. Each is optional context. */
+export interface ComposeSources {
+  readonly memory?: ClaudeMemory | null;
+  readonly crmActivity?: (operatorId: string, limit: number) => Promise<{ connected: boolean; items: CrmActivity[] }>;
+  readonly weekly?: WeeklyLookup | null;
+}
+const ACTIVITY_FOR_EMAIL = 15;
+const WEEKS_FOR_EMAIL = 6;
+
+/**
+ * The email AI on Claude. Generate: writes a case's email from the analysis, next step, weekly numbers, HubSpot
+ * activity and memory. "Prompt" box on a draft: applies a colleague's instruction to the current email.
+ */
 export class ClaudeEmailRewriter implements EmailRewriter {
   readonly connected = true;
 
-  constructor(private readonly claude: ClaudeLike) {}
+  constructor(
+    private readonly claude: ClaudeLike,
+    private readonly sources: ComposeSources = {},
+  ) {}
+
+  async compose({ account, language, analysis, nextStep, playbook }: { account: AccountContext; language: string; analysis: string; nextStep: string; playbook: string }) {
+    const { memory, crmActivity, weekly } = this.sources;
+    const quietly = <T>(read: Promise<T> | undefined, format: (v: T) => string) => (read ? read.then(format, () => '') : Promise.resolve(''));
+    const [numbers, activity, remembered] = await Promise.all([
+      quietly(weekly?.forAccount(account.id, WEEKS_FOR_EMAIL), formatWeekly),
+      quietly(crmActivity?.(account.id, ACTIVITY_FOR_EMAIL), (a) => (a.connected ? formatActivity(a.items) : '')),
+      quietly(memory?.recall(account.id, `${playbook} email ${nextStep}`), (r) => r),
+    ]);
+    const user = [
+      buildOperatorBrief(account).text,
+      `Case: playbook ${playbook}\nAnalysis: ${analysis}\nNext step: ${nextStep || '(none given)'}`,
+      numbers ? `Weekly SeatOS numbers (newest first):\n${numbers}` : '',
+      activity ? `Recent HubSpot activity (newest first):\n${activity}` : '',
+      remembered,
+      `Write the email in: ${language}`,
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+    return this.claude.structured({ system: COMPOSE_SYSTEM, user, schema: Rewritten, effort: 'medium' });
+  }
 
   rewrite({ account, language, subject, body, instruction }: { account: AccountContext; language: string; subject: string; body: string; instruction: string }) {
     const user = [
