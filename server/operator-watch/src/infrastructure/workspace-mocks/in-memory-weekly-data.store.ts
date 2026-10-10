@@ -24,6 +24,10 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
     return this.tickets.filter((r) => r.accountId === accountId).sort(byWeekDesc).slice(0, limit).map(strip);
   }
 
+  async usageWeeks(limit: number): Promise<string[]> {
+    return [...new Set(this.usage.map((r) => r.week))].sort().reverse().slice(0, limit);
+  }
+
   async usageWeek(week?: string): Promise<WeeklyUsageRecord[]> {
     const w = week ?? latest(this.usage);
     return this.usage.filter((r) => r.week === w).sort((a, b) => b.featureCount - a.featureCount || a.operatorName.localeCompare(b.operatorName)).map(strip);

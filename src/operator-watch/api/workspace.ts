@@ -52,7 +52,7 @@ export const workspaceApi = {
   resolveTmsLink: (id: string) => http.post<AccountDetail>(`${account(id)}/tms-link/resolve`, {}),
   conversation: (id: string) => http.get<{ sessionId: string | null; messages: ChatMessage[] }>(`${account(id)}/assistant`),
   crmActivity: (id: string) => http.get<{ connected: boolean; items: CrmActivity[] }>(`${account(id)}/hubspot-activity`),
-  weekly: (id: string) => http.get<{ usage: WeeklyUsage[]; tickets: WeeklyTickets[] }>(`${account(id)}/weekly`),
+  weekly: (id: string) => http.get<{ usage: WeeklyUsage[]; tickets: WeeklyTickets[]; usageWeeks: string[] }>(`${account(id)}/weekly`),
   ask: (id: string, question: string) => http.post<{ connected: boolean; messages: ChatMessage[] }>(`${account(id)}/assistant`, { question }),
 };
 

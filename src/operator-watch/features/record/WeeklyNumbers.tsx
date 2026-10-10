@@ -23,7 +23,7 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
   const now = new Set((latest?.featureUsage ?? []).map((f) => f.name));
   const started = detailed[1] ? [...now].filter((n) => !before.has(n)) : [];
   const stopped = detailed[1] ? [...before].filter((n) => !now.has(n)) : [];
-  const weeks = data ? [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week)])].sort().reverse().slice(0, 8) : [];
+  const weeks = data ? [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week), ...(data.usageWeeks ?? [])])].sort().reverse().slice(0, 8) : [];
   return (
     <div className="card">
       <h2 className="st">
@@ -47,13 +47,16 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
             {weeks.map((w) => {
               const u = data!.usage.find((x) => x.week === w);
               const t = data!.tickets.find((x) => x.week === w);
+              const noActivity = !u && (data!.usageWeeks ?? []).includes(w); // the sync delivered this week, this operator had no tracked events
               return (
                 <tr key={w} style={{ borderTop: '1px solid var(--line, #eee)' }}>
                   <td>{w.slice(5)}</td>
                   <td>
-                    <b>{u ? `${u.featureCount}/7` : '—'}</b>
+                    <b>{u ? `${u.featureCount}/7` : noActivity ? '0/7' : '—'}</b>
                   </td>
-                  <td title={u ? FEATURES.filter((f) => u.features[f]).join(', ') : undefined}>{u ? FEATURES.filter((f) => u.features[f]).map((f) => SHORT[f]).join(' ') || 'none' : '—'}</td>
+                  <td title={u ? FEATURES.filter((f) => u.features[f]).join(', ') : undefined}>
+                    {u ? FEATURES.filter((f) => u.features[f]).map((f) => SHORT[f]).join(' ') || 'none' : noActivity ? <span className="d">no activity in the app</span> : '—'}
+                  </td>
                   <td style={{ textAlign: 'right' }}>{t ? t.tickets.toLocaleString() : '—'}</td>
                 </tr>
               );

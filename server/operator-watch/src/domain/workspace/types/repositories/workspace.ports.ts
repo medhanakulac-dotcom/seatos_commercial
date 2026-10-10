@@ -398,6 +398,8 @@ export interface WeeklyDataStore {
   /** Newest week first. */
   usageFor(accountId: string, limit: number): Promise<WeeklyUsageRecord[]>;
   ticketsFor(accountId: string, limit: number): Promise<WeeklyTicketRecord[]>;
+  /** The weeks that have usage data for anyone, newest first: an operator without a row in one of them had no tracked activity. */
+  usageWeeks(limit: number): Promise<string[]>;
   /** All rows of one week (the latest uploaded week when omitted). */
   usageWeek(week?: string): Promise<WeeklyUsageRecord[]>;
   ticketsWeek(week?: string): Promise<WeeklyTicketRecord[]>;

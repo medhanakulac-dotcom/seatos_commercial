@@ -200,8 +200,10 @@ export function formatActivity(items: readonly { type: string; at: string; title
 export function formatWeekly(data: {
   usage: readonly { week: string; featureCount: number; features: Readonly<Record<string, boolean>>; featureUsage?: readonly { name: string; events: number; days: number }[] }[];
   tickets: readonly { week: string; tickets: number }[];
+  /** Weeks the sync delivered for anyone: no usage row in one of them means no tracked activity (WAO 0/7). */
+  usageWeeks?: readonly string[];
 }): string {
-  const weeks = [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week)])].sort().reverse();
+  const weeks = [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week), ...(data.usageWeeks ?? [])])].sort().reverse();
   if (!weeks.length) return 'No weekly SeatOS numbers have reached the workspace for this operator yet (they sync from BigQuery automatically; nobody uploads files).';
   return weeks
     .map((w) => {
@@ -209,7 +211,7 @@ export function formatWeekly(data: {
       const t = data.tickets.find((x) => x.week === w);
       const used = u ? Object.entries(u.features).filter(([, on]) => on).map(([f]) => f.replace('_management', '')).join(', ') : '';
       const detail = u?.featureUsage?.length ? `\n  features used: ${u.featureUsage.slice(0, 12).map((f) => `${f.name} ${f.events} events/${f.days}d`).join(', ')}` : '';
-      return `- week of ${w}: ${u ? `WAO ${u.featureCount}/7 (${used || 'no features used'})` : 'no usage row'}; ${t ? `${t.tickets} tickets` : 'no ticket row (no sales recorded)'}${detail}`;
+      return `- week of ${w}: ${u ? `WAO ${u.featureCount}/7 (${used || 'no features used'})` : data.usageWeeks?.includes(w) ? 'WAO 0/7 (no tracked activity in the SeatOS app)' : 'no usage data for this week'}; ${t ? `${t.tickets} tickets` : 'no ticket row (no sales recorded)'}${detail}`;
     })
     .join('\n');
 }

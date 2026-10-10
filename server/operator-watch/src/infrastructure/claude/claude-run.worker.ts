@@ -25,7 +25,7 @@ const WEEKS_FOR_CASE = 6;
 
 /** Weekly numbers for one account (WeeklyDataService). */
 export interface WeeklyNumbers {
-  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[] }>;
+  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[] }>;
 }
 
 /** The case Claude returns for one operator: the submit_case contract the Hermes skill used. */

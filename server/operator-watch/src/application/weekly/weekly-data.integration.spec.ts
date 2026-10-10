@@ -163,7 +163,9 @@ describe('Weekly data HTTP integration', () => {
 
     const again = await ingest({ week, rows: [body.rows[0]] }); // a re-sync replaces the week
     expect(again.json()).toMatchObject({ rows: 1, matched: 1 });
-    expect((await call('GET', `/workspace/accounts/${b.id}/weekly`, 'viewer')).json().usage.some((u: { week: string }) => u.week === week)).toBe(false);
+    const bWeekly = (await call('GET', `/workspace/accounts/${b.id}/weekly`, 'viewer')).json();
+    expect(bWeekly.usage.some((u: { week: string }) => u.week === week)).toBe(false);
+    expect(bWeekly.usageWeeks).toContain(week); // delivered week, no row for this operator = no tracked activity (the UI shows WAO 0/7)
   });
 
   it('takes the weekly tickets from the BigQuery sync: token needed, zero-sale operators skipped, week replaced', async () => {
