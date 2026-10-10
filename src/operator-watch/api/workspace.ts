@@ -7,7 +7,6 @@ import type {
   CrmActivity,
   WeeklySummary,
   WeeklyTickets,
-  WeeklyUploadResult,
   WeeklyUsage,
   CurrentUser,
   Decision,
@@ -66,6 +65,5 @@ export const adminApi = {
   verifySmtp: () => http.post<{ ok: boolean; error?: string }>('/admin/sending/verify'),
   testEmail: (channel: SendChannel, to: string) => http.post<{ ok: boolean; error?: string }>('/admin/sending/test', { channel, to }),
   weeklyData: () => http.get<WeeklySummary>('/admin/weekly-data'),
-  uploadWeekly: (kind: 'usage' | 'tickets', csv: string, week?: string) => http.post<WeeklyUploadResult>('/admin/weekly-data', { kind, csv, ...(week ? { week } : {}) }),
   linkWeeklyName: (name: string, accountId: string | null) => http.put<WeeklySummary>('/admin/weekly-data/links', { name, accountId }),
 };

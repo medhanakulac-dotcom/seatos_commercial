@@ -312,14 +312,6 @@ export interface WeeklyTickets {
   tickets: number;
 }
 
-export interface WeeklyUploadResult {
-  kind: 'usage' | 'tickets';
-  weeks: string[];
-  rows: number;
-  matched: number;
-  unmatched: { name: string; key: string }[];
-}
-
 export interface WeeklySummary {
   uploads: { kind: 'usage' | 'tickets'; week: string; rows: number; matched: number; uploadedAt: string; uploadedBy: string }[];
   unmatched: { name: string; key: string; in: ('usage' | 'tickets')[] }[];
