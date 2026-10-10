@@ -798,7 +798,7 @@ export default function Onboarding({ nav }) {
                         borderRadius: "6px",
                       }}
                     >
-                      Available Q3
+                      Available Q4
                     </span>
                   </button>
                 </div>

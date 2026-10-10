@@ -147,7 +147,7 @@ export default function TrainingStructure({ nav }) {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "9px", flexWrap: "wrap" }}>
             <span style={{ fontSize: "15px", fontWeight: "800", color: "#8a5a12", letterSpacing: "-0.2px" }}>
-              Available Q3
+              Available Q4
             </span>{" "}
             <span
               style={{
@@ -164,7 +164,7 @@ export default function TrainingStructure({ nav }) {
             </span>
           </div>
           <p style={{ fontSize: "13px", color: "#a07d3c", lineHeight: "1.55", marginTop: "4px", maxWidth: "640px" }}>
-            The structured training programme below is being finalised and rolls out in <b>Q3</b>. Until then, treat it
+            The structured training programme below is being finalised and rolls out in <b>Q4</b>. Until then, treat it
             as a preview — the modules, timings and outcomes may still change before launch.
           </p>
         </div>

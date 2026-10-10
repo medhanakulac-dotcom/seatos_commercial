@@ -41,7 +41,7 @@ export const TOOLS = {
   "ow-settings": { title: "Operator Watch · Settings" },
 };
 
-const Q3 = { text: "Q3", bg: "#F5A623" };
+const Q4 = { text: "Q4", bg: "#B9A6FF" };
 
 // Sidebar. `accent` colours the active bar; `iconAccent` overrides the active icon colour.
 export const NAV = [
@@ -55,7 +55,7 @@ export const NAV = [
       { section: "sales", label: "Sales Process", icon: icSales, accent: "#7C5CFC" },
       { section: "toolkit", label: "Selling Toolkit", icon: icToolkit, accent: "#E84C88" },
       { section: "onboarding", label: "Onboarding", icon: icOnboarding, accent: "#F5A623" },
-      { section: "training", label: "Training Structure", icon: icTraining, accent: "#F5A623", badge: Q3 },
+      { section: "training", label: "Training Structure", icon: icTraining, accent: "#F5A623", badge: Q4 },
       { section: "cs", label: "Customer Success", icon: icCS, accent: "#2DD4BF" },
       { section: "cstk", label: "CS Toolkit", icon: icCSTools, accent: "#1aa897", iconAccent: "#2DD4BF" },
       { section: "pricing", label: "Pricing & Packages", icon: icPricing, accent: "#E84C88" },
