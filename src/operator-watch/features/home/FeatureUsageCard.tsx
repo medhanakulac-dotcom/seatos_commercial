@@ -8,10 +8,19 @@ const shortWeek = (w: string) => w.slice(5);
 export function FeatureUsageCard() {
   const navigate = useNavigate();
   const [code, setCode] = useState('');
+  const [text, setText] = useState('');
   const picker = useFeatureUsage();
   const usage = useFeatureUsage(code || undefined);
   const features = picker.data?.features ?? [];
-  const modules = [...new Set(features.map((f) => f.module))];
+  /** Typing narrows the list; the feature is chosen once the text is a feature name, or a single feature matches it. */
+  const pick = (value: string) => {
+    setText(value);
+    const q = value.trim().toLowerCase();
+    const exact = features.find((f) => f.name.toLowerCase() === q);
+    const matches = q ? features.filter((f) => `${f.name} ${f.module}`.toLowerCase().includes(q)) : [];
+    setCode((exact ?? (matches.length === 1 ? matches[0] : undefined))?.code ?? '');
+  };
+  const typedNoMatch = text.trim() !== '' && !code;
   const weeks = [...(picker.data?.weeks ?? [])].reverse(); // oldest → newest, left to right
   const operators = code ? (usage.data?.operators ?? []) : [];
 
@@ -19,22 +28,31 @@ export function FeatureUsageCard() {
     <div className="card">
       <h2 className="st">
         <span>Feature usage · last 4 weeks</span>
-        <select value={code} onChange={(e) => setCode(e.target.value)} aria-label="Feature" style={{ maxWidth: 280 }}>
-          <option value="">Choose a feature…</option>
-          {modules.map((m) => (
-            <optgroup key={m} label={m}>
-              {features
-                .filter((f) => f.module === m)
-                .map((f) => (
-                  <option key={f.code} value={f.code}>
-                    {f.name}
-                  </option>
-                ))}
-            </optgroup>
-          ))}
-        </select>
+        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+          <input
+            list="feature-options"
+            value={text}
+            onChange={(e) => pick(e.target.value)}
+            placeholder="Search a feature…"
+            aria-label="Search a feature"
+            autoComplete="off"
+            style={{ width: 260 }}
+          />
+          {text && (
+            <button type="button" className="b tlb" onClick={() => pick('')} aria-label="Clear feature">
+              ✕
+            </button>
+          )}
+          <datalist id="feature-options">
+            {features.map((f) => (
+              <option key={f.code} value={f.name} label={f.module} />
+            ))}
+          </datalist>
+        </span>
       </h2>
-      {!code && <div className="d">Pick a feature to see who used it in each of the last four weeks.</div>}
+      {!code && (
+        <div className="d">{typedNoMatch ? 'Keep typing, or choose a feature from the suggestions.' : 'Search or pick a feature to see who used it in each of the last four weeks.'}</div>
+      )}
       {code && usage.isPending && <div className="d">Loading…</div>}
       {code && usage.error && <div className="d">Could not load: {usage.error.message}</div>}
       {code && usage.data && (
