@@ -191,6 +191,11 @@ export function AccountsPage() {
         {select('health', HEALTHS.map((h) => [h, h]), 'Health')}
         {select('pb', playbooks.map((p) => [p, p]), 'Playbook')}
         {select('lang', Object.entries(meta.languages), 'Language')}
+        <select value={f.tickets} onChange={(e) => set({ tickets: e.target.value as typeof f.tickets })} aria-label="Tickets">
+          <option value="All">Tickets: all</option>
+          <option value="zero">Zero ticket</option>
+          <option value="has">Has tickets</option>
+        </select>
         <button className="b sp" onClick={() => setF((prev) => ({ ...DEFAULT_ACCOUNTS, sort: prev.sort, dir: prev.dir, layout: prev.layout }))}>
           Clear filters
         </button>

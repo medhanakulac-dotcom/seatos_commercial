@@ -23,9 +23,13 @@ describe('filterAccounts', () => {
     expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all' }))).toEqual(['Alpha', 'Delta', 'Bravo', 'Charlie']);
   });
 
-  it('has a zero ticket view fed by the ticket data', () => {
-    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'zero' }, { zero: new Set(['D-2', 'D-4']) }))).toEqual(['Delta', 'Bravo']);
-    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'zero' }))).toEqual([]);
+  it('filters zero ticket accounts and combines it with the other filters', () => {
+    const zero = { zero: new Set(['D-2', 'D-4']) };
+    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all', tickets: 'zero' }, zero))).toEqual(['Delta', 'Bravo']);
+    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, tickets: 'zero' }, zero))).toEqual(['Bravo']); // open cases only
+    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all', tickets: 'has' }, zero))).toEqual(['Alpha', 'Charlie']);
+    // Until the ticket data has loaded the filter cannot tell, so "zero" shows nothing rather than everything.
+    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all', tickets: 'zero' }))).toEqual([]);
   });
 
   it('has a filter for closed cases', () => {

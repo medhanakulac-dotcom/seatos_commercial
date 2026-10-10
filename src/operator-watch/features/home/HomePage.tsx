@@ -43,8 +43,8 @@ export function HomePage() {
       </div>
     </div>
   );
-  const toAccounts = (patch: { view: 'all' | 'zero'; pb?: string }) => () => {
-    setAccounts((f) => ({ ...f, pb: 'All', ...patch }));
+  const toAccounts = (patch: { view: 'all'; pb?: string; tickets?: 'zero' }) => () => {
+    setAccounts((f) => ({ ...f, pb: 'All', tickets: 'All', ...patch }));
     navigate('/accounts');
   };
 
@@ -62,7 +62,7 @@ export function HomePage() {
       </div>
       <div className="grid g4" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
         {kpi('WAO', wao?.week ? `WEEK OF ${wao.week.slice(5)}` : 'NO DATA', wao?.week ? `${waoPct}%` : '—', wao?.week ? `${waoCount} of ${accounts.length} accounts used 3+ of 7 features` : 'no usage data yet', '', toAccounts({ view: 'all' }))}
-        {kpi('0 ticket', 'LAST 2 WEEKS', zeroCount, 'accounts with no tickets sold', '', toAccounts({ view: 'zero' }))}
+        {kpi('0 ticket', 'LAST 2 WEEKS', zeroCount, 'accounts with no tickets sold', '', toAccounts({ view: 'all', tickets: 'zero' }))}
         {kpi('Rescue', 'PLAYBOOK', rescueCount, 'accounts on the Rescue playbook', '', toAccounts({ view: 'all', pb: 'Rescue' }))}
       </div>
       <div style={{ marginTop: 18 }}>

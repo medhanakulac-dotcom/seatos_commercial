@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 
-export type AccountsView = 'open' | 'closed' | 'zero' | 'all' | 'approval' | 'unhealthy' | 'reactive' | 'healthy';
+export type AccountsView = 'open' | 'closed' | 'all' | 'approval' | 'unhealthy' | 'reactive' | 'healthy';
 export type SortKey = 'prio' | 'op' | 'owner' | 'segment' | 'health' | 'playbook' | 'signals' | 'state';
 
 export interface AccountsFilters {
@@ -11,6 +11,8 @@ export interface AccountsFilters {
   health: string;
   pb: string;
   lang: string;
+  /** Tickets filter: every account, only those with no tickets in the last two weeks, or only those that sold some. */
+  tickets: 'All' | 'zero' | 'has';
   sort: SortKey;
   dir: 1 | -1;
   layout: 'table' | 'board';
@@ -21,7 +23,7 @@ export interface ApprovalsFilters {
   owner: string;
 }
 
-export const DEFAULT_ACCOUNTS: AccountsFilters = { view: 'open', q: '', owner: 'All', seg: 'All', health: 'All', pb: 'All', lang: 'All', sort: 'prio', dir: 1, layout: 'table' };
+export const DEFAULT_ACCOUNTS: AccountsFilters = { view: 'open', q: '', owner: 'All', seg: 'All', health: 'All', pb: 'All', lang: 'All', tickets: 'All', sort: 'prio', dir: 1, layout: 'table' };
 
 interface UiState {
   accounts: AccountsFilters;

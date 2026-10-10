@@ -16,7 +16,6 @@ export interface ViewContext {
 export const VIEWS: { key: AccountsView; label: string; match: (a: AccountSummary, ctx: ViewContext) => boolean }[] = [
   { key: 'open', label: 'Open cases', match: (a) => OPEN_STATES.includes(a.state) },
   { key: 'closed', label: 'Closed cases', match: (a) => a.state === 'closed' },
-  { key: 'zero', label: 'Zero ticket', match: (a, ctx) => ctx.zero?.has(a.id) ?? false },
   { key: 'all', label: 'All accounts', match: () => true },
   { key: 'approval', label: 'Needs approval', match: awaitingReview },
   { key: 'unhealthy', label: 'Unhealthy', match: (a) => !a.dormant && a.health === 'Unhealthy' },
@@ -49,6 +48,7 @@ export function filterAccounts(accounts: AccountSummary[], f: AccountsFilters, c
     .filter((a) => f.seg === 'All' || a.segment === f.seg)
     .filter((a) => f.health === 'All' || (!a.dormant && a.health === f.health))
     .filter((a) => f.pb === 'All' || a.playbook === f.pb)
+    .filter((a) => f.tickets === 'All' || (ctx.zero ? ctx.zero.has(a.id) === (f.tickets === 'zero') : f.tickets === 'has'))
     .filter((a) => f.lang === 'All' || (!a.noSend && a.language === f.lang))
     .sort((a, b) => {
       const x = key(a);
