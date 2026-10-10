@@ -199,7 +199,7 @@ describe('Weekly data HTTP integration', () => {
     expect(res.json()).toEqual({ rows: 2, matched: 1 });
     const weekly = (await call('GET', `/workspace/accounts/${a.id}/weekly`, 'viewer')).json();
     expect(weekly.pricing).toEqual([expect.objectContaining({ currency: 'THB', pricePct: 8.12, segments: 4, ticketsCompared: 400, windowDays: 90, detail: [seg] })]);
-    expect((await call('GET', `/workspace/accounts/${b.id}/weekly`, 'viewer')).json().pricing).toEqual([]);
+    expect((await call('GET', `/workspace/accounts/${b.id}/weekly`, 'viewer')).json()).toMatchObject({ pricing: [], pricingSyncedAt: expect.any(String) });
     expect((await mcp('get_weekly_numbers', { operator_id: a.id })).pricing).toHaveLength(1);
     // A later sync replaces the whole snapshot.
     expect((await ingest({ windowDays: 90, rows: [] }, INGEST_TOKEN, 'pricing')).statusCode).toBe(200);

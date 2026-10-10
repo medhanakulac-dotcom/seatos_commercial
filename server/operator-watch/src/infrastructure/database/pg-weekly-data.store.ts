@@ -145,6 +145,11 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
     return (await this.pool.query('select * from operator_pricing where account_id = $1 order by tickets_compared desc', [accountId])).rows.map(toPricing);
   }
 
+  async pricingSyncedAt(): Promise<string | null> {
+    const at = (await this.pool.query('select max(computed_at) as at from operator_pricing')).rows[0]?.at;
+    return at ? new Date(at).toISOString() : null;
+  }
+
   private async weekRows(table: string, week: string | undefined, order: string): Promise<QueryResultRow[]> {
     const target = week ?? (await this.pool.query(`select max(week) as w from ${table}`)).rows[0]?.w;
     if (!target) return [];

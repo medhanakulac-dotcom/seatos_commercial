@@ -7,6 +7,7 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
   private usage: (WeeklyUsageRecord & Stamp)[] = [];
   private tickets: (WeeklyTicketRecord & Stamp)[] = [];
   private pricing: PricingRecord[] = [];
+  private pricingSyncedAtValue: string | null = null;
   private readonly links = new Map<string, string | null>();
 
   async replaceUsage(week: string, rows: readonly WeeklyUsageRecord[], by: string): Promise<void> {
@@ -64,6 +65,11 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
 
   async replacePricing(rows: readonly PricingRecord[]): Promise<void> {
     this.pricing = [...rows];
+    this.pricingSyncedAtValue = new Date().toISOString();
+  }
+
+  async pricingSyncedAt(): Promise<string | null> {
+    return this.pricingSyncedAtValue;
   }
 
   async pricingFor(accountId: string): Promise<PricingRecord[]> {

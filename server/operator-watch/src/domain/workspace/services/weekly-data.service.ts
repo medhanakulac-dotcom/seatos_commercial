@@ -225,16 +225,17 @@ export class WeeklyDataService {
   }
 
   /** The latest `weeks` weeks for one account, newest first. */
-  async forAccount(accountId: string, weeks = 12): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing: PricingRecord[] }> {
-    const [usage, tickets, usageWeeks, pricing] = await Promise.all([
+  async forAccount(accountId: string, weeks = 12): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing: PricingRecord[]; pricingSyncedAt: string | null }> {
+    const [usage, tickets, usageWeeks, pricing, pricingSyncedAt] = await Promise.all([
       this.store.usageFor(accountId, weeks),
       this.store.ticketsFor(accountId, weeks),
       this.store.usageWeeks(weeks),
       this.store.pricingFor(accountId),
+      this.store.pricingSyncedAt(),
     ]);
     // usageWeeks: weeks the sync delivered for anyone. The sync sends operators that had tracked events, so an account
     // without a usage row in one of those weeks was inactive in the SeatOS app (WAO 0/7), not "unknown".
-    return { usage: usage.map(withFeatureNames), tickets: tickets.map(withoutGmv), usageWeeks, pricing };
+    return { usage: usage.map(withFeatureNames), tickets: tickets.map(withoutGmv), usageWeeks, pricing, pricingSyncedAt };
   }
 
   /** Every operator in one week (the latest when omitted). */

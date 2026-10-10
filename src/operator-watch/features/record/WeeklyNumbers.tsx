@@ -23,7 +23,7 @@ function PriceVsMarket({ pricing }: { pricing: WeeklyPricing[] }) {
   return (
     <div style={{ marginTop: 14 }}>
       <div className="d" style={{ marginBottom: 6 }}>
-        Selling price vs other operators — same route, vehicle type and class
+        Selling price vs other operators — same city-to-city route, vehicle type and class
       </div>
       {pricing.map((p) => {
         const verdict =
@@ -203,7 +203,15 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
           </tbody>
         </table>
       )}
-      {data?.pricing?.length ? <PriceVsMarket pricing={data.pricing} /> : null}
+      {data?.pricing?.length ? (
+        <PriceVsMarket pricing={data.pricing} />
+      ) : data ? (
+        <div className="d" style={{ marginTop: 14 }}>
+          {data.pricingSyncedAt
+            ? 'Price vs market: cannot be compared — in the last 90 days no other operator sold enough tickets on the same city-to-city route with the same vehicle type and class.'
+            : 'Price vs market: the BigQuery price comparison has not synced yet.'}
+        </div>
+      ) : null}
       {latest && (
         <div style={{ marginTop: 12 }}>
           <div className="d" style={{ marginBottom: 4 }}>

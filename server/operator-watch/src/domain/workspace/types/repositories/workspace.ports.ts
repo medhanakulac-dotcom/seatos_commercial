@@ -443,5 +443,7 @@ export interface WeeklyDataStore {
   /** The price comparison is one snapshot: a sync replaces all of it. */
   replacePricing(rows: readonly PricingRecord[], by: string): Promise<void>;
   pricingFor(accountId: string): Promise<PricingRecord[]>;
+  /** When the last price comparison was synced (null = never): without it, "no price line" means "not synced yet", with it, "nobody comparable". */
+  pricingSyncedAt(): Promise<string | null>;
 }
 export const WEEKLY_DATA_STORE = Symbol('WEEKLY_DATA_STORE');

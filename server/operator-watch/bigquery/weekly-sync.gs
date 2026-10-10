@@ -116,12 +116,13 @@ function syncAll() {
   syncPricing(); // price vs other operators (own error handling: a failure here must not hide the weekly sync)
 }
 
-// Price comparison: each operator's average ticket price vs the other operators selling the SAME route (from/to station),
-// vehicle type and vehicle class, in the same currency. Confirmed bookings of the last PRICE_WINDOW_DAYS days.
+// Price comparison: each operator's average ticket price vs the other operators selling the SAME route (from city -> to city;
+// station names are free text per operator, so they never match), the same vehicle type and vehicle class, in the same
+// currency. Confirmed bookings of the last PRICE_WINDOW_DAYS days. Operators nobody else competes with get no figure.
 var PRICE_WINDOW_DAYS = 90;
 var PRICE_MIN_PEER_TICKETS = 10;   // the others must have sold at least this many tickets in the segment
-var PRICE_MIN_OWN_TICKETS = 5;     // and the operator itself at least this many
-var PRICE_MIN_OPERATOR_TICKETS = 100; // an operator needs this many compared tickets overall to be reported
+var PRICE_MIN_OWN_TICKETS = 3;     // and the operator itself at least this many
+var PRICE_MIN_OPERATOR_TICKETS = 20; // an operator needs this many compared tickets overall to be reported
 var PRICE_DETAIL_SEGMENTS = 8;
 
 function syncPricing() {
@@ -156,15 +157,15 @@ function round_(n, digits) {
 }
 
 function pricingSql_() {
-  return 'WITH b AS (SELECT t.operator_id, t.operator_name, t.currency, f.from_station, f.to_station, f.vehicle_type, f.vehicle_class, t.tickets, t.total_price ' +
+  return 'WITH b AS (SELECT t.operator_id, t.operator_name, t.currency, t.from_city, t.to_city, LOWER(TRIM(f.vehicle_type)) AS vt, LOWER(TRIM(f.vehicle_class)) AS vc, t.tickets, t.total_price ' +
     'FROM `' + PROJECT_ID + '.raw_tables.tc_export_bookings_table` t JOIN `' + PROJECT_ID + '.dwh.fact_booking` f USING (book_id) ' +
-    'WHERE t.status = \'CONFIRMED\' AND t.booked_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ' + PRICE_WINDOW_DAYS + ' DAY) AND t.tickets > 0 AND t.total_price > 0), ' +
-    'seg AS (SELECT operator_id, ANY_VALUE(operator_name) AS operator_name, currency, from_station, to_station, vehicle_type, vehicle_class, SUM(tickets) AS tickets, SUM(total_price) AS total ' +
-    'FROM b WHERE from_station IS NOT NULL AND to_station IS NOT NULL AND vehicle_type IS NOT NULL AND vehicle_class IS NOT NULL ' +
-    'GROUP BY operator_id, currency, from_station, to_station, vehicle_type, vehicle_class), ' +
+    'WHERE t.status = \\'CONFIRMED\\' AND t.booked_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ' + PRICE_WINDOW_DAYS + ' DAY) AND t.tickets > 0 AND t.total_price > 0), ' +
+    'seg AS (SELECT operator_id, ANY_VALUE(operator_name) AS operator_name, currency, from_city, to_city, vt, vc, SUM(tickets) AS tickets, SUM(total_price) AS total ' +
+    'FROM b WHERE from_city IS NOT NULL AND to_city IS NOT NULL AND vt IS NOT NULL AND vc IS NOT NULL ' +
+    'GROUP BY operator_id, currency, from_city, to_city, vt, vc), ' +
     'cmp AS (SELECT *, SUM(total) OVER w - total AS peer_total, SUM(tickets) OVER w - tickets AS peer_tickets, COUNT(*) OVER w - 1 AS peers FROM seg ' +
-    'WINDOW w AS (PARTITION BY currency, from_station, to_station, vehicle_type, vehicle_class)) ' +
-    'SELECT operator_id, operator_name, currency, from_station, to_station, vehicle_type, vehicle_class, tickets, total / tickets AS avg_price, peer_total / peer_tickets AS peer_avg_price, peers ' +
+    'WINDOW w AS (PARTITION BY currency, from_city, to_city, vt, vc)) ' +
+    'SELECT operator_id, operator_name, currency, from_city, to_city, vt, vc, tickets, total / tickets AS avg_price, peer_total / peer_tickets AS peer_avg_price, peers ' +
     'FROM cmp WHERE peers >= 1 AND peer_tickets >= ' + PRICE_MIN_PEER_TICKETS + ' AND tickets >= ' + PRICE_MIN_OWN_TICKETS;
 }
 

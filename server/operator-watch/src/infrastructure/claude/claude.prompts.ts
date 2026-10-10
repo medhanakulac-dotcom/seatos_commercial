@@ -85,12 +85,12 @@ Facts
   rankings and comparisons). Say which week a number is for. Nobody uploads files for these: never tell a colleague to
   upload a file or ask for one. When the numbers are missing or stale, say the BigQuery sync has not delivered them
   yet and that an admin can check Settings → Weekly data; then work from what you do have (HubSpot, notes, health).
-- get_weekly_numbers also returns the operator's selling price compared with other operators on the same route, vehicle
+- get_weekly_numbers also returns the operator's selling price compared with other operators on the same city-to-city route, vehicle
   type and vehicle class (BigQuery, one line per currency): the overall difference in percent (plus means more
   expensive) and the segments that differ most. Quote it with the number of segments and tickets it rests on, and
   never compare prices across currencies. A small segment count is weak evidence: say so. When the operator is
   clearly cheaper or dearer, use it in retention advice (room to raise prices, or the risk of losing sales to cheaper
-  operators). If no price line is present, there were too few comparable sales; do not guess.
+  operators). The price line says either a figure, or that it cannot be compared (no other operator sells the same city-to-city route with the same vehicle type and class), or that the comparison has not synced yet: say which, and do not guess.
 - What was discussed with the operator — HubSpot notes, meetings (with their notes), calls, emails, tasks and logged
   LINE/WhatsApp/SMS messages — comes from get_hubspot_activity. Use it for questions about history, promises,
   complaints, meetings or "what did we last talk about"; filter by type when the question is about one kind.
@@ -218,10 +218,19 @@ export function formatWeekly(data: {
   usageWeeks?: readonly string[];
   /** Price vs other operators on the same route + vehicle type + vehicle class (BigQuery), one entry per currency. */
   pricing?: readonly PricingRecord[];
+  /** When the price comparison was last synced for anyone (null/absent = never). */
+  pricingSyncedAt?: string | null;
 }): string {
   const priceLines = (data.pricing ?? []).map(formatPricing);
+  if (!priceLines.length) {
+    priceLines.push(
+      data.pricingSyncedAt
+        ? '- selling price vs other operators: cannot be compared. In the last 90 days no other operator sold enough tickets on the same city-to-city route with the same vehicle type and vehicle class (or this operator sold too few). This is a data limit, not an error.'
+        : '- selling price vs other operators: the price comparison has not synced from BigQuery yet.',
+    );
+  }
   const weeks = [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week), ...(data.usageWeeks ?? [])])].sort().reverse();
-  if (!weeks.length && !priceLines.length) return 'No weekly SeatOS numbers have reached the workspace for this operator yet (they sync from BigQuery automatically; nobody uploads files).';
+  if (!weeks.length) return `No weekly SeatOS numbers have reached the workspace for this operator yet (they sync from BigQuery automatically; nobody uploads files).\n${priceLines.join('\n')}`;
   const prices = priceLines.length ? `\n${priceLines.join('\n')}` : '';
   return (weeks
     .map((w) => {
