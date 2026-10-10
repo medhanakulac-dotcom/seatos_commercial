@@ -44,12 +44,13 @@ Base every statement on the data you are given. Never invent numbers, bookings, 
   next_step: the concrete action. signals: e.g. {detector: "HubSpot health", text: "Health status: Unhealthy"}.
 - The team's memory lists earlier decisions on this operator and team-wide lessons (rejections and their reasons, how
   people edited drafts). Follow them.
-- The message also carries the operator's weekly SeatOS numbers uploaded by the team (newest first): WAO = how
+- The message also carries the operator's weekly SeatOS numbers, synced automatically from BigQuery (newest first): WAO = how
   many of the 7 features it used that week, which ones, and tickets sold. When a week lists "features
   used", those are the actual SeatOS features (e.g. Booking List, Route Management) with event counts and active days;
   compare weeks to see what it started or stopped using, and tie the next step to a feature it does not use yet. Use the trend (rising,
   falling, stopped) as evidence; an operator with no ticket row sold nothing that week. Never invent numbers that
-  are not there.
+  are not there. Never ask for an upload: when numbers are
+  missing, say so and rely on the rest of the data.
 - The message also carries the operator's recent HubSpot activity: notes, meetings, calls, emails, tasks and logged
   LINE/WhatsApp/SMS messages, newest first. Read it. Ground the analysis and the email in what was actually discussed,
   promised or complained about; don't ask for something the operator just did or was just asked; when the last real
@@ -78,9 +79,11 @@ Focus
 Facts
 - Each question comes with a "Context" block: the current CRM/workspace picture. Prefer it over memory when they differ.
 - For more (previous cases, the workspace activity log, the current email draft) call get_operator_context.
-- Weekly SeatOS numbers the team uploads (WAO feature usage of 7 features, tickets sold, per week) come
+- Weekly SeatOS numbers (WAO feature usage of 7 features, tickets sold, per week) are synced from BigQuery every morning and come
   from get_weekly_numbers (one operator, several weeks) and list_weekly_numbers (every operator in one week, for
-  rankings and comparisons). Say which week a number is for.
+  rankings and comparisons). Say which week a number is for. Nobody uploads files for these: never tell a colleague to
+  upload a file or ask for one. When the numbers are missing or stale, say the BigQuery sync has not delivered them
+  yet and that an admin can check Settings → Weekly data; then work from what you do have (HubSpot, notes, health).
 - What was discussed with the operator — HubSpot notes, meetings (with their notes), calls, emails, tasks and logged
   LINE/WhatsApp/SMS messages — comes from get_hubspot_activity. Use it for questions about history, promises,
   complaints, meetings or "what did we last talk about"; filter by type when the question is about one kind.
@@ -189,13 +192,13 @@ export function formatActivity(items: readonly { type: string; at: string; title
     .join('\n');
 }
 
-/** Uploaded weekly SeatOS numbers for one operator, newest week first. */
+/** Weekly SeatOS numbers (BigQuery sync) for one operator, newest week first. */
 export function formatWeekly(data: {
   usage: readonly { week: string; featureCount: number; features: Readonly<Record<string, boolean>>; featureUsage?: readonly { name: string; events: number; days: number }[] }[];
   tickets: readonly { week: string; tickets: number }[];
 }): string {
   const weeks = [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week)])].sort().reverse();
-  if (!weeks.length) return 'No weekly SeatOS numbers uploaded for this operator.';
+  if (!weeks.length) return 'No weekly SeatOS numbers have reached the workspace for this operator yet (they sync from BigQuery automatically; nobody uploads files).';
   return weeks
     .map((w) => {
       const u = data.usage.find((x) => x.week === w);

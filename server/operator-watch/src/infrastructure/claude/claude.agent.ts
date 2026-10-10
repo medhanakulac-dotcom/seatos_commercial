@@ -26,7 +26,7 @@ import { SeatosTools } from './seatos.tools';
 
 export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
 
-/** Uploaded weekly numbers (WeeklyDataService). */
+/** Weekly numbers synced from BigQuery (WeeklyDataService). */
 export interface WeeklyLookup {
   forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[] }>;
   week(kind: 'usage' | 'tickets', week?: string): Promise<(UsageWithFeatures | TicketsView)[]>;
@@ -138,7 +138,7 @@ export class ClaudeAccountAssistant implements AccountAssistant {
           betaZodTool({
             name: 'get_weekly_numbers',
             description:
-              "One operator's weekly SeatOS numbers uploaded by the team, newest week first: WAO (features used of 7, and which), " +
+              "One operator's weekly SeatOS numbers (synced from BigQuery), newest week first: WAO (features used of 7, and which), " +
               'tickets sold. Defaults to the operator this chat is about.',
             inputSchema: z.object({
               operator_id: z.string().optional().describe('Only when a user explicitly asks about a different operator'),
@@ -152,8 +152,8 @@ export class ClaudeAccountAssistant implements AccountAssistant {
           betaZodTool({
             name: 'list_weekly_numbers',
             description:
-              'Every operator in one uploaded week, for rankings and comparisons: kind "usage" (WAO, sorted high to low) or "tickets" ' +
-              '(tickets sold, sorted high to low). Defaults to the latest uploaded week.',
+              'Every operator in one synced week, for rankings and comparisons: kind "usage" (WAO, sorted high to low) or "tickets" ' +
+              '(tickets sold, sorted high to low). Defaults to the latest synced week.',
             inputSchema: z.object({
               kind: z.enum(['usage', 'tickets']),
               week: z.string().optional().describe('Monday of the week, YYYY-MM-DD'),
@@ -161,7 +161,7 @@ export class ClaudeAccountAssistant implements AccountAssistant {
             run: async ({ kind, week }) => {
               try {
                 const rows = await weekly.week(kind, week);
-                if (!rows.length) return 'Nothing uploaded for that week.';
+                if (!rows.length) return 'No synced numbers for that week.';
                 return JSON.stringify(
                   rows.map((r) =>
                     'tickets' in r

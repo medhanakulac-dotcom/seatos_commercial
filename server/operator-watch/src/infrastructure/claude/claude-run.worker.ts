@@ -20,10 +20,10 @@ const LEASE_MS = 5 * 60_000;
 const RECALL_FOR_CASE = 'past assessments, outreach outcomes, decisions and the reasons behind them';
 /** HubSpot engagements shown to Claude per assessment. */
 const ACTIVITY_FOR_CASE = 20;
-/** Weeks of uploaded SeatOS numbers shown per assessment. */
+/** Weeks of synced SeatOS numbers shown per assessment. */
 const WEEKS_FOR_CASE = 6;
 
-/** Uploaded weekly numbers for one account (WeeklyDataService). */
+/** Weekly numbers for one account (WeeklyDataService). */
 export interface WeeklyNumbers {
   forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[] }>;
 }

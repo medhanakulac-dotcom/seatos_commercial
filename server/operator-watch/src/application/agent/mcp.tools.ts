@@ -59,7 +59,7 @@ export function buildMcpServer(
       'get_weekly_numbers',
       {
         description:
-          "One operator's weekly SeatOS numbers uploaded by the team, newest week first: WAO (features used of 7, and which), tickets sold.",
+          "One operator's weekly SeatOS numbers synced from BigQuery, newest week first: WAO (features used of 7, and which), tickets sold.",
         inputSchema: { operator_id: z.string().min(1).max(64), weeks: z.number().int().min(1).max(52).default(8) },
         annotations: { readOnlyHint: true },
       },
@@ -69,7 +69,7 @@ export function buildMcpServer(
       'list_weekly_numbers',
       {
         description:
-          'Every operator in one uploaded week, for rankings and comparisons. kind "usage": WAO per operator (high to low); kind "tickets": tickets sold (high to low). Defaults to the latest week.',
+          'Every operator in one synced week, for rankings and comparisons. kind "usage": WAO per operator (high to low); kind "tickets": tickets sold (high to low). Defaults to the latest week.',
         inputSchema: { kind: z.enum(['usage', 'tickets']), week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Monday of the week') },
         annotations: { readOnlyHint: true },
       },
