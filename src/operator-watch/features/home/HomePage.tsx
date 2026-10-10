@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useAccounts, useActivity, useMe, useMeta, useWao, useZeroTicketIds } from '../../api/queries';
+import { useAccounts, useMe, useMeta, useWao, useZeroTicketIds } from '../../api/queries';
 import { Avatar, HealthTag, SegTag, ZeroTicketTag } from '../../components/tags';
 import { useUiState } from '../../app/UiState';
 import { awaitingReview, byPriority, greeting, ownerKey, ownerName } from '../../lib/format';
@@ -12,7 +12,6 @@ export function HomePage() {
   const { data: allAccounts, isPending } = useAccounts();
   const { data: meta } = useMeta();
   const { data: me } = useMe();
-  const { data: activity = [] } = useActivity();
   const { data: wao } = useWao();
   const { data: zero } = useZeroTicketIds();
   const { homeSections, setHomeSections, setAccounts, accounts: filters } = useUiState();
@@ -24,7 +23,10 @@ export function HomePage() {
   const waoCount = wao ? accounts.filter((a) => wao.ids.has(a.id)).length : 0;
   const waoPct = accounts.length ? Math.round((100 * waoCount) / accounts.length) : 0;
   const zeroCount = zero ? accounts.filter((a) => zero.has(a.id)).length : 0;
-  const rescueCount = accounts.filter((a) => a.playbook === 'Rescue').length;
+  const rescueAccounts = accounts.filter((a) => a.playbook === 'Rescue');
+  const rescueCount = rescueAccounts.length;
+  // No tickets first, then by priority and signals, never just alphabetical.
+  const rescue = [...rescueAccounts].sort((a, b) => Number(zero?.has(b.id) ?? false) - Number(zero?.has(a.id) ?? false) || a.priority - b.priority || b.signalCount - a.signalCount || a.name.localeCompare(b.name));
   const top = [...accounts].sort(byPriority);
   const pending = top.filter(awaitingReview);
   // Needs attention: open cases ranked by priority, and within the same priority the ones with no tickets first, then
@@ -143,19 +145,34 @@ export function HomePage() {
         <div className="grid" style={{ gap: 18 }}>
           <div className="card">
             <h2 className="st">
-              <span>Recent activity</span>
+              <span>Rescue</span>
+              <button className="b tlb" onClick={toAccounts({ view: 'all', pb: 'Rescue' })}>
+                All {rescueCount} →
+              </button>
             </h2>
-            {activity.length ? (
-              activity.map((e) => (
-                <div className="task" key={e.id} onClick={() => open(e.accountId)} style={{ cursor: 'pointer' }}>
-                  <div className="grow">
-                    <b>{e.name}</b>
-                    <span className="d">{e.text}</span>
+            {rescue.length ? (
+              <>
+                {rescue.slice(0, 8).map((a) => (
+                  <div className="task" key={a.id} onClick={() => open(a.id)} style={{ cursor: 'pointer' }}>
+                    <Avatar name={a.name} />
+                    <div className="grow">
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <b>{a.name}</b>
+                        <SegTag segment={a.segment} />
+                        {zero?.has(a.id) && <ZeroTicketTag />}
+                      </div>
+                      <span className="d">owner {ownerName(a.owner)}</span>
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+                {rescue.length > 8 && (
+                  <div className="d" style={{ padding: '12px 4px' }}>
+                    + {rescue.length - 8} more
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="d">Approvals, holds and notes will show up here.</div>
+              <div className="d">No accounts on the Rescue playbook.</div>
             )}
           </div>
         </div>
