@@ -9,7 +9,7 @@ export const BIGQUERY_SYNC_ACTOR = 'bigquery-sync';
 
 /**
  * The weekly BigQuery sync posts here (a Google Apps Script running the query as a team member, see
- * bigquery/weekly-sync.gs) with `Authorization: Bearer <WEEKLY_INGEST_TOKEN>`. On the site: `/api/ow/ingest/weekly-usage`.
+ * bigquery/weekly-sync.gs) with `Authorization: Bearer <WEEKLY_INGEST_TOKEN>`. On the site: `/api/ow/ingest/weekly-usage` and `/api/ow/ingest/weekly-tickets`.
  * Disabled (503) until the token is set; the token only allows this one write.
  */
 @Controller('ingest')
@@ -22,9 +22,21 @@ export class WeeklyIngestController {
   @Post('weekly-usage')
   @HttpCode(200)
   usage(@Headers('authorization') authorization: string | undefined, @Body() body: unknown) {
-    const token = process.env.WEEKLY_INGEST_TOKEN;
-    if (!token) throw new ServiceUnavailableException('WEEKLY_INGEST_TOKEN is not set');
-    if (!agentAuthorized(authorization, token)) throw new UnauthorizedException();
+    authorize(authorization);
     return this.weekly.ingestUsage(body, BIGQUERY_SYNC_ACTOR);
   }
+
+  /** `{ week: 'YYYY-MM-DD' (a Monday), rows: [{ operatorId, operatorName, tickets }] }` — tickets sold that week. */
+  @Post('weekly-tickets')
+  @HttpCode(200)
+  tickets(@Headers('authorization') authorization: string | undefined, @Body() body: unknown) {
+    authorize(authorization);
+    return this.weekly.ingestTickets(body, BIGQUERY_SYNC_ACTOR);
+  }
+}
+
+function authorize(authorization: string | undefined): void {
+  const token = process.env.WEEKLY_INGEST_TOKEN;
+  if (!token) throw new ServiceUnavailableException('WEEKLY_INGEST_TOKEN is not set');
+  if (!agentAuthorized(authorization, token)) throw new UnauthorizedException();
 }

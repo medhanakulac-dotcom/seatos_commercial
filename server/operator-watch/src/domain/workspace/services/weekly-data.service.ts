@@ -120,6 +120,30 @@ export class WeeklyDataService {
     return { ...this.result('usage', [p.week], rows, match), unknownFeatures: [...unknown].sort() };
   }
 
+  /**
+   * The weekly BigQuery sync of tickets sold (dwh.fact_operator_tickets_actual_vs_target, summed per Monday-start week),
+   * replacing that week's tickets rows. Operators that sold nothing are simply absent (no row = no sales).
+   */
+  async ingestTickets(payload: unknown, by: string): Promise<UploadResult> {
+    const p = (payload ?? {}) as { week?: unknown; rows?: unknown };
+    if (typeof p.week !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(p.week) || mondayOfIso(p.week) !== p.week) throw new WeeklyDataError('week must be a Monday, YYYY-MM-DD');
+    if (!Array.isArray(p.rows)) throw new WeeklyDataError('rows must be a list');
+    if (p.rows.length > MAX_INGEST_ROWS) throw new WeeklyDataError(`At most ${MAX_INGEST_ROWS} operators per week`);
+    const match = await this.matcher();
+    const records = new Map<string, WeeklyTicketRecord>();
+    for (const raw of p.rows as { operatorId?: unknown; operatorName?: unknown; tickets?: unknown }[]) {
+      const name = cleanName(typeof raw.operatorName === 'string' ? raw.operatorName : '');
+      const tickets = Math.round(Number(raw.tickets));
+      if (!name || !Number.isFinite(tickets) || tickets < 0) throw new WeeklyDataError('Every row needs operatorName and tickets (a number, 0 or more)');
+      if (tickets === 0) continue;
+      const m = match(name);
+      records.set(name, { week: p.week, operatorName: name, nameKey: m.key, accountId: m.accountId, gmvUsd: 0, tickets });
+    }
+    const rows = [...records.values()];
+    await this.store.replaceTickets(p.week, rows, by);
+    return this.result('tickets', [p.week], rows, match);
+  }
+
   /** Uploads so far, names still unmatched in the latest weeks, and the accounts they can be matched to. */
   async summary() {
     const [uploads, links, accounts, usage, tickets] = await Promise.all([this.store.uploads(20), this.store.nameLinks(), this.accounts(), this.store.usageWeek(), this.store.ticketsWeek()]);

@@ -117,7 +117,7 @@ export function WeeklyData({ syncTokenSet }: { syncTokenSet: boolean }) {
         <div className="grow">
           <b>Automatic sync from BigQuery</b>
           <div className="d">
-            A Google Apps Script runs the feature-usage query every day and sends the current and previous week here. It replaces the Activity file below.
+            A Google Apps Script runs the feature-usage and ticket queries every day and sends the current and previous week here. It replaces both files below.
           </div>
           <div style={{ marginTop: 6 }}>
             {syncTokenSet ? <span className="ok">✓ sync token set</span> : <span className="no">✗ WEEKLY_INGEST_TOKEN is not set on the server — the sync is off</span>}
@@ -139,7 +139,7 @@ export function WeeklyData({ syncTokenSet }: { syncTokenSet: boolean }) {
         </div>
         <input type="date" value={ticketWeek} onChange={(e) => setTicketWeek(e.target.value)} />
       </div>
-      <Slot n={2} title="Tickets" hint="Looker → Target vs Actual → Budget vs Actual → Export CSV (operator_name and Tickets Actual; GMV is not needed)" kind="tickets" week={ticketWeek} onDone={() => undefined} />
+      <Slot n={2} title="Tickets" hint="Only without the BigQuery sync: Looker → Target vs Actual → Budget vs Actual → Export CSV (operator_name and Tickets Actual; GMV is not needed)" kind="tickets" week={ticketWeek} onDone={() => undefined} />
       {data && <Unmatched data={data} />}
       {data?.uploads.length ? (
         <div style={{ marginTop: 14 }}>

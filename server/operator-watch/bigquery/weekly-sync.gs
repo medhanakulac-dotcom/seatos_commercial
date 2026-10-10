@@ -1,15 +1,17 @@
 /**
  * SeatOS weekly usage sync: BigQuery -> Operator Watch (dealsuite.app).
  *
- * Runs the feature-usage query as YOU (your Google account already has BigQuery access) for the current week and the
- * previous week (Monday-Sunday, Bangkok time) and posts one row per operator to the site: which WAO categories fired
- * and which SeatOS features were used (events, active days). The site replaces those weeks, so running it often is safe.
+ * Runs two queries as YOU (your Google account already has BigQuery access) for the current week and the previous week
+ * (Monday-Sunday, Bangkok time) and posts the results to the site, one row per operator:
+ *   - usage: which WAO categories fired and which SeatOS features were used (events, active days);
+ *   - tickets: tickets sold that week (dwh.fact_operator_tickets_actual_vs_target).
+ * The site replaces those weeks, so running it often is safe.
  *
  * Setup (once), see server/operator-watch/bigquery/README.md:
  *   1. script.google.com -> New project -> paste this file.
  *   2. Services (+) -> add "BigQuery API" (identifier BigQuery).
  *   3. Project Settings -> Script properties -> add INGEST_TOKEN = the WEEKLY_INGEST_TOKEN set on Vercel.
- *      (Optional INGEST_URL, default below.)
+ *      (Optional INGEST_URL = the site's ingest base, default below.)
  *   4. Run syncAll once and accept the permissions, then run installTrigger once (daily at about 06:00).
  *
  * Events -> features: each feature owns an event-name pattern (Feature Event Map, Prab, 9 Oct 2026). WAO categories use the
@@ -18,7 +20,7 @@
  */
 var PROJECT_ID = 'seatos-tms';
 var TZ = 'Asia/Bangkok';
-var DEFAULT_URL = 'https://dealsuite.app/api/ow/ingest/weekly-usage';
+var DEFAULT_URL = 'https://dealsuite.app/api/ow/ingest';
 
 /** Event names (lower case) that count toward WAO, with their category: i d r t f a c. */
 var WAO_EVENTS = [
@@ -134,8 +136,20 @@ function syncWeek_(weeksBack) {
     else op.features[r[2]] = { events: Number(r[3]), days: Number(r[4]) };
   });
   var rows = Object.keys(operators).map(function (k) { return operators[k]; });
-  var result = post_({ week: monday, rows: rows });
-  Logger.log('Week of %s: %s operators sent -> %s', monday, rows.length, JSON.stringify(result));
+  var result = post_('weekly-usage', { week: monday, rows: rows });
+  Logger.log('Usage, week of %s: %s operators sent -> %s', monday, rows.length, JSON.stringify(result));
+
+  var tickets = runQuery_(ticketsSql_(monday, addDays_(monday, 6))).map(function (r) {
+    return { operatorId: Number(r[0]), operatorName: r[1] || names[r[0]] || 'Operator ' + r[0], tickets: Number(r[2]) };
+  });
+  var ticketResult = post_('weekly-tickets', { week: monday, rows: tickets });
+  Logger.log('Tickets, week of %s: %s operators sent -> %s', monday, tickets.length, JSON.stringify(ticketResult));
+}
+
+/** Tickets sold per operator in the week (dates inclusive); operators with no sales are left out. */
+function ticketsSql_(firstDate, lastDate) {
+  return 'SELECT operator_id, ANY_VALUE(operator_name) AS operator_name, SUM(daily_actual_tickets) AS tickets FROM `' + PROJECT_ID +
+    '.dwh.fact_operator_tickets_actual_vs_target` WHERE date BETWEEN \'' + firstDate + '\' AND \'' + lastDate + '\' GROUP BY 1 HAVING SUM(daily_actual_tickets) > 0';
 }
 
 function usageSql_(start, end) {
@@ -172,11 +186,11 @@ function runQuery_(sql) {
   return rows;
 }
 
-function post_(payload) {
+function post_(path, payload) {
   var props = PropertiesService.getScriptProperties();
   var token = props.getProperty('INGEST_TOKEN');
   if (!token) throw new Error('Add the script property INGEST_TOKEN (the WEEKLY_INGEST_TOKEN set on Vercel).');
-  var res = UrlFetchApp.fetch(props.getProperty('INGEST_URL') || DEFAULT_URL, {
+  var res = UrlFetchApp.fetch((props.getProperty('INGEST_URL') || DEFAULT_URL).replace(/\/$/, '') + '/' + path, {
     method: 'post',
     contentType: 'application/json',
     headers: { Authorization: 'Bearer ' + token },

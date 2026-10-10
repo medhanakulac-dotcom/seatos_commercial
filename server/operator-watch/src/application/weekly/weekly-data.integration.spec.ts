@@ -24,10 +24,10 @@ describe('Weekly data HTTP integration', () => {
       headers: { authorization: tokens[role], ...(payload !== undefined ? { 'content-type': 'application/json' } : {}) },
       payload: payload === undefined ? undefined : JSON.stringify(payload),
     });
-  const ingest = (body: unknown, token: string | null = INGEST_TOKEN) =>
+  const ingest = (body: unknown, token: string | null = INGEST_TOKEN, path = 'weekly-usage') =>
     app.getHttpAdapter().getInstance().inject({
       method: 'POST',
-      url: '/ingest/weekly-usage',
+      url: `/ingest/${path}`,
       headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
       payload: JSON.stringify(body),
     });
@@ -164,6 +164,24 @@ describe('Weekly data HTTP integration', () => {
     const again = await ingest({ week, rows: [body.rows[0]] }); // a re-sync replaces the week
     expect(again.json()).toMatchObject({ rows: 1, matched: 1 });
     expect((await call('GET', `/workspace/accounts/${b.id}/weekly`, 'viewer')).json().usage.some((u: { week: string }) => u.week === week)).toBe(false);
+  });
+
+  it('takes the weekly tickets from the BigQuery sync: token needed, zero-sale operators skipped, week replaced', async () => {
+    const [a, b] = accounts;
+    const week = '2026-10-19';
+    const body = { week, rows: [{ operatorId: 1, operatorName: a.name, tickets: 5593 }, { operatorId: 2, operatorName: b.name, tickets: 0 }, { operatorId: 3, operatorName: 'Unknown Sync Bus', tickets: 12 }] };
+    expect((await ingest(body, null, 'weekly-tickets')).statusCode).toBe(401);
+    expect((await ingest({ ...body, week: '2026-10-20' }, INGEST_TOKEN, 'weekly-tickets')).statusCode).toBe(400);
+    expect((await ingest({ week, rows: [{ operatorName: a.name, tickets: -1 }] }, INGEST_TOKEN, 'weekly-tickets')).statusCode).toBe(400);
+    const res = await ingest(body, INGEST_TOKEN, 'weekly-tickets');
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ kind: 'tickets', weeks: [week], rows: 2, matched: 1, unmatched: [{ name: 'Unknown Sync Bus' }] });
+    const weekly = (await call('GET', `/workspace/accounts/${a.id}/weekly`, 'viewer')).json();
+    expect(weekly.tickets.find((t: { week: string }) => t.week === week)).toMatchObject({ tickets: 5593 });
+    expect(weekly.tickets[0]).not.toHaveProperty('gmvUsd');
+    expect((await call('GET', `/workspace/accounts/${b.id}/weekly`, 'viewer')).json().tickets.some((t: { week: string }) => t.week === week)).toBe(false);
+    const history = (await call('GET', '/admin/weekly-data', 'admin')).json().uploads;
+    expect(history).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'tickets', week, rows: 2, uploadedBy: 'bigquery-sync' })]));
   });
 
   it('keeps the sync off until its token is set', async () => {
