@@ -51,15 +51,11 @@ function LoginScreen() {
     if (!email.trim() || !email.includes("@")) { setError("Enter a valid email."); return; }
     setLoading(true);
 
-    // Check if email is in allowed_users
-    const { data: allowed } = await supabase
-      .from("allowed_users")
-      .select("email")
-      .eq("email", email.toLowerCase().trim())
-      .single();
-
-    if (!allowed) {
-      setError("This email is not authorized. Ask your admin for an invite.");
+    // Only an authorized email gets a link. The answer is the same either way, so the screen never says who is on the list;
+    // the list itself is not readable from the browser (the check is a database function that returns only yes or no).
+    const { data: allowed } = await supabase.rpc("is_email_allowed", { p_email: email.toLowerCase().trim() });
+    if (allowed !== true) {
+      setSent(true);
       setLoading(false);
       return;
     }
@@ -85,7 +81,7 @@ function LoginScreen() {
           <div style={{ fontSize: 48, marginBottom: 16 }}>📧</div>
           <div style={{ fontWeight: 800, fontSize: 22, color: C.dark, marginBottom: 8 }}>Check your email</div>
           <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.6, marginBottom: 24 }}>
-            We sent a sign-in link to<br /><b style={{ color: C.dark }}>{email}</b>
+            If this email is authorized, we sent a sign-in link to<br /><b style={{ color: C.dark }}>{email}</b>
           </div>
           <div style={{ fontSize: 12, color: "#a1a1aa" }}>Click the link in the email to sign in. You can close this tab.</div>
           <button onClick={() => { setSent(false); setEmail(""); }} style={{

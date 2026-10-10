@@ -1,21 +1,15 @@
 import { useState, useRef, useEffect } from "react";
+import { supabase } from "../supabaseClient.js";
 
-/* ── Supabase Config ── */
-const SUPABASE_URL = "https://vaoukjukkzvjuzgedvfd.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhb3VranVra3p2anV6Z2VkdmZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNTMyNzMsImV4cCI6MjA4OTcyOTI3M30.wqLt84tV43PsdC8HXRGJfiFN5MVy4L0exXUGoUfAAds";
+/* ── Settings storage (Supabase, as the signed-in user: row level security decides who may read and write) ── */
 const sbFetch = async (method, key, value) => {
-  const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" };
   if (method === "GET") {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?key=eq.${key}&select=value`, { headers });
-    const d = await r.json();
-    return d?.[0]?.value ?? null;
+    const { data } = await supabase.from("app_settings").select("value").eq("key", key).maybeSingle();
+    return data?.value ?? null;
   }
   // UPSERT: insert if not exists, update if exists
-  await fetch(`${SUPABASE_URL}/rest/v1/app_settings`, {
-    method: "POST",
-    headers: { ...headers, Prefer: "resolution=merge-duplicates,return=minimal" },
-    body: JSON.stringify({ key, value })
-  });
+  const { error } = await supabase.from("app_settings").upsert({ key, value }, { onConflict: "key" });
+  if (error) throw new Error(error.message);
   return true;
 };
 

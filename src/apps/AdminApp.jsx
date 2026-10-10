@@ -80,24 +80,12 @@ export default function AdminApp({ currentUser }) {
       return;
     }
 
-    // 2. Send invite via Supabase Auth (magic link)
-    const { error: authErr } = await supabase.auth.admin.inviteUserByEmail(newEmail.trim());
-    // Note: admin.inviteUserByEmail requires service_role key.
-    // Alternative: use supabase.auth.signInWithOtp for magic link invite
-    if (authErr) {
-      // Fallback: send OTP magic link instead
-      const { error: otpErr } = await supabase.auth.signInWithOtp({
-        email: newEmail.trim(),
-        options: { shouldCreateUser: true },
-      });
-      if (otpErr) {
-        setInviteMsg("Saved to allowed list, but email invite failed: " + otpErr.message);
-      } else {
-        setInviteMsg("Invite sent to " + newEmail + "!");
-      }
-    } else {
-      setInviteMsg("Invite sent to " + newEmail + "!");
-    }
+    // 2. Send the sign-in link (magic link); the user is created on first sign-in because the email is on the list.
+    const { error: otpErr } = await supabase.auth.signInWithOtp({
+      email: newEmail.trim(),
+      options: { shouldCreateUser: true },
+    });
+    setInviteMsg(otpErr ? "Saved to allowed list, but email invite failed: " + otpErr.message : "Invite sent to " + newEmail + "!");
 
     setNewEmail("");
     fetchUsers();

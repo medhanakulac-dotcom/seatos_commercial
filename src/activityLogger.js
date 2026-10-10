@@ -15,8 +15,10 @@ import { supabase } from "./supabaseClient.js";
  */
 export async function logActivity(eventType, metadata = {}, userEmail = "") {
   try {
+    // The row must carry the signed-in user's own email (the database refuses anything else).
+    const { data: { session } } = await supabase.auth.getSession();
     const { error } = await supabase.from("activity_logs").insert({
-      user_email: userEmail,
+      user_email: session?.user?.email || userEmail,
       event_type: eventType,
       metadata: metadata,
       created_at: new Date().toISOString(),

@@ -1,24 +1,15 @@
 import { useState, useEffect } from "react";
+import { supabase } from "../supabaseClient.js";
 
-/* ═══ SUPABASE CONFIG ═══ */
-const SUPABASE_URL="https://vaoukjukkzvjuzgedvfd.supabase.co";
-const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhb3VranVra3p2anV6Z2VkdmZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNTMyNzMsImV4cCI6MjA4OTcyOTI3M30.wqLt84tV43PsdC8HXRGJfiFN5MVy4L0exXUGoUfAAds";
+/* ═══ SETTINGS STORAGE (Supabase, as the signed-in user: row level security decides who may read and write) ═══ */
 const sbFetch=async(method,body)=>{
   try{
-    const headers={"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"};
-    if(method==="POST")headers["Prefer"]="resolution=merge-duplicates,return=representation";
-    const base=SUPABASE_URL+"/rest/v1/contract_builder_settings";
-    let url=base;let opts={method,headers};
-    if(method==="GET"){url=base+"?id=eq.default&select=*"}
-    else{
-      opts.method="POST";
-      opts.body=JSON.stringify({id:"default",...body});
+    if(method==="GET"){
+      const {data,error}=await supabase.from("contract_builder_settings").select("*").eq("id","default");
+      return error?null:(data||[]);
     }
-    const r=await fetch(url,opts);
-    if(!r.ok)return null;
-    const text=await r.text();
-    if(!text||text.trim()==="")return method==="GET"?[]:true;
-    try{return JSON.parse(text)}catch(e){return method==="GET"?[]:true}
+    const {error}=await supabase.from("contract_builder_settings").upsert({id:"default",...body},{onConflict:"id"});
+    return error?null:true;
   }catch(e){return null}
 };
 const loadSettings=async()=>{const d=await sbFetch("GET");return d&&d[0]?{pricing:d[0].pricing,company:d[0].company}:null};
