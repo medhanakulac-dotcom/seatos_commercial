@@ -31,7 +31,8 @@ export function AccountsPage() {
 
   if (isPending || !accounts || !meta) return <div className="loading">Loading…</div>;
 
-  const list = filterAccounts(accounts, f);
+  const ctx = { zero };
+  const list = filterAccounts(accounts, f, ctx);
   const playbooks = [...new Set(accounts.map((a) => a.playbook))];
   const open = (id: string) => navigate(`/accounts/${id}`);
   const set = (patch: Partial<typeof f>) => setF((prev) => ({ ...prev, ...patch }));
@@ -179,7 +180,7 @@ export function AccountsPage() {
         {VIEWS.map((v) => (
           <button key={v.key} className={f.view === v.key ? 'on' : ''} onClick={() => set({ view: v.key })}>
             {v.label}
-            <span className="n">{accounts.filter(v.match).length}</span>
+            <span className="n">{accounts.filter((a) => v.match(a, ctx)).length}</span>
           </button>
         ))}
       </div>

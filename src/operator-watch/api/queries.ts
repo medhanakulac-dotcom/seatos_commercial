@@ -30,6 +30,10 @@ export const useMeta = () => useQuery({ queryKey: keys.meta, queryFn: workspaceA
 export const useAccounts = () => useQuery({ queryKey: keys.accounts, queryFn: workspaceApi.accounts });
 export const useAccount = (id: string | undefined) =>
   useQuery({ queryKey: keys.account(id ?? ''), queryFn: () => workspaceApi.account(id as string), enabled: !!id });
+/** Accounts that were weekly active (WAO) in the latest week with usage data. */
+export const useWao = () => useQuery({ queryKey: ['workspace', 'wao'], queryFn: workspaceApi.wao, staleTime: 5 * 60_000, select: (d) => ({ week: d.week, ids: new Set(d.accountIds) }) });
+/** Who used a feature over the last four weeks (no feature: just the picker data). */
+export const useFeatureUsage = (feature?: string) => useQuery({ queryKey: ['workspace', 'feature-usage', feature ?? ''], queryFn: () => workspaceApi.featureUsage(feature), staleTime: 5 * 60_000 });
 /** Ids of the accounts that sold no tickets in the last two weeks of ticket data. */
 export const useZeroTicketIds = () =>
   useQuery({ queryKey: ['workspace', 'zero-tickets'], queryFn: workspaceApi.zeroTickets, staleTime: 5 * 60_000, select: (d) => new Set(d.accountIds) });

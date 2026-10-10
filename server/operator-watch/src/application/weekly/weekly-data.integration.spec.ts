@@ -217,6 +217,29 @@ describe('Weekly data HTTP integration', () => {
     expect(zero.accountIds).toContain(b.id);
   });
 
+  it('serves WAO of the latest week and who used a feature over the last four weeks', async () => {
+    const [a, b] = accounts;
+    const act = (events: number, days: number) => ({ events, days });
+    const send = (week: string, rows: unknown[]) => ingest({ week, rows }, INGEST_TOKEN, 'weekly-usage');
+    expect((await send('2026-12-07', [
+      { operatorId: 1, operatorName: a.name, categories: ['r', 't', 'a'], features: { inc: act(40, 3), db: act(5, 1) } },
+      { operatorId: 2, operatorName: b.name, categories: ['r'], features: { inc: act(2, 1) } }, // under 3 events: not active
+    ])).statusCode).toBe(200);
+    expect((await send('2026-11-30', [{ operatorId: 1, operatorName: a.name, categories: ['r', 't', 'a'], features: { inc: act(10, 2) } }])).statusCode).toBe(200);
+    const wao = (await call('GET', '/workspace/wao', 'viewer')).json();
+    expect(wao.week).toBe('2026-12-07');
+    expect(wao.accountIds).toContain(a.id);
+    expect(wao.accountIds).not.toContain(b.id); // only 1 of 7 categories
+    const list = (await call('GET', '/workspace/feature-usage', 'viewer')).json();
+    expect(list.weeks.slice(0, 2)).toEqual(['2026-12-07', '2026-11-30']);
+    expect(list.features.find((f: { code: string }) => f.code === 'bf')).toMatchObject({ name: 'Booking Form' });
+    expect(list.features.some((f: { code: string }) => f.code === 'ga4')).toBe(false);
+    const inc = (await call('GET', '/workspace/feature-usage?feature=inc', 'viewer')).json();
+    expect(inc.operators.map((o: { operatorName: string }) => o.operatorName)).toEqual([a.name]);
+    expect(inc.operators[0]).toMatchObject({ accountId: a.id, events: 50, activeWeeks: 2, byWeek: { '2026-12-07': { events: 40, days: 3 }, '2026-11-30': { events: 10, days: 2 } } });
+    expect((await call('GET', '/workspace/feature-usage?feature=nope', 'viewer')).statusCode).toBe(400);
+  });
+
   it('keeps the sync off until its token is set', async () => {
     const keep = process.env.WEEKLY_INGEST_TOKEN;
     delete process.env.WEEKLY_INGEST_TOKEN;

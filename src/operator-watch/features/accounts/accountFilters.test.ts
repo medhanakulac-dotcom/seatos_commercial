@@ -23,6 +23,11 @@ describe('filterAccounts', () => {
     expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all' }))).toEqual(['Alpha', 'Delta', 'Bravo', 'Charlie']);
   });
 
+  it('has a zero ticket view fed by the ticket data', () => {
+    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'zero' }, { zero: new Set(['D-2', 'D-4']) }))).toEqual(['Delta', 'Bravo']);
+    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'zero' }))).toEqual([]);
+  });
+
   it('has a filter for closed cases', () => {
     const withClosed = [...accounts, { ...base, id: 'D-5', name: 'Echo', state: 'closed' as const, drafted: false, priority: 5 }];
     expect(names(filterAccounts(withClosed, { ...DEFAULT_ACCOUNTS, view: 'closed' }))).toEqual(['Echo']);

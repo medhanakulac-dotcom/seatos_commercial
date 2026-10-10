@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 
-export type AccountsView = 'open' | 'closed' | 'all' | 'approval' | 'unhealthy' | 'reactive' | 'healthy';
+export type AccountsView = 'open' | 'closed' | 'zero' | 'all' | 'approval' | 'unhealthy' | 'reactive' | 'healthy';
 export type SortKey = 'prio' | 'op' | 'owner' | 'segment' | 'health' | 'playbook' | 'signals' | 'state';
 
 export interface AccountsFilters {

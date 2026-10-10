@@ -336,6 +336,14 @@ export interface WeeklyPricing {
   computedAt: string;
 }
 
+export interface FeatureUsage {
+  /** Weeks with usage data, newest first (at most four). */
+  weeks: string[];
+  features: { code: string; name: string; module: string }[];
+  feature: string | null;
+  operators: { operatorName: string; accountId: string | null; byWeek: Record<string, { events: number; days: number }>; events: number; activeWeeks: number }[];
+}
+
 export interface WeeklySummary {
   uploads: { kind: 'usage' | 'tickets'; week: string; rows: number; matched: number; uploadedAt: string; uploadedBy: string }[];
   unmatched: { name: string; key: string; in: ('usage' | 'tickets')[] }[];

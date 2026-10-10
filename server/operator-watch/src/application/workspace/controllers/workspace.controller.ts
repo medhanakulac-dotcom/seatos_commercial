@@ -168,6 +168,18 @@ export class WorkspaceController {
     return this.detail(id);
   }
 
+  /** Accounts that were weekly active (used at least 3 of 7 categories) in the latest week with usage data. */
+  @Get('wao')
+  wao() {
+    return this.weeklyData.waoOverview();
+  }
+
+  /** `?feature=<code>` — who used the feature over the last four weeks; without it, just the feature list and the weeks. */
+  @Get('feature-usage')
+  featureUsage(@Query('feature') feature?: string) {
+    return this.weeklyData.featureUsage(feature || undefined);
+  }
+
   /** Accounts with no tickets sold in the last two weeks of ticket data (the "zero ticket" label). */
   @Get('zero-tickets')
   zeroTickets() {

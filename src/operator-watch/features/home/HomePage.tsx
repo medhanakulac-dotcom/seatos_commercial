@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { useAccounts, useActivity, useMe, useMeta } from '../../api/queries';
+import { useAccounts, useActivity, useMe, useMeta, useWao, useZeroTicketIds } from '../../api/queries';
 import { Avatar } from '../../components/tags';
 import { useUiState } from '../../app/UiState';
 import { awaitingReview, byPriority, greeting, ownerKey, ownerName } from '../../lib/format';
+import { FeatureUsageCard } from './FeatureUsageCard';
 import { PlaybookGuide } from './PlaybookGuide';
 import { PlaybookMatrix } from './PlaybookMatrix';
 
@@ -12,21 +13,25 @@ export function HomePage() {
   const { data: meta } = useMeta();
   const { data: me } = useMe();
   const { data: activity = [] } = useActivity();
+  const { data: wao } = useWao();
+  const { data: zero } = useZeroTicketIds();
   const { homeSections, setHomeSections, setAccounts, accounts: filters } = useUiState();
   const navigate = useNavigate();
 
   if (isPending || !allAccounts || !meta) return <div className="loading">Loading…</div>;
 
   const accounts = filters.owner === 'All' ? allAccounts : allAccounts.filter((a) => ownerKey(a.owner) === filters.owner);
-  const signals = accounts.reduce((n, a) => n + a.signalCount, 0);
+  const waoCount = wao ? accounts.filter((a) => wao.ids.has(a.id)).length : 0;
+  const waoPct = accounts.length ? Math.round((100 * waoCount) / accounts.length) : 0;
+  const zeroCount = zero ? accounts.filter((a) => zero.has(a.id)).length : 0;
+  const rescueCount = accounts.filter((a) => a.playbook === 'Rescue').length;
   const top = [...accounts].sort(byPriority);
   const pending = top.filter(awaitingReview);
   const brief = top.filter((a) => !a.noSend).slice(0, 3);
-  const toEmail = accounts.filter((a) => !a.noSend).length;
   const open = (id: string) => navigate(`/accounts/${id}`);
   const review = (id: string) => navigate(`/approvals?case=${encodeURIComponent(id)}`);
 
-  const kpi = (label: string, tag: string, n: number, detail: string, cls: string, onClick: () => void) => (
+  const kpi = (label: string, tag: string, n: number | string, detail: string, cls: string, onClick: () => void) => (
     <div className={`card click ${cls}`} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onClick()}>
       <div className="lab" style={{ display: 'flex', justifyContent: 'space-between' }}>
         <span>{label}</span>
@@ -38,8 +43,8 @@ export function HomePage() {
       </div>
     </div>
   );
-  const toAccounts = () => {
-    setAccounts((f) => ({ ...f, view: 'all' }));
+  const toAccounts = (patch: { view: 'all' | 'zero'; pb?: string }) => () => {
+    setAccounts((f) => ({ ...f, pb: 'All', ...patch }));
     navigate('/accounts');
   };
 
@@ -56,9 +61,12 @@ export function HomePage() {
         </div>
       </div>
       <div className="grid g4" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
-        {kpi('Signals', 'HUBSPOT', signals, 'signals from HubSpot fields', '', toAccounts)}
-        {kpi('Accounts', 'CODE', accounts.length, `${toEmail} to email · ${accounts.length - toEmail} no send`, '', toAccounts)}
-        {kpi('Approvals', 'HUMAN', pending.length, 'awaiting you', 'human', () => navigate('/approvals'))}
+        {kpi('WAO', wao?.week ? `WEEK OF ${wao.week.slice(5)}` : 'NO DATA', wao?.week ? `${waoPct}%` : '—', wao?.week ? `${waoCount} of ${accounts.length} accounts used 3+ of 7 features` : 'no usage data yet', '', toAccounts({ view: 'all' }))}
+        {kpi('0 ticket', 'LAST 2 WEEKS', zeroCount, 'accounts with no tickets sold', '', toAccounts({ view: 'zero' }))}
+        {kpi('Rescue', 'PLAYBOOK', rescueCount, 'accounts on the Rescue playbook', '', toAccounts({ view: 'all', pb: 'Rescue' }))}
+      </div>
+      <div style={{ marginTop: 18 }}>
+        <FeatureUsageCard />
       </div>
       <div className="grid g2" style={{ marginTop: 18, alignItems: 'start' }}>
         <div className="grid" style={{ gap: 18 }}>

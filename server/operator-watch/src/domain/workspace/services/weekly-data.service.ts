@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CrmAccount } from '../entities/workspace.entities';
 import { Clock, PricingRecord, PricingSegment, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
 import { RunService } from './run.service';
-import { CATEGORY_CODES, featureByCode } from './seatos-features';
+import { CATEGORY_CODES, featureByCode, SEATOS_FEATURES } from './seatos-features';
 import { cleanName, FEATURES, FeatureActivity, Feature, mondayOf, nameKey, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
 
 export interface UploadResult {
@@ -38,6 +38,20 @@ export interface UsageWithFeatures extends Omit<WeeklyUsageRecord, 'featureUsage
 export type TicketsView = Omit<WeeklyTicketRecord, 'gmvUsd'>;
 
 export const MAX_INGEST_ROWS = 3000;
+/** WAO: an operator is weekly active when it used at least this many of the 7 categories in a week. */
+export const WAO_MIN_CATEGORIES = 3;
+/** A feature counts as used in a week (the operator is active on it) from this many events. */
+export const ACTIVE_FEATURE_EVENTS = 3;
+/** The feature picker looks back this many weeks. */
+const FEATURE_WEEKS = 4;
+
+export interface FeatureUsageView {
+  /** Weeks with usage data, newest first (at most four). */
+  readonly weeks: string[];
+  readonly features: { code: string; name: string; module: string }[];
+  readonly feature: string | null;
+  readonly operators: { operatorName: string; accountId: string | null; byWeek: Record<string, { events: number; days: number }>; events: number; activeWeeks: number }[];
+}
 
 /**
  * The weekly numbers the team uploads every Sunday night: Looker's feature usage table (WAO) and tickets.
@@ -248,6 +262,39 @@ export class WeeklyDataService {
     if (!weeks.length) return { weeks: [], accountIds: [] };
     const sold = new Set((await Promise.all(weeks.map((w) => this.store.ticketsWeek(w)))).flat().map((r) => r.accountId));
     return { weeks, accountIds: (await this.accounts()).filter((a) => !sold.has(a.id)).map((a) => a.id) };
+  }
+
+  /**
+   * WAO of the latest week with usage data: the accounts that used at least 3 of the 7 categories (the WAO rule), so the
+   * Home page can show them as a share of the accounts in view.
+   */
+  async waoOverview(): Promise<{ week: string | null; accountIds: string[] }> {
+    const rows = await this.store.usageWeek();
+    return { week: rows[0]?.week ?? null, accountIds: rows.filter((r) => r.accountId && r.featureCount >= WAO_MIN_CATEGORIES).map((r) => r.accountId as string) };
+  }
+
+  /**
+   * Who used a feature over the last four weeks of usage data: one entry per operator with its events and active days
+   * in each week, most active first. A week only counts at 3 or more events (active); less is not use. Without a feature code only the picker (features and weeks) comes back.
+   */
+  async featureUsage(code?: string): Promise<FeatureUsageView> {
+    const weeks = await this.store.usageWeeks(FEATURE_WEEKS);
+    const features = SEATOS_FEATURES.filter((f) => f.module !== 'System / Platform').map(({ code, name, module }) => ({ code, name, module }));
+    if (!code) return { weeks, features, feature: null, operators: [] };
+    if (!featureByCode(code)) throw new WeeklyDataError(`Unknown feature ${code}`);
+    const operators = new Map<string, FeatureUsageView['operators'][number]>();
+    for (const w of weeks) {
+      for (const r of await this.store.usageWeek(w)) {
+        const a = r.featureUsage?.[code];
+        if (!a || a.events < ACTIVE_FEATURE_EVENTS) continue;
+        const o = operators.get(r.nameKey) ?? { operatorName: r.operatorName, accountId: r.accountId, byWeek: {}, events: 0, activeWeeks: 0 };
+        o.byWeek[w] = { events: a.events, days: a.days };
+        o.events += a.events;
+        o.activeWeeks += 1;
+        operators.set(r.nameKey, o);
+      }
+    }
+    return { weeks, features, feature: code, operators: [...operators.values()].sort((x, y) => y.events - x.events || x.operatorName.localeCompare(y.operatorName)) };
   }
 
   /** Every operator in one week (the latest when omitted). */

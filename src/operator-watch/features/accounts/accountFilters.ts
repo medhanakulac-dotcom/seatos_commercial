@@ -7,9 +7,16 @@ const HEALTH_RANK: Record<Health, number> = { Unhealthy: 0, Adopted: 1, Healthy:
 /** A case still being worked: waiting for review, approved, on hold, returned, or a reactive-only account. */
 const OPEN_STATES: readonly AccountSummary['state'][] = ['pending', 'approved', 'hold', 'rejected', 'reactive'];
 
-export const VIEWS: { key: AccountsView; label: string; match: (a: AccountSummary) => boolean }[] = [
+/** Data some views need beyond the account itself. */
+export interface ViewContext {
+  /** Ids of accounts with no tickets in the last two weeks of ticket data (unknown until it loads). */
+  zero?: ReadonlySet<string>;
+}
+
+export const VIEWS: { key: AccountsView; label: string; match: (a: AccountSummary, ctx: ViewContext) => boolean }[] = [
   { key: 'open', label: 'Open cases', match: (a) => OPEN_STATES.includes(a.state) },
   { key: 'closed', label: 'Closed cases', match: (a) => a.state === 'closed' },
+  { key: 'zero', label: 'Zero ticket', match: (a, ctx) => ctx.zero?.has(a.id) ?? false },
   { key: 'all', label: 'All accounts', match: () => true },
   { key: 'approval', label: 'Needs approval', match: awaitingReview },
   { key: 'unhealthy', label: 'Unhealthy', match: (a) => !a.dormant && a.health === 'Unhealthy' },
@@ -31,12 +38,12 @@ const SORT_KEYS: Record<SortKey, (a: AccountSummary) => string | number> = {
 /** Sorting a new column starts ascending for names, descending for everything else. */
 export const initialDirection = (key: SortKey): 1 | -1 => (key === 'op' || key === 'owner' ? 1 : -1);
 
-export function filterAccounts(accounts: AccountSummary[], f: AccountsFilters): AccountSummary[] {
+export function filterAccounts(accounts: AccountSummary[], f: AccountsFilters, ctx: ViewContext = {}): AccountSummary[] {
   const view = VIEWS.find((v) => v.key === f.view) ?? VIEWS[0];
   const q = f.q.trim().toLowerCase();
   const key = SORT_KEYS[f.sort];
   return accounts
-    .filter(view.match)
+    .filter((a) => view.match(a, ctx))
     .filter((a) => !q || `${a.name} ${a.id} ${a.caseId ?? ''} ${a.owner ?? ''}`.toLowerCase().includes(q))
     .filter((a) => f.owner === 'All' || a.owner === ownerFromKey(f.owner))
     .filter((a) => f.seg === 'All' || a.segment === f.seg)
