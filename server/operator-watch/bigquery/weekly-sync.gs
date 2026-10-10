@@ -159,7 +159,7 @@ function round_(n, digits) {
 function pricingSql_() {
   return 'WITH b AS (SELECT t.operator_id, t.operator_name, t.currency, t.from_city, t.to_city, LOWER(TRIM(f.vehicle_type)) AS vt, LOWER(TRIM(f.vehicle_class)) AS vc, t.tickets, t.total_price ' +
     'FROM `' + PROJECT_ID + '.raw_tables.tc_export_bookings_table` t JOIN `' + PROJECT_ID + '.dwh.fact_booking` f USING (book_id) ' +
-    'WHERE t.status = \\'CONFIRMED\\' AND t.booked_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ' + PRICE_WINDOW_DAYS + ' DAY) AND t.tickets > 0 AND t.total_price > 0), ' +
+    'WHERE t.status = \'CONFIRMED\' AND t.booked_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ' + PRICE_WINDOW_DAYS + ' DAY) AND t.tickets > 0 AND t.total_price > 0), ' +
     'seg AS (SELECT operator_id, ANY_VALUE(operator_name) AS operator_name, currency, from_city, to_city, vt, vc, SUM(tickets) AS tickets, SUM(total_price) AS total ' +
     'FROM b WHERE from_city IS NOT NULL AND to_city IS NOT NULL AND vt IS NOT NULL AND vc IS NOT NULL ' +
     'GROUP BY operator_id, currency, from_city, to_city, vt, vc), ' +
