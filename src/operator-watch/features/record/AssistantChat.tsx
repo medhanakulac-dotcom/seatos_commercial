@@ -13,6 +13,8 @@ const TYPING_EXPIRE_MS = 6_000;
 /** How often our own "typing" signal is re-sent while typing, and how long after the last keystroke we say "stopped". */
 const TYPING_SEND_MS = 3_000;
 const TYPING_IDLE_MS = 4_000;
+/** A conversation that has been quiet this long is cleared from the screen (the server also starts a fresh one). */
+const CHAT_IDLE_MS = 10 * 60_000;
 
 type Pending = { id: string; text: string; authorName: string };
 
@@ -129,6 +131,14 @@ export function AssistantChat({ accountId, accountName }: { accountId: string; a
     }
   };
   useEffect(() => () => clearTimeout(idle.current), []);
+
+  /** Ten quiet minutes after the last line, the conversation is over: clear it. */
+  useEffect(() => {
+    const clearIfIdle = () => setMessages((cur) => (cur.length && Date.now() - Date.parse(cur[cur.length - 1].at) > CHAT_IDLE_MS ? [] : cur));
+    clearIfIdle();
+    const timer = setInterval(clearIfIdle, 15_000);
+    return () => clearInterval(timer);
+  }, [messages]);
 
   useEffect(() => {
     if (box.current) box.current.scrollTop = box.current.scrollHeight;

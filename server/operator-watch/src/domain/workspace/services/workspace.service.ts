@@ -98,6 +98,8 @@ export interface OwnerWeekStats {
 const CHAT_HISTORY_LIMIT = 200;
 /** Chat lines handed to the assistant with each question. */
 const CHAT_HISTORY = 20;
+/** A chat that has been quiet this long is over: the next question starts a fresh conversation (the old lines stay stored). */
+export const CHAT_IDLE_MS = 10 * 60_000;
 /** The chat waits at most this long for the SeatOS operator id; a slow directory must not delay the answer. */
 const LINK_WAIT_MS = 3000;
 /** Bodies in agent notes are truncated: the agent needs the gist of an edit, not a full copy. */
@@ -446,7 +448,7 @@ export class WorkspaceService {
       return { connected: false, messages: [this.chatLine(operatorId, 'assistant', SYSTEM_AUTHOR, "The assistant isn't connected yet. Once a model is connected here, it will answer using this account's data.")] };
     }
     // The shared thread so far, oldest first, so an agent without its own session memory can follow the conversation.
-    const history = (await this.store.chatMessages(operatorId, CHAT_HISTORY)).map((m) => ({ role: m.role, text: m.role === 'user' ? `${m.authorName}: ${m.text}` : m.text }));
+    const history = currentChat(await this.store.chatMessages(operatorId, CHAT_HISTORY), this.clock.now().getTime()).map((m) => ({ role: m.role, text: m.role === 'user' ? `${m.authorName}: ${m.text}` : m.text }));
     const asked = this.chatLine(operatorId, 'user', asker, question);
     await this.store.insertChatMessage(asked);
     this.chatEvents?.publish(operatorId, { type: 'message', message: asked });
@@ -504,7 +506,7 @@ export class WorkspaceService {
   /** The shared chat thread for an operator, oldest first. */
   async conversation(operatorId: string): Promise<{ sessionId: string | null; messages: ChatMessage[] }> {
     await this.get(operatorId);
-    return { sessionId: this.assistant.sessionId?.(operatorId) ?? null, messages: await this.store.chatMessages(operatorId, CHAT_HISTORY_LIMIT) };
+    return { sessionId: this.assistant.sessionId?.(operatorId) ?? null, messages: currentChat(await this.store.chatMessages(operatorId, CHAT_HISTORY_LIMIT), this.clock.now().getTime()) };
   }
 
   private chatLine(operatorId: string, role: ChatMessage['role'], author: Actor, text: string): ChatMessage {
@@ -682,3 +684,19 @@ export function accountContext(v: AccountDetailView): AccountContext {
 }
 
 export { PLAY_OUTBOX };
+
+/**
+ * The conversation that is still going: the newest lines, back to the first gap longer than CHAT_IDLE_MS. When the newest
+ * line is itself older than that, the conversation has ended and nothing is shown or sent to the assistant.
+ */
+export function currentChat<T extends { at: string }>(messages: readonly T[], now: number): T[] {
+  let next = now;
+  let start = messages.length;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const at = Date.parse(messages[i].at);
+    if (next - at > CHAT_IDLE_MS) break;
+    next = at;
+    start = i;
+  }
+  return messages.slice(start);
+}
