@@ -9,7 +9,7 @@ interface AuthedRequest { user?: AuthenticatedUser }
 /** 2 MB of CSV is ~15k operators; anything larger is not one of these exports. */
 const MAX_CSV = 2_000_000;
 
-/** Weekly uploads (Settings → Weekly data): Looker usage table and tickets/GMV, plus hand-made name matches. */
+/** Weekly uploads (Settings → Weekly data): Looker usage table and tickets, plus hand-made name matches. */
 @Controller('admin/weekly-data')
 @UseGuards(SessionGuard, RbacGuard, JsonRequestGuard)
 @RequirePermission('admin:settings')

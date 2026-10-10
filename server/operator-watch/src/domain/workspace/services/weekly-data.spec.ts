@@ -43,7 +43,7 @@ describe('weekly data parsing', () => {
     expect(rows[2].featureCount).toBe(0);
   });
 
-  it('parses tickets and GMV, rounding GMV to cents', () => {
+  it('parses tickets; a GMV column is read (rounded to cents) when present', () => {
     expect(parseTicketsCsv(TICKETS)).toEqual([
       { operatorName: 'Alpha Ferry', gmvUsd: 70311.22, tickets: 5327 },
       { operatorName: 'Charlie Bus', gmvUsd: 1233.85, tickets: 151 },
@@ -54,6 +54,7 @@ describe('weekly data parsing', () => {
   it('says which column is missing or which value is wrong', () => {
     expect(() => parseUsageCsv('Week,Operator name\n"Oct 5, 2026",X\n')).toThrow(/missing column\(s\): inventory_management/);
     expect(() => parseTicketsCsv('operator_name,GMV\nX,1\n')).toThrow(/Tickets Actual/);
+    expect(parseTicketsCsv('operator_name,Tickets Actual\nX,7\n')).toEqual([{ operatorName: 'X', gmvUsd: 0, tickets: 7 }]); // GMV not needed
     expect(() => parseTicketsCsv('operator_name,GMV,Tickets Actual\nX,abc,1\n')).toThrow(/GMV for "X" is not a number/);
     expect(() => parseTicketsCsv('')).toThrow(/empty/);
   });

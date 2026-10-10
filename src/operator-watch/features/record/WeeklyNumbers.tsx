@@ -13,7 +13,7 @@ const SHORT: Record<Feature, string> = {
 };
 const FEATURES = Object.keys(SHORT) as Feature[];
 
-/** The weekly Looker uploads for this operator: features used (WAO) and tickets/GMV, newest first. */
+/** The weekly Looker uploads for this operator: features used (WAO) and tickets, newest first. */
 export function WeeklyNumbers({ accountId }: { accountId: string }) {
   const { data, isPending, error } = useQuery({ queryKey: ['workspace', 'weekly', accountId], queryFn: () => workspaceApi.weekly(accountId), staleTime: 60_000 });
   // The two newest weeks that carry per-feature detail (BigQuery sync): what it uses now and what changed.
@@ -41,7 +41,6 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
               <th>WAO</th>
               <th>Features</th>
               <th style={{ textAlign: 'right' }}>Tickets</th>
-              <th style={{ textAlign: 'right' }}>GMV</th>
             </tr>
           </thead>
           <tbody>
@@ -56,7 +55,6 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
                   </td>
                   <td title={u ? FEATURES.filter((f) => u.features[f]).join(', ') : undefined}>{u ? FEATURES.filter((f) => u.features[f]).map((f) => SHORT[f]).join(' ') || 'none' : '—'}</td>
                   <td style={{ textAlign: 'right' }}>{t ? t.tickets.toLocaleString() : '—'}</td>
-                  <td style={{ textAlign: 'right' }}>{t ? `$${Math.round(t.gmvUsd).toLocaleString()}` : '—'}</td>
                 </tr>
               );
             })}

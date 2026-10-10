@@ -105,7 +105,7 @@ describe('Weekly data HTTP integration', () => {
 
     const weekly = (await call('GET', `/workspace/accounts/${target.id}/weekly`, 'viewer')).json();
     expect(weekly.usage).toEqual([expect.objectContaining({ week: '2026-10-05', featureCount: 7, operatorName: 'Unknown Ferry Co' })]);
-    expect(weekly.tickets).toEqual([expect.objectContaining({ week: '2026-10-05', tickets: 2, gmvUsd: 10 })]);
+    expect(weekly.tickets).toEqual([expect.objectContaining({ week: '2026-10-05', tickets: 2 })]);
 
     // Next week the same name matches by itself.
     const next = await call('POST', '/admin/weekly-data', 'admin', { kind: 'tickets', week: '2026-10-12', csv: 'operator_name,GMV,Tickets Actual\nUnknown Ferry Co,20,4\n' });
@@ -119,7 +119,8 @@ describe('Weekly data HTTP integration', () => {
 
     const numbers = await mcp('get_weekly_numbers', { operator_id: a.id });
     expect(numbers.usage[0]).toMatchObject({ week: '2026-10-05', featureCount: 3 });
-    expect(numbers.tickets[0]).toMatchObject({ tickets: 321, gmvUsd: 1234.57 });
+    expect(numbers.tickets[0]).toMatchObject({ tickets: 321 });
+    expect(numbers.tickets[0]).not.toHaveProperty('gmvUsd');
 
     const week = await mcp('list_weekly_numbers', { kind: 'tickets', week: '2026-10-05' });
     expect(week.rows.map((r: { tickets: number }) => r.tickets)).toEqual([321, 2]);

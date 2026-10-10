@@ -3,7 +3,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod/v4';
 import { Actor, CRM_ACTIVITY_TYPES, CrmActivity } from '../../domain/workspace/entities/workspace.entities';
 import { WorkspaceSettings } from '../../domain/workspace/services/settings';
-import type { UsageWithFeatures } from '../../domain/workspace/services/weekly-data.service';
+import type { TicketsView, UsageWithFeatures } from '../../domain/workspace/services/weekly-data.service';
 import {
   AccountAssistant,
   AccountContext,
@@ -15,7 +15,6 @@ import {
   ChatTurn,
   EmailRewriter,
   RunStartedEvent,
-  WeeklyTicketRecord,
 } from '../../domain/workspace/types/repositories/workspace.ports';
 import { buildOperatorBrief } from '../hermes/operator-chat/operator-chat.brief';
 import { renderHermesEvent } from '../hermes/hermes-agent.notifier';
@@ -29,8 +28,8 @@ export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
 
 /** Uploaded weekly numbers (WeeklyDataService). */
 export interface WeeklyLookup {
-  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: WeeklyTicketRecord[] }>;
-  week(kind: 'usage' | 'tickets', week?: string): Promise<(UsageWithFeatures | WeeklyTicketRecord)[]>;
+  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[] }>;
+  week(kind: 'usage' | 'tickets', week?: string): Promise<(UsageWithFeatures | TicketsView)[]>;
 }
 
 /** Chat turns kept in the prompt; older ones live on in memory. */
@@ -140,7 +139,7 @@ export class ClaudeAccountAssistant implements AccountAssistant {
             name: 'get_weekly_numbers',
             description:
               "One operator's weekly SeatOS numbers uploaded by the team, newest week first: WAO (features used of 7, and which), " +
-              'tickets sold and GMV in USD. Defaults to the operator this chat is about.',
+              'tickets sold. Defaults to the operator this chat is about.',
             inputSchema: z.object({
               operator_id: z.string().optional().describe('Only when a user explicitly asks about a different operator'),
               weeks: z.number().int().min(1).max(52).optional().describe('How many weeks back (default 8)'),
@@ -154,7 +153,7 @@ export class ClaudeAccountAssistant implements AccountAssistant {
             name: 'list_weekly_numbers',
             description:
               'Every operator in one uploaded week, for rankings and comparisons: kind "usage" (WAO, sorted high to low) or "tickets" ' +
-              '(tickets and GMV in USD, sorted high to low). Defaults to the latest uploaded week.',
+              '(tickets sold, sorted high to low). Defaults to the latest uploaded week.',
             inputSchema: z.object({
               kind: z.enum(['usage', 'tickets']),
               week: z.string().optional().describe('Monday of the week, YYYY-MM-DD'),
@@ -166,7 +165,7 @@ export class ClaudeAccountAssistant implements AccountAssistant {
                 return JSON.stringify(
                   rows.map((r) =>
                     'tickets' in r
-                      ? { week: r.week, operator: r.operatorName, operator_id: r.accountId, tickets: r.tickets, gmv_usd: r.gmvUsd }
+                      ? { week: r.week, operator: r.operatorName, operator_id: r.accountId, tickets: r.tickets }
                       : { week: r.week, operator: r.operatorName, operator_id: r.accountId, wao: r.featureCount },
                   ),
                 );

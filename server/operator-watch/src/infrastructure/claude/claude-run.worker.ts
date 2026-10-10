@@ -3,8 +3,8 @@ import { z } from 'zod/v4';
 import { LANGUAGES } from '../../domain/workspace/entities/workspace.entities';
 import { CaseStateError } from '../../domain/workspace/errors/workspace.errors';
 import { CaseSubmission, RunService } from '../../domain/workspace/services/run.service';
-import type { UsageWithFeatures } from '../../domain/workspace/services/weekly-data.service';
-import { AgentJob, AgentJobQueue, CrmActivitySource, WeeklyTicketRecord, WorkspaceStore } from '../../domain/workspace/types/repositories/workspace.ports';
+import type { TicketsView, UsageWithFeatures } from '../../domain/workspace/services/weekly-data.service';
+import { AgentJob, AgentJobQueue, CrmActivitySource, WorkspaceStore } from '../../domain/workspace/types/repositories/workspace.ports';
 import { MAX_ATTEMPTS } from '../database/pg-agent.store';
 import { CLAUDE_AUTHOR } from './claude.agent';
 import { ClaudeLike } from './claude.client';
@@ -25,7 +25,7 @@ const WEEKS_FOR_CASE = 6;
 
 /** Uploaded weekly numbers for one account (WeeklyDataService). */
 export interface WeeklyNumbers {
-  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: WeeklyTicketRecord[] }>;
+  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[] }>;
 }
 
 /** The case Claude returns for one operator: the submit_case contract the Hermes skill used. */

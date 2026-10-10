@@ -45,7 +45,7 @@ Base every statement on the data you are given. Never invent numbers, bookings, 
 - The team's memory lists earlier decisions on this operator and team-wide lessons (rejections and their reasons, how
   people edited drafts). Follow them.
 - The message also carries the operator's weekly SeatOS numbers uploaded by the team (newest first): WAO = how
-  many of the 7 features it used that week, which ones, and tickets sold and GMV (USD). When a week lists "features
+  many of the 7 features it used that week, which ones, and tickets sold. When a week lists "features
   used", those are the actual SeatOS features (e.g. Booking List, Route Management) with event counts and active days;
   compare weeks to see what it started or stopped using, and tie the next step to a feature it does not use yet. Use the trend (rising,
   falling, stopped) as evidence; an operator with no ticket row sold nothing that week. Never invent numbers that
@@ -78,7 +78,7 @@ Focus
 Facts
 - Each question comes with a "Context" block: the current CRM/workspace picture. Prefer it over memory when they differ.
 - For more (previous cases, the workspace activity log, the current email draft) call get_operator_context.
-- Weekly SeatOS numbers the team uploads (WAO feature usage of 7 features, tickets sold, GMV in USD, per week) come
+- Weekly SeatOS numbers the team uploads (WAO feature usage of 7 features, tickets sold, per week) come
   from get_weekly_numbers (one operator, several weeks) and list_weekly_numbers (every operator in one week, for
   rankings and comparisons). Say which week a number is for.
 - What was discussed with the operator — HubSpot notes, meetings (with their notes), calls, emails, tasks and logged
@@ -192,7 +192,7 @@ export function formatActivity(items: readonly { type: string; at: string; title
 /** Uploaded weekly SeatOS numbers for one operator, newest week first. */
 export function formatWeekly(data: {
   usage: readonly { week: string; featureCount: number; features: Readonly<Record<string, boolean>>; featureUsage?: readonly { name: string; events: number; days: number }[] }[];
-  tickets: readonly { week: string; tickets: number; gmvUsd: number }[];
+  tickets: readonly { week: string; tickets: number }[];
 }): string {
   const weeks = [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week)])].sort().reverse();
   if (!weeks.length) return 'No weekly SeatOS numbers uploaded for this operator.';
@@ -202,7 +202,7 @@ export function formatWeekly(data: {
       const t = data.tickets.find((x) => x.week === w);
       const used = u ? Object.entries(u.features).filter(([, on]) => on).map(([f]) => f.replace('_management', '')).join(', ') : '';
       const detail = u?.featureUsage?.length ? `\n  features used: ${u.featureUsage.slice(0, 12).map((f) => `${f.name} ${f.events} events/${f.days}d`).join(', ')}` : '';
-      return `- week of ${w}: ${u ? `WAO ${u.featureCount}/7 (${used || 'no features used'})` : 'no usage row'}; ${t ? `${t.tickets} tickets, GMV $${t.gmvUsd.toFixed(2)}` : 'no ticket row (no sales recorded)'}${detail}`;
+      return `- week of ${w}: ${u ? `WAO ${u.featureCount}/7 (${used || 'no features used'})` : 'no usage row'}; ${t ? `${t.tickets} tickets` : 'no ticket row (no sales recorded)'}${detail}`;
     })
     .join('\n');
 }

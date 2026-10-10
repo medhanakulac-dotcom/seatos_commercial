@@ -168,7 +168,7 @@ export class WorkspaceController {
     return this.detail(id);
   }
 
-  /** Uploaded weekly numbers for the account: feature usage (WAO) and tickets/GMV, newest week first. */
+  /** Uploaded weekly numbers for the account: feature usage (WAO) and tickets, newest week first. */
   @Get('accounts/:id/weekly')
   weekly(@Param('id', AccountIdPipe) id: string) {
     return this.weeklyData.forAccount(id);

@@ -34,10 +34,13 @@ export interface UsageWithFeatures extends Omit<WeeklyUsageRecord, 'featureUsage
   readonly featureUsage: { code: string; name: string; module: string; events: number; days: number }[];
 }
 
+/** A weekly tickets row as people and agents see it (GMV is stored for old uploads but no longer reported). */
+export type TicketsView = Omit<WeeklyTicketRecord, 'gmvUsd'>;
+
 export const MAX_INGEST_ROWS = 3000;
 
 /**
- * The weekly numbers the team uploads every Sunday night: Looker's feature usage table (WAO) and tickets/GMV.
+ * The weekly numbers the team uploads every Sunday night: Looker's feature usage table (WAO) and tickets.
  * Each operator name is matched to a workspace account (its HubSpot main deal) by normalised name, or by a match a
  * person made once; the match is stored with the row so agents and people can read numbers per account.
  */
@@ -145,15 +148,15 @@ export class WeeklyDataService {
   }
 
   /** The latest `weeks` weeks for one account, newest first. */
-  async forAccount(accountId: string, weeks = 12): Promise<{ usage: UsageWithFeatures[]; tickets: WeeklyTicketRecord[] }> {
+  async forAccount(accountId: string, weeks = 12): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[] }> {
     const [usage, tickets] = await Promise.all([this.store.usageFor(accountId, weeks), this.store.ticketsFor(accountId, weeks)]);
-    return { usage: usage.map(withFeatureNames), tickets };
+    return { usage: usage.map(withFeatureNames), tickets: tickets.map(withoutGmv) };
   }
 
   /** Every operator in one week (the latest when omitted). */
   async week(kind: WeeklyKind, week?: string) {
     const w = week ? parseWeek(week) : undefined;
-    return kind === 'usage' ? (await this.store.usageWeek(w)).map(withFeatureNames) : this.store.ticketsWeek(w);
+    return kind === 'usage' ? (await this.store.usageWeek(w)).map(withFeatureNames) : (await this.store.ticketsWeek(w)).map(withoutGmv);
   }
 
   private result(kind: WeeklyKind, weeks: string[], rows: readonly { operatorName: string; accountId: string | null; nameKey: string }[], match: ReturnType<WeeklyDataService['matcherSync']>): UploadResult {
@@ -200,3 +203,5 @@ function withFeatureNames(r: WeeklyUsageRecord): UsageWithFeatures {
 }
 
 const mondayOfIso = (iso: string): string => mondayOf(new Date(`${iso}T12:00:00Z`), 'UTC');
+
+const withoutGmv = ({ gmvUsd: _gmv, ...rest }: WeeklyTicketRecord): TicketsView => rest;

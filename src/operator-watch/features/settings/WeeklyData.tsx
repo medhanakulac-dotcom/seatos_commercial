@@ -139,7 +139,7 @@ export function WeeklyData({ syncTokenSet }: { syncTokenSet: boolean }) {
         </div>
         <input type="date" value={ticketWeek} onChange={(e) => setTicketWeek(e.target.value)} />
       </div>
-      <Slot n={2} title="Tickets & GMV" hint="Looker → Target vs Actual → Budget vs Actual → Export CSV (GMV in USD)" kind="tickets" week={ticketWeek} onDone={() => undefined} />
+      <Slot n={2} title="Tickets" hint="Looker → Target vs Actual → Budget vs Actual → Export CSV (operator_name and Tickets Actual; GMV is not needed)" kind="tickets" week={ticketWeek} onDone={() => undefined} />
       {data && <Unmatched data={data} />}
       {data?.uploads.length ? (
         <div style={{ marginTop: 14 }}>

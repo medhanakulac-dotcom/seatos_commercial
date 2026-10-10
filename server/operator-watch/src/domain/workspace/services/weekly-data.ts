@@ -139,14 +139,14 @@ export function parseUsageCsv(text: string): { weeks: string[]; rows: (UsageRow 
   return { weeks: [...new Set(out.map((r) => r.week))].sort(), rows: out };
 }
 
-/** "Budget vs Actual" export: operator_name, GMV (USD), Tickets Actual — one week, no date column. */
+/** "Budget vs Actual" export: operator_name and Tickets Actual — one week, no date column. A GMV column is read when present but not used anywhere (the team no longer tracks GMV). */
 export function parseTicketsCsv(text: string): TicketRow[] {
   const rows = parseCsv(text);
-  const cols = header(rows, ['operator_name', 'GMV', 'Tickets Actual'], 'tickets');
+  const cols = header(rows, ['operator_name', 'Tickets Actual'], 'tickets');
   const at = (r: string[], name: string) => r[cols.get(name.toLowerCase())!];
   return rows.slice(1).map((r) => {
     const operatorName = cleanName(at(r, 'operator_name') ?? '');
     if (!operatorName) throw new WeeklyDataError('A row in the tickets file has no operator name');
-    return { operatorName, gmvUsd: Math.round(number(at(r, 'GMV'), 'GMV', operatorName) * 100) / 100, tickets: Math.round(number(at(r, 'Tickets Actual'), 'Tickets', operatorName)) };
+    return { operatorName, gmvUsd: cols.has('gmv') ? Math.round(number(at(r, 'GMV'), 'GMV', operatorName) * 100) / 100 : 0, tickets: Math.round(number(at(r, 'Tickets Actual'), 'Tickets', operatorName)) };
   });
 }

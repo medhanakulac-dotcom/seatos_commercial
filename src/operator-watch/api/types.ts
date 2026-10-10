@@ -309,7 +309,6 @@ export interface WeeklyTickets {
   week: string;
   operatorName: string;
   accountId: string | null;
-  gmvUsd: number;
   tickets: number;
 }
 
