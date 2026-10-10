@@ -26,6 +26,12 @@ describe('weekly data parsing', () => {
     expect(nameKey('PhiPhi Logistic & Tour')).toBe(nameKey('PhiPhi Logistic and tour'));
     expect(nameKey('Tom &amp; Jerry Bus')).toBe(nameKey('Tom and Jerry Bus'));
     expect(legacyNameKey('PhiPhi Logistic & Tour')).toBe('phiphilogistictour');
+    // Company-form words do not count.
+    expect(nameKey('The Tanis Fast Cruise')).toBe(nameKey('Tanis Fast Cruise'));
+    expect(nameKey('Kevinjohn Transport Services Inc')).toBe(nameKey('Kevinjohn Transport Services'));
+    expect(nameKey('Sri Racha Tour Ltd')).toBe(nameKey('Sriracha Tour'));
+    expect(nameKey('PT Wijaya Tramena')).toBe(nameKey('Wijaya Tramena'));
+    expect(nameKey('Smile on Corner Company Limited')).toBe('smileoncorner');
   });
 
   it('reads Looker week labels and finds the Monday of a week in Bangkok time', () => {

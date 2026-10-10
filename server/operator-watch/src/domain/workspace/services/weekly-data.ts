@@ -81,15 +81,21 @@ export function cleanName(raw: string): string {
     .trim();
 }
 
+/** Company-form words that differ between systems ("Tanis Fast Cruise" / "The Tanis Fast Cruise", "Kevinjohn Transport Services Inc"). */
+const COMPANY_WORDS = new Set(['the', 'inc', 'ltd', 'limited', 'co', 'company', 'llc', 'pt', 'cv']);
+
 /**
- * The matching key: lower case, letters (with their marks) and digits only ("PhiPhi Cruiser" = "Phi Phi Cruiser"), and
- * "&" counts as "and" ("PhiPhi Logistic & Tour" = "PhiPhi Logistic and Tour").
+ * The matching key: lower case, letters (with their marks) and digits only ("PhiPhi Cruiser" = "Phi Phi Cruiser"),
+ * "&" counts as "and" ("PhiPhi Logistic & Tour" = "PhiPhi Logistic and Tour"), and company-form words are ignored
+ * ("PT Wijaya Tramena" = "Wijaya Tramena", "Sri Racha Tour Ltd" = "Sriracha Tour").
  */
 export function nameKey(name: string): string {
   return cleanName(name)
     .toLowerCase()
     .replace(/&/g, ' and ')
-    .replace(/[^\p{L}\p{M}\p{N}]+/gu, ''); // \p{M} keeps Thai vowel and tone marks
+    .split(/[^\p{L}\p{M}\p{N}]+/u) // \p{M} keeps Thai vowel and tone marks
+    .filter((w) => w && !COMPANY_WORDS.has(w))
+    .join('');
 }
 
 /** The key before "&" meant "and": hand-made links saved under it still apply. */
