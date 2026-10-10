@@ -434,6 +434,8 @@ export interface WeeklyDataStore {
   /** All rows of one week (the latest uploaded week when omitted). */
   usageWeek(week?: string): Promise<WeeklyUsageRecord[]>;
   ticketsWeek(week?: string): Promise<WeeklyTicketRecord[]>;
+  /** The weeks that have tickets data for anyone, newest first: an operator without a row in one of them sold nothing. */
+  ticketWeeks(limit: number): Promise<string[]>;
   /** One entry per uploaded (kind, week), newest first. */
   uploads(limit: number): Promise<WeeklyUpload[]>;
   /** Hand-made matches: name key → account id (null = ignore this name). */

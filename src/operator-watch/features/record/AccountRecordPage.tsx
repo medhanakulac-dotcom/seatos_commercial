@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useAccount, useMeta } from '../../api/queries';
+import { useAccount, useMeta, useZeroTicketIds } from '../../api/queries';
 import type { AccountDetail, CaseEvent } from '../../api/types';
-import { Avatar, HealthTag, SegTag, StateTag } from '../../components/tags';
+import { Avatar, HealthTag, SegTag, StateTag, ZeroTicketTag } from '../../components/tags';
 import { awaitingReview, formatEventTime, formatSendTime, money, ownerName } from '../../lib/format';
 import { LanguageBar } from '../drafts/LanguageBar';
 import { draftBadge, MailHeader, qaLabel } from '../drafts/MailHeader';
@@ -73,6 +73,7 @@ export function AccountRecordPage() {
   const navigate = useNavigate();
   const { data: a, isPending, error } = useAccount(id);
   const { data: meta } = useMeta();
+  const { data: zero } = useZeroTicketIds();
   const generate = useGenerateDraft();
   const generating = useGeneratingIds().has(id);
   const { decide } = useDecision();
@@ -353,6 +354,7 @@ export function AccountRecordPage() {
             <SegTag segment={a.segment} />
             <HealthTag account={a} />
             <StateTag state={a.state} />
+            {zero?.has(a.id) && <ZeroTicketTag />}
           </div>
         </div>
         <div className="row" style={{ marginLeft: 'auto' }}>

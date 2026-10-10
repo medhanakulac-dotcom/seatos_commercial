@@ -206,6 +206,17 @@ describe('Weekly data HTTP integration', () => {
     expect((await call('GET', `/workspace/accounts/${a.id}/weekly`, 'viewer')).json().pricing).toEqual([]);
   });
 
+  it('labels accounts with no tickets in the last two ticket weeks as zero ticket', async () => {
+    const [a, b] = accounts;
+    expect((await call('GET', '/workspace/zero-tickets', 'viewer')).statusCode).toBe(200);
+    const week = '2026-11-02';
+    expect((await ingest({ week, rows: [{ operatorId: 1, operatorName: a.name, tickets: 7 }] }, INGEST_TOKEN, 'weekly-tickets')).statusCode).toBe(200);
+    const zero = (await call('GET', '/workspace/zero-tickets', 'viewer')).json();
+    expect(zero.weeks[0]).toBe(week);
+    expect(zero.accountIds).not.toContain(a.id);
+    expect(zero.accountIds).toContain(b.id);
+  });
+
   it('keeps the sync off until its token is set', async () => {
     const keep = process.env.WEEKLY_INGEST_TOKEN;
     delete process.env.WEEKLY_INGEST_TOKEN;

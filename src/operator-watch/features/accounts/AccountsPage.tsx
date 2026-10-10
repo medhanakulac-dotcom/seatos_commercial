@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { useAccounts, useMeta } from '../../api/queries';
+import { useAccounts, useMeta, useZeroTicketIds } from '../../api/queries';
 import type { AccountSummary, CaseState } from '../../api/types';
 import { DEFAULT_ACCOUNTS, SortKey, useUiState } from '../../app/UiState';
 import { OwnerSelect } from '../../components/OwnerSelect';
-import { Avatar, HealthTag, LangTag, SegTag, StateTag } from '../../components/tags';
+import { Avatar, HealthTag, LangTag, SegTag, StateTag, ZeroTicketTag } from '../../components/tags';
 import { ownerName } from '../../lib/format';
 import { useGenerateDraft, useGeneratingIds } from '../drafts/useDraftActions';
 import { filterAccounts, initialDirection, VIEWS } from './accountFilters';
@@ -23,6 +23,7 @@ const BOARD_COLUMNS: [CaseState, string][] = [
 export function AccountsPage() {
   const { data: accounts, isPending } = useAccounts();
   const { data: meta } = useMeta();
+  const { data: zero } = useZeroTicketIds();
   const { accounts: f, setAccounts: setF } = useUiState();
   const navigate = useNavigate();
   const generate = useGenerateDraft();
@@ -109,6 +110,7 @@ export function AccountsPage() {
                 <td>{a.noSend || a.state === 'closed' ? '—' : a.drafted ? <span className="tg">ready</span> : generateButton(a)}</td>
                 <td>
                   <StateTag state={a.state} />
+                  {zero?.has(a.id) && <ZeroTicketTag style={{ marginLeft: 6 }} />}
                 </td>
               </tr>
             ))
@@ -141,6 +143,7 @@ export function AccountsPage() {
                 </div>
                 <div className="d">{a.playbook}</div>
                 <div className="m">
+                  {zero?.has(a.id) && <ZeroTicketTag />}
                   <SegTag segment={a.segment} />
                   <HealthTag account={a} />
                   {!a.noSend && <LangTag language={a.language} />}

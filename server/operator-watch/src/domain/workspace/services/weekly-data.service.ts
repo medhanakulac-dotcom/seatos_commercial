@@ -238,6 +238,18 @@ export class WeeklyDataService {
     return { usage: usage.map(withFeatureNames), tickets: tickets.map(withoutGmv), usageWeeks, pricing, pricingSyncedAt };
   }
 
+  /**
+   * Accounts that sold no tickets in the last two weeks that have ticket data (the current and the previous week):
+   * the sync only lists operators that sold something, so no row means zero tickets. Empty until ticket data exists, so
+   * nobody is labelled "zero ticket" just because nothing has arrived yet.
+   */
+  async zeroTickets(): Promise<{ weeks: string[]; accountIds: string[] }> {
+    const weeks = await this.store.ticketWeeks(2);
+    if (!weeks.length) return { weeks: [], accountIds: [] };
+    const sold = new Set((await Promise.all(weeks.map((w) => this.store.ticketsWeek(w)))).flat().map((r) => r.accountId));
+    return { weeks, accountIds: (await this.accounts()).filter((a) => !sold.has(a.id)).map((a) => a.id) };
+  }
+
   /** Every operator in one week (the latest when omitted). */
   async week(kind: WeeklyKind, week?: string) {
     const w = week ? parseWeek(week) : undefined;

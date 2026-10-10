@@ -53,6 +53,7 @@ export const workspaceApi = {
   resolveTmsLink: (id: string) => http.post<AccountDetail>(`${account(id)}/tms-link/resolve`, {}),
   conversation: (id: string) => http.get<{ sessionId: string | null; messages: ChatMessage[] }>(`${account(id)}/assistant`),
   crmActivity: (id: string) => http.get<{ connected: boolean; items: CrmActivity[] }>(`${account(id)}/hubspot-activity`),
+  zeroTickets: () => http.get<{ weeks: string[]; accountIds: string[] }>('/workspace/zero-tickets'),
   weekly: (id: string) => http.get<{ usage: WeeklyUsage[]; tickets: WeeklyTickets[]; usageWeeks: string[]; pricing?: WeeklyPricing[]; pricingSyncedAt?: string | null }>(`${account(id)}/weekly`),
   ask: (id: string, question: string) => http.post<{ connected: boolean; messages: ChatMessage[] }>(`${account(id)}/assistant`, { question }),
 };

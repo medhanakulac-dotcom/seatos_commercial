@@ -72,6 +72,10 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
     return (await this.pool.query('select distinct week from weekly_usage order by week desc limit $1', [limit])).rows.map((r) => day(r.week));
   }
 
+  async ticketWeeks(limit: number): Promise<string[]> {
+    return (await this.pool.query('select distinct week from weekly_tickets order by week desc limit $1', [limit])).rows.map((r) => day(r.week));
+  }
+
   async usageWeek(week?: string): Promise<WeeklyUsageRecord[]> {
     return (await this.weekRows('weekly_usage', week, 'feature_count desc, operator_name')).map(toUsage);
   }

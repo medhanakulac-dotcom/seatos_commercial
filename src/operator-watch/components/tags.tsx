@@ -17,6 +17,13 @@ export const StateTag = ({ state, style }: { state: CaseState; style?: React.CSS
   </span>
 );
 
+/** Shown on accounts that sold no tickets in the last two weeks. */
+export const ZeroTicketTag = ({ style }: { style?: React.CSSProperties }) => (
+  <span className="tg zero" title="No tickets sold in the last two weeks" style={style}>
+    Zero ticket
+  </span>
+);
+
 export const LangTag = ({ language, title }: { language: Language; title?: string }) => (
   <span className="tg llm" title={title}>
     {language.toUpperCase()}

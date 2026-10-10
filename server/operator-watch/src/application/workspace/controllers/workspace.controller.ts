@@ -168,6 +168,12 @@ export class WorkspaceController {
     return this.detail(id);
   }
 
+  /** Accounts with no tickets sold in the last two weeks of ticket data (the "zero ticket" label). */
+  @Get('zero-tickets')
+  zeroTickets() {
+    return this.weeklyData.zeroTickets();
+  }
+
   /** Uploaded weekly numbers for the account: feature usage (WAO) and tickets, newest week first. */
   @Get('accounts/:id/weekly')
   weekly(@Param('id', AccountIdPipe) id: string) {
