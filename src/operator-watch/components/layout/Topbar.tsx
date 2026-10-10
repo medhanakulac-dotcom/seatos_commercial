@@ -6,11 +6,10 @@ import { GlobalSearch } from './GlobalSearch';
 export function Topbar() {
   const { data: accounts = [] } = useAccounts();
   const { data: meta } = useMeta();
-  const { accounts: filters, setAccounts, setApprovals } = useUiState();
+  const { accounts: filters, setAccounts } = useUiState();
   const owner = filters.owner;
   const setOwner = (v: string) => {
     setAccounts((f) => ({ ...f, owner: v }));
-    setApprovals((f) => ({ ...f, owner: v }));
   };
 
   return (

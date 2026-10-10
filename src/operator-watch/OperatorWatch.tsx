@@ -8,9 +8,6 @@ import './styles/operator-watch.css';
 export const OW_PAGES = {
   home: '/',
   accounts: '/accounts',
-  approvals: '/approvals',
-  sent: '/sent',
-  leader: '/leader',
   settings: '/settings',
 } as const;
 

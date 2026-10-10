@@ -17,42 +17,30 @@ const accounts: AccountSummary[] = [
 const names = (list: AccountSummary[]) => list.map((a) => a.name);
 
 describe('filterAccounts', () => {
-  it('shows open cases by default, sorted by priority', () => {
-    expect(DEFAULT_ACCOUNTS.view).toBe('open');
-    expect(names(filterAccounts(accounts, DEFAULT_ACCOUNTS))).toEqual(['Alpha', 'Bravo', 'Charlie']);
-    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all' }))).toEqual(['Alpha', 'Delta', 'Bravo', 'Charlie']);
+  it('shows every account by default, sorted by priority', () => {
+    expect(DEFAULT_ACCOUNTS.view).toBe('all');
+    expect(names(filterAccounts(accounts, DEFAULT_ACCOUNTS))).toEqual(['Alpha', 'Delta', 'Bravo', 'Charlie']);
   });
 
   it('filters zero ticket accounts and combines it with the other filters', () => {
     const zero = { zero: new Set(['D-2', 'D-4']) };
     expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all', tickets: 'zero' }, zero))).toEqual(['Delta', 'Bravo']);
-    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, tickets: 'zero' }, zero))).toEqual(['Bravo']); // open cases only
+    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'unhealthy', tickets: 'zero' }, zero))).toEqual(['Bravo']);
     expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all', tickets: 'has' }, zero))).toEqual(['Alpha', 'Charlie']);
     // Until the ticket data has loaded the filter cannot tell, so "zero" shows nothing rather than everything.
     expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all', tickets: 'zero' }))).toEqual([]);
   });
 
-  it('has a filter for closed cases', () => {
-    const withClosed = [...accounts, { ...base, id: 'D-5', name: 'Echo', state: 'closed' as const, drafted: false, priority: 5 }];
-    expect(names(filterAccounts(withClosed, { ...DEFAULT_ACCOUNTS, view: 'closed' }))).toEqual(['Echo']);
-    expect(names(filterAccounts(withClosed, DEFAULT_ACCOUNTS))).not.toContain('Echo');
-  });
-
   it('applies the saved views', () => {
-    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'approval' }))).toEqual(['Alpha']);
     expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'reactive' }))).toEqual(['Charlie']);
     expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'healthy' }))).toEqual(['Delta']);
     // Dormant accounts are never "Unhealthy" in the view, even though their CRM health is.
     expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'unhealthy' }))).toEqual(['Alpha', 'Bravo']);
   });
 
-  it('filters unassigned owners and searches case ids', () => {
+  it('filters unassigned owners and searches by name', () => {
     expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, owner: UNASSIGNED }))).toEqual(['Bravo']);
-    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, q: 'w40-0001' }))).toEqual(['Alpha', 'Bravo', 'Charlie']);
-  });
-
-  it('only matches languages on accounts that send email', () => {
-    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, lang: 'th' }))).toEqual(['Alpha', 'Bravo']);
+    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, q: 'brav' }))).toEqual(['Bravo']);
   });
 
   it('starts name columns ascending and others descending', () => {

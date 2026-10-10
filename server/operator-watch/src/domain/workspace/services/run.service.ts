@@ -110,7 +110,7 @@ export class RunService {
     const settings = await this.settings.get();
     if (!settings.pipeline.enabled) return null;
     const now = this.clock.now();
-    const period = currentPeriod(now, settings.pipeline);
+    const period = currentPeriod(now, pipelineFor(settings.pipeline));
     if (now.getTime() - period.opensAt.getTime() > CATCH_UP_MS) return null;
     if (await this.store.runForPeriod(period.key)) return null;
     return this.startRun('schedule', 'scheduler');
@@ -128,7 +128,7 @@ export class RunService {
     const nowIso = now.toISOString();
     const period =
       trigger === 'schedule'
-        ? currentPeriod(now, settings.pipeline)
+        ? currentPeriod(now, pipelineFor(settings.pipeline))
         : { key: `manual:${nowIso}`, label: `${manualLabel(now, settings.pipeline.timezone)} (manual)` };
     if (trigger === 'schedule' && (await this.store.runForPeriod(period.key))) return null;
 
@@ -146,7 +146,7 @@ export class RunService {
       label: period.label,
       trigger,
       status: 'running',
-      agent: settings.agent.mode,
+      agent: casesEnabled() ? settings.agent.mode : PLAYBOOK_AGENT,
       playbookVersion: settings.agent.playbookVersion || null,
       snapshotId: snapshot.id,
       summary: null,
@@ -181,7 +181,11 @@ export class RunService {
     const tmsIds = await this.operatorLinks?.linkedIds(snapshot.accounts.map((a) => a.id)).catch(() => new Map<string, number>());
 
     try {
-      if (run.agent === 'local') await this.runLocalAgent(run, snapshot);
+      if (run.agent === PLAYBOOK_AGENT) {
+        // No cases, drafts or assessments: the fresh HubSpot snapshot is the update. Each account's playbook is derived
+        // from its segment and health in that snapshot (playbook.rules.ts).
+        await this.completeRun(run.id, `Playbook status updated for ${snapshot.accounts.length} accounts`);
+      } else if (run.agent === 'local') await this.runLocalAgent(run, snapshot);
       else {
         const dispatch = await this.agent.trigger(
           {
@@ -361,6 +365,17 @@ export class RunService {
 }
 
 class DuplicatePeriod extends Error {}
+
+/** The run only refreshes each account's playbook status: no cases, assessments or drafts. */
+const PLAYBOOK_AGENT = 'playbook';
+
+/**
+ * Case workflow (agent assessments, drafts, approvals) is retired. OW_CASES=on brings it back; the tests of that
+ * workflow set it. Without it every run only updates playbook status, every Monday, whatever cadence an older settings
+ * row still carries.
+ */
+const casesEnabled = (): boolean => process.env.OW_CASES === 'on';
+const pipelineFor = (pipeline: WorkspaceSettings['pipeline']): WorkspaceSettings['pipeline'] => (casesEnabled() ? pipeline : { ...pipeline, cadence: 'weekly', weekday: 1 });
 
 function guardReason(settings: WorkspaceSettings, dormant: boolean, health: string): string | null {
   if (dormant && settings.guards.blockDormant) return 'Dormant accounts are reactive only';

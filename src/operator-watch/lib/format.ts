@@ -19,12 +19,6 @@ export const pct = (a: number, b: number): number => (b ? Math.round((a / b) * 1
 
 export const HEALTH_COLORS: Record<Health, string> = { Unhealthy: '#cc3f6e', Adopted: '#c98a2b', Healthy: '#3f9a5b' };
 
-/** Case is drafted and waiting for a human decision (the approval queue). */
-export const awaitingReview = (a: Pick<AccountSummary, 'state' | 'drafted'>): boolean => a.state === 'pending' && a.drafted;
-
-/** Cases that belong in the review queue at all (anything with a draft that isn't closed). */
-export const inReview = (a: AccountSummary): boolean => !a.noSend && a.drafted && a.state !== 'closed';
-
 export const byPriority = (a: AccountSummary, b: AccountSummary): number => a.priority - b.priority || a.name.localeCompare(b.name);
 
 /** Owners ordered by how many accounts they hold, most first. */

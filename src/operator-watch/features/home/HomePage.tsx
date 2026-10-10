@@ -2,12 +2,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAccounts, useMe, useMeta, useWao, useZeroTicketIds } from '../../api/queries';
 import { Avatar, HealthTag, SegTag, ZeroTicketTag } from '../../components/tags';
 import { useUiState } from '../../app/UiState';
-import { awaitingReview, byPriority, greeting, ownerKey, ownerName } from '../../lib/format';
+import { greeting, ownerKey, ownerName } from '../../lib/format';
 import { FeatureUsageCard } from './FeatureUsageCard';
 import { PlaybookGuide } from './PlaybookGuide';
 import { PlaybookMatrix } from './PlaybookMatrix';
 
-const RUN_AGENT: Record<string, string> = { claude: 'assessed by Claude', hermes: 'assessed by Hermes', local: 'assessed by the built-in playbook' };
 export function HomePage() {
   const { data: allAccounts, isPending } = useAccounts();
   const { data: meta } = useMeta();
@@ -27,17 +26,12 @@ export function HomePage() {
   const rescueCount = rescueAccounts.length;
   // No tickets first, then by priority and signals, never just alphabetical.
   const rescue = [...rescueAccounts].sort((a, b) => Number(zero?.has(b.id) ?? false) - Number(zero?.has(a.id) ?? false) || a.priority - b.priority || b.signalCount - a.signalCount || a.name.localeCompare(b.name));
-  const top = [...accounts].sort(byPriority);
-  const pending = top.filter(awaitingReview);
-  // Needs attention: open cases ranked by priority, and within the same priority the ones with no tickets first, then
-  // the ones with the most signals (never just alphabetical).
-  const OPEN = ['pending', 'approved', 'hold', 'rejected', 'reactive'];
-  const attention = accounts
-    .filter((a) => OPEN.includes(a.state))
+  // Needs attention: by priority, and within the same priority the ones with no tickets first, then the ones with
+  // the most signals (never just alphabetical).
+  const attention = [...accounts]
     .sort((a, b) => a.priority - b.priority || Number(zero?.has(b.id) ?? false) - Number(zero?.has(a.id) ?? false) || b.signalCount - a.signalCount || a.name.localeCompare(b.name))
     .slice(0, 5);
   const open = (id: string) => navigate(`/accounts/${id}`);
-  const review = (id: string) => navigate(`/approvals?case=${encodeURIComponent(id)}`);
 
   const kpi = (label: string, tag: string, n: number | string, detail: string, cls: string, onClick: () => void) => (
     <div className={`card click ${cls}`} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onClick()}>
@@ -64,7 +58,7 @@ export function HomePage() {
             {greeting()}, {me?.name.split(' ')[0]}
           </h1>
           <div className="sub">
-            Run {meta.week.current}{meta.run ? ` · ${RUN_AGENT[meta.run.agent] ?? `assessed by ${meta.run.agent}`}${meta.run.status === 'running' ? ' (in progress)' : ''}` : ''} · {pending.length} draft{pending.length === 1 ? '' : 's'} waiting for your approval
+            Playbook status is updated every Monday{meta.run ? ` · last update ${meta.run.label}` : ''}
           </div>
         </div>
       </div>
@@ -80,44 +74,9 @@ export function HomePage() {
         <div className="grid" style={{ gap: 18 }}>
           <div className="card">
             <h2 className="st">
-              <span>My tasks · review drafts</span>
-              <button className="b tlb" onClick={() => navigate('/approvals')}>
-                Open Approvals →
-              </button>
-            </h2>
-            {pending.length ? (
-              <>
-                {pending.slice(0, 8).map((a) => (
-                  <div className="task" key={a.id}>
-                    <Avatar name={a.name} />
-                    <div className="grow">
-                      <b>{a.name}</b>
-                      <span className="d">
-                        {a.playbook} · {meta.languages[a.language]} · owner {ownerName(a.owner)}
-                      </span>
-                    </div>
-                    <button className="b pri" onClick={() => review(a.id)}>
-                      Review
-                    </button>
-                  </div>
-                ))}
-                {pending.length > 8 && (
-                  <div className="d" style={{ padding: '12px 4px' }}>
-                    + {pending.length - 8} more in Approvals
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="d" style={{ padding: '16px 0' }}>
-                All caught up — nothing waiting.
-              </div>
-            )}
-          </div>
-          <div className="card">
-            <h2 className="st">
               <span>Needs attention</span>
               <button className="b tlb" onClick={() => navigate('/accounts')}>
-                All open cases →
+                All accounts →
               </button>
             </h2>
             {attention.length ? (
@@ -138,7 +97,7 @@ export function HomePage() {
                 </div>
               ))
             ) : (
-              <div className="d">No open cases in view.</div>
+              <div className="d">No accounts in view.</div>
             )}
           </div>
         </div>

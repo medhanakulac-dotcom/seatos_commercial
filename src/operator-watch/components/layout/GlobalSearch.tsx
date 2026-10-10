@@ -19,7 +19,7 @@ export function GlobalSearch() {
 
   const needle = q.trim().toLowerCase();
   const matches = needle
-    ? accounts.filter((a) => `${a.name} ${a.id} ${a.caseId ?? ''} ${a.owner ?? ''}`.toLowerCase().includes(needle))
+    ? accounts.filter((a) => `${a.name} ${a.id} ${a.owner ?? ''}`.toLowerCase().includes(needle))
     : [];
 
   const go = (id: string) => {
@@ -51,7 +51,7 @@ export function GlobalSearch() {
           matches.map((a) => (
             <div key={a.id} className="it" onClick={() => go(a.id)}>
               <span>
-                <b>{a.name}</b> <span className="d">{a.caseId ?? a.id}</span>
+                <b>{a.name}</b> <span className="d">{a.id}</span>
               </span>
               <span className="d">{a.playbook}</span>
             </div>

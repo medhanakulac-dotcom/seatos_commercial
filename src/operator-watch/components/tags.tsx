@@ -1,4 +1,4 @@
-import type { AccountSummary, CaseState, Language, Segment } from '../api/types';
+import type { AccountSummary, Segment } from '../api/types';
 import { initials } from '../lib/format';
 
 export const SegTag = ({ segment, style }: { segment: Segment; style?: React.CSSProperties }) => (
@@ -11,22 +11,10 @@ export const SegTag = ({ segment, style }: { segment: Segment; style?: React.CSS
 export const HealthTag = ({ account }: { account: Pick<AccountSummary, 'dormant' | 'health'> }) =>
   account.dormant ? <span className="tg">Reactive</span> : <span className={`hl ${account.health}`}>{account.health}</span>;
 
-export const StateTag = ({ state, style }: { state: CaseState; style?: React.CSSProperties }) => (
-  <span className={`tg st ${state}`} style={style}>
-    {state.replace('_', ' ')}
-  </span>
-);
-
 /** Shown on accounts that sold no tickets in the last two weeks. */
 export const ZeroTicketTag = ({ style }: { style?: React.CSSProperties }) => (
   <span className="tg zero" title="No tickets sold in the last two weeks" style={style}>
     Zero ticket
-  </span>
-);
-
-export const LangTag = ({ language, title }: { language: Language; title?: string }) => (
-  <span className="tg llm" title={title}>
-    {language.toUpperCase()}
   </span>
 );
 

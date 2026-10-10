@@ -1,35 +1,20 @@
 import { useNavigate } from 'react-router-dom';
-import { useAccounts, useMeta, useZeroTicketIds } from '../../api/queries';
-import type { AccountSummary, CaseState } from '../../api/types';
+import { useAccounts, useZeroTicketIds } from '../../api/queries';
 import { DEFAULT_ACCOUNTS, SortKey, useUiState } from '../../app/UiState';
 import { OwnerSelect } from '../../components/OwnerSelect';
-import { Avatar, HealthTag, LangTag, SegTag, StateTag, ZeroTicketTag } from '../../components/tags';
+import { Avatar, HealthTag, SegTag, ZeroTicketTag } from '../../components/tags';
 import { ownerName } from '../../lib/format';
-import { useGenerateDraft, useGeneratingIds } from '../drafts/useDraftActions';
 import { filterAccounts, initialDirection, VIEWS } from './accountFilters';
 
 const SEGMENTS = ['High', 'Mid', 'Low', 'Dormant'];
 const HEALTHS = ['Unhealthy', 'Adopted', 'Healthy'];
-const BOARD_COLUMNS: [CaseState, string][] = [
-  ['pending', 'To review'],
-  ['approved', 'Approved'],
-  ['hold', 'On hold'],
-  ['rejected', 'Returned'],
-  ['reactive', 'Reactive only'],
-  ['healthy', 'Healthy · no case'],
-  ['closed', 'Closed'],
-];
-
 export function AccountsPage() {
   const { data: accounts, isPending } = useAccounts();
-  const { data: meta } = useMeta();
   const { data: zero } = useZeroTicketIds();
   const { accounts: f, setAccounts: setF } = useUiState();
   const navigate = useNavigate();
-  const generate = useGenerateDraft();
-  const generating = useGeneratingIds();
 
-  if (isPending || !accounts || !meta) return <div className="loading">Loading…</div>;
+  if (isPending || !accounts) return <div className="loading">Loading…</div>;
 
   const ctx = { zero };
   const list = filterAccounts(accounts, f, ctx);
@@ -44,7 +29,7 @@ export function AccountsPage() {
       {f.sort === key ? (f.dir > 0 ? ' ▲' : ' ▼') : ''}
     </th>
   );
-  const select = (key: 'seg' | 'health' | 'pb' | 'lang', options: [string, string][], label: string) => (
+  const select = (key: 'seg' | 'health' | 'pb', options: [string, string][], label: string) => (
     <select value={f[key]} onChange={(e) => set({ [key]: e.target.value })} aria-label={label}>
       <option value="All">{label}: all</option>
       {options.map(([value, text]) => (
@@ -54,19 +39,6 @@ export function AccountsPage() {
       ))}
     </select>
   );
-  const generateButton = (a: AccountSummary) => (
-    <button
-      className="b tlb"
-      disabled={generating.has(a.id)}
-      onClick={(e) => {
-        e.stopPropagation();
-        generate.mutate(a.id);
-      }}
-    >
-      {generating.has(a.id) ? 'Generating…' : 'Generate'}
-    </button>
-  );
-
   const table = (
     <div className="tw">
       <table>
@@ -77,9 +49,7 @@ export function AccountsPage() {
             {th('segment', 'Segment')}
             {th('health', 'Health')}
             {th('playbook', 'Playbook')}
-            <th>Lang</th>
-            <th>Draft</th>
-            {th('state', 'Status')}
+            {th('signals', 'Signals')}
           </tr>
         </thead>
         <tbody>
@@ -92,7 +62,7 @@ export function AccountsPage() {
                     <div>
                       <b>{a.name}</b>
                       <span className="d">
-                        {a.caseId ?? 'no case'} · {a.country ?? '—'}
+                        {a.country ?? '—'}
                       </span>
                     </div>
                   </div>
@@ -107,17 +77,15 @@ export function AccountsPage() {
                 <td>
                   <b>{a.playbook}</b>
                 </td>
-                <td>{a.noSend ? '—' : <LangTag language={a.language} title={meta.languages[a.language]} />}</td>
-                <td>{a.noSend || a.state === 'closed' ? '—' : a.drafted ? <span className="tg">ready</span> : generateButton(a)}</td>
                 <td>
-                  <StateTag state={a.state} />
-                  {zero?.has(a.id) && <ZeroTicketTag style={{ marginLeft: 6 }} />}
+                  {a.signalCount}
+                  {zero?.has(a.id) && <ZeroTicketTag style={{ marginLeft: 8 }} />}
                 </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={8} className="d" style={{ padding: 30, textAlign: 'center' }}>
+              <td colSpan={6} className="d" style={{ padding: 30, textAlign: 'center' }}>
                 No accounts match these filters.
               </td>
             </tr>
@@ -127,53 +95,14 @@ export function AccountsPage() {
     </div>
   );
 
-  const board = (
-    <div className="board">
-      {BOARD_COLUMNS.map(([state, label]) => {
-        const items = list.filter((a) => a.state === state);
-        return (
-          <div className="col" key={state}>
-            <h3>
-              <span>{label}</span>
-              <span>{items.length}</span>
-            </h3>
-            {items.map((a) => (
-              <div className="kc" key={a.id} onClick={() => open(a.id)}>
-                <div className="l">
-                  <b>{a.name}</b>
-                </div>
-                <div className="d">{a.playbook}</div>
-                <div className="m">
-                  {zero?.has(a.id) && <ZeroTicketTag />}
-                  <SegTag segment={a.segment} />
-                  <HealthTag account={a} />
-                  {!a.noSend && <LangTag language={a.language} />}
-                  <Avatar name={ownerName(a.owner)} size={24} title={ownerName(a.owner)} style={{ marginLeft: 'auto' }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        );
-      })}
-    </div>
-  );
-
   return (
     <>
       <div className="ph">
         <div>
           <h1>Accounts</h1>
           <div className="sub">
-            {list.length} of {accounts.length} accounts · click a row to open the record
+            {list.length} of {accounts.length} accounts · playbook status is updated every Monday
           </div>
-        </div>
-        <div className="row">
-          <button className={`b ${f.layout === 'table' ? 'on' : ''}`} onClick={() => set({ layout: 'table' })}>
-            ☰ Table
-          </button>
-          <button className={`b ${f.layout === 'board' ? 'on' : ''}`} onClick={() => set({ layout: 'board' })}>
-            ▦ Board
-          </button>
         </div>
       </div>
       <div className="tabs">
@@ -190,17 +119,16 @@ export function AccountsPage() {
         {select('seg', SEGMENTS.map((s) => [s, s]), 'Segment')}
         {select('health', HEALTHS.map((h) => [h, h]), 'Health')}
         {select('pb', playbooks.map((p) => [p, p]), 'Playbook')}
-        {select('lang', Object.entries(meta.languages), 'Language')}
         <select value={f.tickets} onChange={(e) => set({ tickets: e.target.value as typeof f.tickets })} aria-label="Tickets">
           <option value="All">Tickets: all</option>
           <option value="zero">Zero ticket</option>
           <option value="has">Has tickets</option>
         </select>
-        <button className="b sp" onClick={() => setF((prev) => ({ ...DEFAULT_ACCOUNTS, sort: prev.sort, dir: prev.dir, layout: prev.layout }))}>
+        <button className="b sp" onClick={() => setF((prev) => ({ ...DEFAULT_ACCOUNTS, sort: prev.sort, dir: prev.dir }))}>
           Clear filters
         </button>
       </div>
-      {f.layout === 'table' ? table : board}
+      {table}
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 
-export type AccountsView = 'open' | 'closed' | 'all' | 'approval' | 'unhealthy' | 'reactive' | 'healthy';
-export type SortKey = 'prio' | 'op' | 'owner' | 'segment' | 'health' | 'playbook' | 'signals' | 'state';
+export type AccountsView = 'all' | 'unhealthy' | 'reactive' | 'healthy';
+export type SortKey = 'prio' | 'op' | 'owner' | 'segment' | 'health' | 'playbook' | 'signals';
 
 export interface AccountsFilters {
   view: AccountsView;
@@ -10,40 +10,30 @@ export interface AccountsFilters {
   seg: string;
   health: string;
   pb: string;
-  lang: string;
   /** Tickets filter: every account, only those with no tickets in the last two weeks, or only those that sold some. */
   tickets: 'All' | 'zero' | 'has';
   sort: SortKey;
   dir: 1 | -1;
-  layout: 'table' | 'board';
 }
 
-export interface ApprovalsFilters {
-  pb: string;
-  owner: string;
-}
-
-export const DEFAULT_ACCOUNTS: AccountsFilters = { view: 'open', q: '', owner: 'All', seg: 'All', health: 'All', pb: 'All', lang: 'All', tickets: 'All', sort: 'prio', dir: 1, layout: 'table' };
+export const DEFAULT_ACCOUNTS: AccountsFilters = { view: 'all', q: '', owner: 'All', seg: 'All', health: 'All', pb: 'All', tickets: 'All', sort: 'prio', dir: 1 };
 
 interface UiState {
   accounts: AccountsFilters;
   setAccounts: React.Dispatch<React.SetStateAction<AccountsFilters>>;
-  approvals: ApprovalsFilters;
-  setApprovals: React.Dispatch<React.SetStateAction<ApprovalsFilters>>;
   homeSections: { matrix: boolean; guide: boolean };
   setHomeSections: React.Dispatch<React.SetStateAction<{ matrix: boolean; guide: boolean }>>;
 }
 
 const Ctx = createContext<UiState | null>(null);
 
-/** View state that survives navigation between pages (filters, sort, layout, open sections). */
+/** View state that survives navigation between pages (filters, sort, open sections). */
 export function UiStateProvider({ children }: { children: React.ReactNode }) {
   const [accounts, setAccounts] = useState<AccountsFilters>(DEFAULT_ACCOUNTS);
-  const [approvals, setApprovals] = useState<ApprovalsFilters>({ pb: 'All', owner: 'All' });
   const [homeSections, setHomeSections] = useState({ matrix: false, guide: false });
   const value = useMemo(
-    () => ({ accounts, setAccounts, approvals, setApprovals, homeSections, setHomeSections }),
-    [accounts, approvals, homeSections],
+    () => ({ accounts, setAccounts, homeSections, setHomeSections }),
+    [accounts, homeSections],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
