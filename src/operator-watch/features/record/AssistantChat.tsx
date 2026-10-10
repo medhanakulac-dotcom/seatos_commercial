@@ -3,6 +3,7 @@ import { useMe, useMeta } from '../../api/queries';
 import type { ChatMessage } from '../../api/types';
 import { watchChat, type ChatFeed } from '../../api/chatSocket';
 import { workspaceApi } from '../../api/workspace';
+import { Markdown } from '../../lib/markdown';
 
 /** Safety net when the live connection is down: the thread is re-read on this interval. */
 const FALLBACK_POLL_MS = 15_000;
@@ -172,12 +173,12 @@ export function AssistantChat({ accountId, accountName }: { accountId: string; a
     const mine = m.role === 'user' && m.authorId === me?.id;
     const cls = m.role === 'assistant' ? 'a' : mine ? 'u' : 'o';
     return (
-      <div key={m.id} className={`m ${cls}`}>
+      <div key={m.id} className={`m ${cls}${m.role === 'assistant' ? ' md-msg' : ''}`}>
         <div className="who">
           {m.authorName}
           <span>{time(m.at)}</span>
         </div>
-        {m.text}
+        {m.role === 'assistant' ? <Markdown text={m.text} /> : m.text}
       </div>
     );
   };
