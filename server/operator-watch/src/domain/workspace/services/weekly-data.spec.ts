@@ -1,4 +1,4 @@
-import { cleanName, mondayOf, nameKey, parseCsv, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError } from './weekly-data';
+import { cleanName, legacyNameKey, mondayOf, nameKey, parseCsv, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError } from './weekly-data';
 
 // Same shape as the Looker exports, with made-up operators.
 const USAGE = `Week,Operator name,inventory_management,distribution_management,reservation_management,trip_management,fleet_management,analytics,accounting,# Feature count
@@ -22,6 +22,10 @@ describe('weekly data parsing', () => {
     expect(nameKey('PhiPhi Cruiser')).toBe(nameKey('Phi Phi Cruiser'));
     expect(nameKey("D&#039;Camel")).toBe(nameKey('DCamel'));
     expect(nameKey('ห้างหุ้นส่วน ทดสอบ')).toBe('ห้างหุ้นส่วนทดสอบ');
+    // "&" and "and" are the same word; the old key (no "and") is kept for links saved under it.
+    expect(nameKey('PhiPhi Logistic & Tour')).toBe(nameKey('PhiPhi Logistic and tour'));
+    expect(nameKey('Tom &amp; Jerry Bus')).toBe(nameKey('Tom and Jerry Bus'));
+    expect(legacyNameKey('PhiPhi Logistic & Tour')).toBe('phiphilogistictour');
   });
 
   it('reads Looker week labels and finds the Monday of a week in Bangkok time', () => {

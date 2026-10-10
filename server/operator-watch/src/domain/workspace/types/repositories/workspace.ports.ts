@@ -440,6 +440,10 @@ export interface WeeklyDataStore {
   uploads(limit: number): Promise<WeeklyUpload[]>;
   /** Hand-made matches: name key → account id (null = ignore this name). */
   nameLinks(): Promise<Map<string, string | null>>;
+  /** Gives the account to stored rows of a name that have none (no hand-made link is saved). */
+  assignAccount(nameKey: string, accountId: string): Promise<void>;
+  /** Rows still without an account, one entry per name. */
+  unmatchedNames(): Promise<{ nameKey: string; operatorName: string }[]>;
   /** Saves a hand-made match and applies it to every stored row with that name. */
   setNameLink(nameKey: string, accountId: string | null, by: string): Promise<void>;
   /** The price comparison is one snapshot: a sync replaces all of it. */

@@ -3,7 +3,7 @@ import { CrmAccount } from '../entities/workspace.entities';
 import { Clock, PricingRecord, PricingSegment, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
 import { RunService } from './run.service';
 import { CATEGORY_CODES, featureByCode, SEATOS_FEATURES } from './seatos-features';
-import { cleanName, FEATURES, FeatureActivity, Feature, mondayOf, nameKey, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
+import { cleanName, FEATURES, FeatureActivity, Feature, legacyNameKey, mondayOf, nameKey, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
 
 export interface UploadResult {
   readonly kind: WeeklyKind;
@@ -38,6 +38,7 @@ export interface UsageWithFeatures extends Omit<WeeklyUsageRecord, 'featureUsage
 export type TicketsView = Omit<WeeklyTicketRecord, 'gmvUsd'>;
 
 export const MAX_INGEST_ROWS = 3000;
+const REMATCH_EVERY_MS = 5 * 60_000;
 /** WAO: an operator is weekly active when it used at least this many of the 7 categories in a week. */
 export const WAO_MIN_CATEGORIES = 3;
 /** A feature counts as used in a week (the operator is active on it) from this many events. */
@@ -60,6 +61,8 @@ export interface FeatureUsageView {
  */
 @Injectable()
 export class WeeklyDataService {
+  private lastRematch = 0;
+
   constructor(
     @Inject(WEEKLY_DATA_STORE) private readonly store: WeeklyDataStore,
     private readonly runs: RunService,
@@ -230,6 +233,23 @@ export class WeeklyDataService {
     };
   }
 
+  /**
+   * Stored rows that matched no account when they arrived (a name written differently, or an account added since) get
+   * matched again with the current rules and links, so an operator that sells tickets never shows as having none just
+   * because its name did not match. At most once a few minutes per server instance.
+   */
+  async rematchUnmatched(): Promise<void> {
+    if (Date.now() - this.lastRematch < REMATCH_EVERY_MS) return;
+    this.lastRematch = Date.now();
+    const names = await this.store.unmatchedNames();
+    if (!names.length) return;
+    const match = await this.matcher();
+    for (const n of names) {
+      const { accountId } = match(n.operatorName);
+      if (accountId) await this.store.assignAccount(n.nameKey, accountId);
+    }
+  }
+
   /** A person matches an uploaded name to an account (or `null` = not an operator we track), for this and later weeks. */
   async link(name: string, accountId: string | null, by: string): Promise<void> {
     if (accountId && !(await this.accounts()).some((a) => a.id === accountId)) throw new WeeklyDataError(`Account ${accountId} is not in the latest run`);
@@ -240,6 +260,7 @@ export class WeeklyDataService {
 
   /** The latest `weeks` weeks for one account, newest first. */
   async forAccount(accountId: string, weeks = 12): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing: PricingRecord[]; pricingSyncedAt: string | null }> {
+    await this.rematchUnmatched();
     const [usage, tickets, usageWeeks, pricing, pricingSyncedAt] = await Promise.all([
       this.store.usageFor(accountId, weeks),
       this.store.ticketsFor(accountId, weeks),
@@ -258,6 +279,7 @@ export class WeeklyDataService {
    * nobody is labelled "zero ticket" just because nothing has arrived yet.
    */
   async zeroTickets(): Promise<{ weeks: string[]; accountIds: string[] }> {
+    await this.rematchUnmatched();
     const weeks = await this.store.ticketWeeks(2);
     if (!weeks.length) return { weeks: [], accountIds: [] };
     const sold = new Set((await Promise.all(weeks.map((w) => this.store.ticketsWeek(w)))).flat().map((r) => r.accountId));
@@ -269,6 +291,7 @@ export class WeeklyDataService {
    * Home page can show them as a share of the accounts in view.
    */
   async waoOverview(): Promise<{ week: string | null; accountIds: string[] }> {
+    await this.rematchUnmatched();
     const rows = await this.store.usageWeek();
     return { week: rows[0]?.week ?? null, accountIds: rows.filter((r) => r.accountId && r.featureCount >= WAO_MIN_CATEGORIES).map((r) => r.accountId as string) };
   }
@@ -322,7 +345,8 @@ export class WeeklyDataService {
     }
     const match = (name: string) => {
       const key = nameKey(cleanName(name));
-      const accountId = links.has(key) ? (links.get(key) ?? null) : (byKey.get(key) ?? null);
+      const linked = links.has(key) ? key : links.has(legacyNameKey(name)) ? legacyNameKey(name) : null;
+      const accountId = linked !== null ? (links.get(linked) ?? null) : (byKey.get(key) ?? null);
       return { key, accountId };
     };
     return Object.assign(match, { ignored: (key: string) => links.has(key) && links.get(key) === null });

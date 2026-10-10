@@ -81,11 +81,22 @@ export function cleanName(raw: string): string {
     .trim();
 }
 
-/** The matching key: lower case, letters (with their marks) and digits only ("PhiPhi Cruiser" = "Phi Phi Cruiser"). */
+/**
+ * The matching key: lower case, letters (with their marks) and digits only ("PhiPhi Cruiser" = "Phi Phi Cruiser"), and
+ * "&" counts as "and" ("PhiPhi Logistic & Tour" = "PhiPhi Logistic and Tour").
+ */
 export function nameKey(name: string): string {
   return cleanName(name)
     .toLowerCase()
+    .replace(/&/g, ' and ')
     .replace(/[^\p{L}\p{M}\p{N}]+/gu, ''); // \p{M} keeps Thai vowel and tone marks
+}
+
+/** The key before "&" meant "and": hand-made links saved under it still apply. */
+export function legacyNameKey(name: string): string {
+  return cleanName(name)
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}]+/gu, '');
 }
 
 const MONTHS: Record<string, number> = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };

@@ -99,4 +99,16 @@ describeDb('PgWeeklyDataStore', () => {
     await store.replacePricing([rec(1, 'Alpha', 'D-1')], 'sync');
     expect(await store.pricingFor('D-2')).toEqual([]);
   });
+
+  it('lists rows without an account and gives them one later without making a link', async () => {
+    await pool.query('delete from weekly_usage; delete from operator_name_links;');
+    await store.replaceUsage('2026-10-12', [usage('2026-10-12', 'Nameless Ferry', null, 3), usage('2026-10-12', 'Known Ferry', 'D-9', 2)], 'sync');
+    expect(await store.unmatchedNames()).toEqual([{ nameKey: 'namelessferry', operatorName: 'Nameless Ferry' }]);
+    await store.assignAccount('namelessferry', 'D-7');
+    await store.assignAccount('knownferry', 'D-8'); // never overrides an account a row already has
+    expect(await store.unmatchedNames()).toEqual([]);
+    expect((await store.usageFor('D-7', 5)).map((r) => r.operatorName)).toEqual(['Nameless Ferry']);
+    expect((await store.usageFor('D-9', 5)).map((r) => r.operatorName)).toEqual(['Known Ferry']);
+    expect(await store.nameLinks()).toEqual(new Map());
+  });
 });

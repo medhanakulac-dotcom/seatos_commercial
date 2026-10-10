@@ -100,6 +100,22 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
     return new Map(rows.map((r) => [r.name_key, r.account_id]));
   }
 
+  async assignAccount(nameKey: string, accountId: string): Promise<void> {
+    for (const table of ['weekly_usage', 'weekly_tickets', 'operator_pricing']) {
+      await this.pool.query(`update ${table} set account_id = $2 where name_key = $1 and account_id is null`, [nameKey, accountId]);
+    }
+  }
+
+  async unmatchedNames(): Promise<{ nameKey: string; operatorName: string }[]> {
+    const { rows } = await this.pool.query(
+      `select name_key, max(operator_name) as operator_name from (
+         select name_key, operator_name from weekly_usage where account_id is null
+         union all select name_key, operator_name from weekly_tickets where account_id is null) t
+       group by name_key`,
+    );
+    return rows.map((r) => ({ nameKey: r.name_key, operatorName: r.operator_name }));
+  }
+
   async setNameLink(nameKey: string, accountId: string | null, by: string): Promise<void> {
     const client = await this.pool.connect();
     try {

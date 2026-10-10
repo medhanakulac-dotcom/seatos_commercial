@@ -60,6 +60,16 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
     return new Map(this.links);
   }
 
+  async assignAccount(nameKey: string, accountId: string): Promise<void> {
+    this.usage = this.usage.map((r) => (r.nameKey === nameKey && !r.accountId ? { ...r, accountId } : r));
+    this.tickets = this.tickets.map((r) => (r.nameKey === nameKey && !r.accountId ? { ...r, accountId } : r));
+    this.pricing = this.pricing.map((r) => (r.nameKey === nameKey && !r.accountId ? { ...r, accountId } : r));
+  }
+
+  async unmatchedNames(): Promise<{ nameKey: string; operatorName: string }[]> {
+    return [...new Map([...this.usage, ...this.tickets].filter((r) => !r.accountId).map((r) => [r.nameKey, { nameKey: r.nameKey, operatorName: r.operatorName }])).values()];
+  }
+
   async setNameLink(nameKey: string, accountId: string | null): Promise<void> {
     this.links.set(nameKey, accountId);
     this.usage = this.usage.map((r) => (r.nameKey === nameKey ? { ...r, accountId } : r));
