@@ -34,7 +34,6 @@ const PAGES = [
   { label: "Customer Success", sub: "Segment × health matrix", tab: "cs", anchor: null },
   { label: "CS golden rules", sub: "The 10 principles", tab: "cstk", anchor: "cs-rules" },
   { label: "CS tips", sub: "The 30 detailed tips", tab: "cstk", anchor: "cs-tips" },
-  { label: "CS Automation", sub: "Low segment · Available Q3", tab: "csauto", anchor: null },
   { label: "Pricing & Packages", sub: "Tiers & add-ons", tab: "pricing", anchor: null },
   { label: "Deal Calculator", sub: "Model MRR, ARR & discounts", tool: "calculator" },
   { label: "Proposal Builder", sub: "Generate a branded quote", tool: "proposal" },

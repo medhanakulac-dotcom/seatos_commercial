@@ -2,7 +2,7 @@
 // To add or rename a page: add its component in ./sections, register it in SECTIONS,
 // then list it in NAV. Tool items open an app from src/apps instead of a Playbook page.
 import {
-  icHome, icSales, icToolkit, icOnboarding, icTraining, icCS, icCSTools, icCSAuto,
+  icHome, icSales, icToolkit, icOnboarding, icTraining, icCS, icCSTools,
   icPricing, icCalc, icProposal, icContract, icTemplates, icAdmin,
   icOwHome, icOwAccounts, icOwSettings,
 } from "./ui.jsx";
@@ -13,7 +13,6 @@ import Onboarding from "./sections/Onboarding.jsx";
 import TrainingStructure from "./sections/TrainingStructure.jsx";
 import CustomerSuccess from "./sections/CustomerSuccess.jsx";
 import CSToolkit from "./sections/CSToolkit.jsx";
-import CSAutomation from "./sections/CSAutomation.jsx";
 import Pricing from "./sections/Pricing.jsx";
 import Templates from "./sections/Templates.jsx";
 
@@ -26,7 +25,6 @@ export const SECTIONS = {
   training: { title: "Training Structure", component: TrainingStructure },
   cs: { title: "Customer Success", component: CustomerSuccess },
   cstk: { title: "CS Toolkit", component: CSToolkit },
-  csauto: { title: "CS Automation", component: CSAutomation },
   pricing: { title: "Pricing & Packages", component: Pricing },
   templates: { title: "Templates & Docs", component: Templates },
 };
@@ -60,7 +58,6 @@ export const NAV = [
       { section: "training", label: "Training Structure", icon: icTraining, accent: "#F5A623", badge: Q3 },
       { section: "cs", label: "Customer Success", icon: icCS, accent: "#2DD4BF" },
       { section: "cstk", label: "CS Toolkit", icon: icCSTools, accent: "#1aa897", iconAccent: "#2DD4BF" },
-      { section: "csauto", label: "CS Automation", icon: icCSAuto, accent: "#2DD4BF", badge: Q3 },
       { section: "pricing", label: "Pricing & Packages", icon: icPricing, accent: "#E84C88" },
     ],
   },

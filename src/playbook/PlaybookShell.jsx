@@ -128,7 +128,7 @@ export default function PlaybookShell({ userEmail, isAdmin, activeTool, onOpenTo
   const nav = {
     go, jump, openTool, scrollTo,
     navHome: go("home"), navSales: go("sales"), navToolkit: go("toolkit"), navOnboarding: go("onboarding"),
-    navTraining: go("training"), navCS: go("cs"), navCSTools: go("cstk"), navCSAuto: go("csauto"),
+    navTraining: go("training"), navCS: go("cs"), navCSTools: go("cstk"),
     navPricing: go("pricing"), navTemplates: go("templates"),
     navCalc: () => openTool("calculator"), navProposal: () => openTool("proposal"),
     navContract: () => openTool("contract"), navAdmin: () => openTool("admin"),

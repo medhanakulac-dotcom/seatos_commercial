@@ -85,17 +85,6 @@ export const icCSTools = icon([
   "M19.1 4.9l-3.5 3.5",
   "M8.4 15.6l-3.5 3.5",
 ]);
-export const icCSAuto = icon([
-  "M12 2v4",
-  "M12 18v4",
-  "M4.9 4.9l2.8 2.8",
-  "M16.3 16.3l2.8 2.8",
-  "M2 12h4",
-  "M18 12h4",
-  "M4.9 19.1l2.8-2.8",
-  "M16.3 7.7l2.8-2.8",
-]);
-
 // Operator Watch group.
 export const icOwHome = icon(["M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z", "M12 9a3 3 0 100 6 3 3 0 000-6z"]);
 export const icOwAccounts = icon(["M8 6h13", "M8 12h13", "M8 18h13", "M3 6h.01", "M3 12h.01", "M3 18h.01"]);
