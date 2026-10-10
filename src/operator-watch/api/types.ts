@@ -259,6 +259,7 @@ export interface ServerStatus {
   hermesWebhookSecret: boolean;
   hermesApi: boolean;
   agentApiToken: boolean;
+  weeklyIngestToken: boolean;
   /** ANTHROPIC_API_KEY is set: Claude runs, chat, rewrites and memory. */
   claude: boolean;
   /** TMS_TOOLS_MCP_URL is set: the chat can read live SeatOS numbers. */
@@ -299,6 +300,9 @@ export interface WeeklyUsage {
   accountId: string | null;
   features: Record<Feature, boolean>;
   featureCount: number;
+  /** SeatOS operator id and the features used that week (BigQuery sync only; most used first). */
+  operatorId?: number | null;
+  featureUsage?: { code: string; name: string; module: string; events: number; days: number }[];
 }
 
 export interface WeeklyTickets {

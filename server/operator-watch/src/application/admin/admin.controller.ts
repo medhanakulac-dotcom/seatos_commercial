@@ -94,6 +94,7 @@ export class AdminController {
       database: !!process.env.DATABASE_URL,
       hermesWebhookSecret: !!process.env.HERMES_WEBHOOK_SECRET,
       agentApiToken: !!process.env.AGENT_API_TOKEN,
+      weeklyIngestToken: !!process.env.WEEKLY_INGEST_TOKEN,
       hermesApi: !!process.env.HERMES_API_URL && !!process.env.HERMES_API_KEY,
       claude: !!process.env.ANTHROPIC_API_KEY,
       seatosTools: !!process.env.TMS_TOOLS_MCP_URL,

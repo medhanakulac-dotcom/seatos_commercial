@@ -13,6 +13,8 @@ const toUsage = (r: QueryResultRow): WeeklyUsageRecord => ({
   accountId: r.account_id,
   features: Object.fromEntries(FEATURES.map((f) => [f, r[f]])) as Record<Feature, boolean>,
   featureCount: r.feature_count,
+  operatorId: r.operator_id ?? null,
+  featureUsage: r.feature_usage ?? null,
 });
 
 const toTickets = (r: QueryResultRow): WeeklyTicketRecord => ({
@@ -29,12 +31,14 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
   constructor(private readonly pool: Pool) {}
 
   replaceUsage(week: string, rows: readonly WeeklyUsageRecord[], by: string): Promise<void> {
-    return this.replace('weekly_usage', week, rows, by, ['operator_name', 'name_key', 'account_id', ...FEATURES, 'feature_count'], (r) => [
+    return this.replace('weekly_usage', week, rows, by, ['operator_name', 'name_key', 'account_id', ...FEATURES, 'feature_count', 'operator_id', 'feature_usage'], (r) => [
       r.operatorName,
       r.nameKey,
       r.accountId,
       ...FEATURES.map((f) => r.features[f]),
       r.featureCount,
+      r.operatorId ?? null,
+      r.featureUsage ? JSON.stringify(r.featureUsage) : null,
     ]);
   }
 

@@ -8,6 +8,7 @@ import { TMS_DIRECTORY } from '../../domain/workspace/types/repositories/workspa
 
 type Method = 'GET' | 'POST' | 'PUT';
 const AGENT_TOKEN = 'test-agent-token-weekly-0123';
+const INGEST_TOKEN = 'test-ingest-token-weekly-4567';
 
 /** Weekly uploads end to end on the in-memory stores and the mock CRM. */
 describe('Weekly data HTTP integration', () => {
@@ -23,6 +24,13 @@ describe('Weekly data HTTP integration', () => {
       headers: { authorization: tokens[role], ...(payload !== undefined ? { 'content-type': 'application/json' } : {}) },
       payload: payload === undefined ? undefined : JSON.stringify(payload),
     });
+  const ingest = (body: unknown, token: string | null = INGEST_TOKEN) =>
+    app.getHttpAdapter().getInstance().inject({
+      method: 'POST',
+      url: '/ingest/weekly-usage',
+      headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      payload: JSON.stringify(body),
+    });
   const mcp = async (name: string, args: Record<string, unknown>) => {
     const res = await app.getHttpAdapter().getInstance().inject({
       method: 'POST',
@@ -37,6 +45,7 @@ describe('Weekly data HTTP integration', () => {
     for (const k of ['DATABASE_URL', 'CRM_SOURCE', 'HUBSPOT_ACCESS_TOKEN', 'ANTHROPIC_API_KEY']) delete process.env[k];
     process.env.WORKSPACE_WORKERS = 'false';
     process.env.AGENT_API_TOKEN = AGENT_TOKEN;
+    process.env.WEEKLY_INGEST_TOKEN = INGEST_TOKEN;
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(TMS_DIRECTORY)
       .useValue({ connected: false, findOperators: async () => [] })
@@ -117,5 +126,49 @@ describe('Weekly data HTTP integration', () => {
 
     const activity = await mcp('get_hubspot_activity', { operator_id: a.id });
     expect(activity).toEqual({ connected: false, items: [] }); // mock CRM: nothing to read
+  });
+  it('takes the weekly BigQuery sync: needs its token, stores feature usage, matches accounts and serves it to people and agents', async () => {
+    const [a, b] = accounts;
+    const week = '2026-10-12';
+    const body = {
+      week,
+      rows: [
+        { operatorId: 28271, operatorName: a.name.toUpperCase(), categories: ['r', 't', 'i'], features: { bl: { events: 120, days: 5 }, rm: { events: 30, days: 2 }, bf: { events: 12, days: 3 }, zz: { events: 5, days: 1 }, auth: { events: 9, days: 4 } } },
+        { operatorId: 28272, operatorName: b.name, categories: [], features: {} },
+        { operatorId: 28273, operatorName: 'Unknown Sync Bus', categories: ['r'], features: { bp: { events: 3, days: 1 } } },
+      ],
+    };
+    expect((await ingest(body, null)).statusCode).toBe(401);
+    expect((await ingest(body, 'wrong-token')).statusCode).toBe(401);
+    expect((await ingest({ ...body, week: '2026-10-13' })).statusCode).toBe(400); // not a Monday
+    const res = await ingest(body);
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ kind: 'usage', weeks: [week], rows: 3, matched: 2, unknownFeatures: ['zz'], unmatched: [{ name: 'Unknown Sync Bus' }] });
+
+    const weekly = (await call('GET', `/workspace/accounts/${a.id}/weekly`, 'viewer')).json();
+    const row = weekly.usage.find((u: { week: string }) => u.week === week);
+    expect(row).toMatchObject({ featureCount: 3, operatorId: 28271, features: { reservation_management: true, trip_management: true, inventory_management: true, analytics: false } });
+    expect(row.featureUsage).toEqual([
+      { code: 'bl', name: 'Booking List', module: 'Reservation Management', events: 120, days: 5 },
+      { code: 'rm', name: 'Route Management', module: 'Inventory Management', events: 30, days: 2 },
+      { code: 'bf', name: 'Booking Form', module: 'Reservation Management', events: 12, days: 3 }, // login events (system) stay out
+    ]);
+
+    const history = (await call('GET', '/admin/weekly-data', 'admin')).json().uploads;
+    expect(history).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'usage', week, rows: 3, uploadedBy: 'bigquery-sync' })]));
+
+    const numbers = await mcp('get_weekly_numbers', { operator_id: a.id });
+    expect(numbers.usage.find((u: { week: string }) => u.week === week).featureUsage[0]).toMatchObject({ name: 'Booking List', events: 120 });
+
+    const again = await ingest({ week, rows: [body.rows[0]] }); // a re-sync replaces the week
+    expect(again.json()).toMatchObject({ rows: 1, matched: 1 });
+    expect((await call('GET', `/workspace/accounts/${b.id}/weekly`, 'viewer')).json().usage.some((u: { week: string }) => u.week === week)).toBe(false);
+  });
+
+  it('keeps the sync off until its token is set', async () => {
+    const keep = process.env.WEEKLY_INGEST_TOKEN;
+    delete process.env.WEEKLY_INGEST_TOKEN;
+    expect((await ingest({ week: '2026-10-12', rows: [] })).statusCode).toBe(503);
+    process.env.WEEKLY_INGEST_TOKEN = keep;
   });
 });

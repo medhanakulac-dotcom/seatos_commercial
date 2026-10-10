@@ -3,6 +3,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod/v4';
 import { Actor, CRM_ACTIVITY_TYPES, CrmActivity } from '../../domain/workspace/entities/workspace.entities';
 import { WorkspaceSettings } from '../../domain/workspace/services/settings';
+import type { UsageWithFeatures } from '../../domain/workspace/services/weekly-data.service';
 import {
   AccountAssistant,
   AccountContext,
@@ -15,7 +16,6 @@ import {
   EmailRewriter,
   RunStartedEvent,
   WeeklyTicketRecord,
-  WeeklyUsageRecord,
 } from '../../domain/workspace/types/repositories/workspace.ports';
 import { buildOperatorBrief } from '../hermes/operator-chat/operator-chat.brief';
 import { renderHermesEvent } from '../hermes/hermes-agent.notifier';
@@ -29,8 +29,8 @@ export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
 
 /** Uploaded weekly numbers (WeeklyDataService). */
 export interface WeeklyLookup {
-  forAccount(accountId: string, weeks: number): Promise<{ usage: WeeklyUsageRecord[]; tickets: WeeklyTicketRecord[] }>;
-  week(kind: 'usage' | 'tickets', week?: string): Promise<(WeeklyUsageRecord | WeeklyTicketRecord)[]>;
+  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: WeeklyTicketRecord[] }>;
+  week(kind: 'usage' | 'tickets', week?: string): Promise<(UsageWithFeatures | WeeklyTicketRecord)[]>;
 }
 
 /** Chat turns kept in the prompt; older ones live on in memory. */

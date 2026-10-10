@@ -14,10 +14,20 @@ export type Feature = (typeof FEATURES)[number];
 
 export type WeeklyKind = 'usage' | 'tickets';
 
+/** How much one feature was used by one operator in one week (BigQuery sync only). */
+export interface FeatureActivity {
+  readonly events: number;
+  readonly days: number;
+}
+
 export interface UsageRow {
   readonly operatorName: string;
+  /** The seven WAO categories: which had at least one counted event. */
   readonly features: Readonly<Record<Feature, boolean>>;
   readonly featureCount: number;
+  /** SeatOS operator id and per-feature activity (feature code → activity); only rows from the BigQuery sync have them. */
+  readonly operatorId?: number | null;
+  readonly featureUsage?: Readonly<Record<string, FeatureActivity>> | null;
 }
 
 export interface TicketRow {

@@ -2,7 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CrmAccount } from '../entities/workspace.entities';
 import { Clock, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
 import { RunService } from './run.service';
-import { cleanName, mondayOf, nameKey, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
+import { CATEGORY_CODES, featureByCode } from './seatos-features';
+import { cleanName, FEATURES, FeatureActivity, Feature, mondayOf, nameKey, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
 
 export interface UploadResult {
   readonly kind: WeeklyKind;
@@ -12,6 +13,28 @@ export interface UploadResult {
   /** Names that matched no account (and were not marked "ignore"): match them by hand once. */
   readonly unmatched: { name: string; key: string }[];
 }
+
+/** One operator's week as the BigQuery sync sends it. */
+export interface UsageIngestRow {
+  readonly operatorId: number;
+  readonly operatorName: string;
+  /** WAO categories with a counted event: i d r t f a c (CATEGORY_CODES). */
+  readonly categories: readonly string[];
+  /** Feature code → activity (Feature Event Map codes). */
+  readonly features: Readonly<Record<string, FeatureActivity>>;
+}
+
+export interface IngestResult extends UploadResult {
+  /** Feature codes in the payload that this site does not know (dropped). */
+  readonly unknownFeatures: string[];
+}
+
+/** A stored usage row with the readable feature list the UI, Claude and MCP tools use. */
+export interface UsageWithFeatures extends Omit<WeeklyUsageRecord, 'featureUsage'> {
+  readonly featureUsage: { code: string; name: string; module: string; events: number; days: number }[];
+}
+
+export const MAX_INGEST_ROWS = 3000;
 
 /**
  * The weekly numbers the team uploads every Sunday night: Looker's feature usage table (WAO) and tickets/GMV.
@@ -47,6 +70,53 @@ export class WeeklyDataService {
     return this.result(kind, [target], rows, match);
   }
 
+  /**
+   * The weekly BigQuery sync (bigquery/weekly-sync.gs): feature usage per operator for one Monday-start week, replacing
+   * that week's usage rows. Same name matching as the CSV upload; the WAO categories fill the same seven flags.
+   */
+  async ingestUsage(payload: unknown, by: string): Promise<IngestResult> {
+    const p = (payload ?? {}) as { week?: unknown; rows?: unknown };
+    if (typeof p.week !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(p.week) || mondayOfIso(p.week) !== p.week) throw new WeeklyDataError('week must be a Monday, YYYY-MM-DD');
+    if (!Array.isArray(p.rows) || !p.rows.length) throw new WeeklyDataError('rows must be a non-empty list');
+    if (p.rows.length > MAX_INGEST_ROWS) throw new WeeklyDataError(`At most ${MAX_INGEST_ROWS} operators per week`);
+    const match = await this.matcher();
+    const unknown = new Set<string>();
+    const records = new Map<string, WeeklyUsageRecord>();
+    for (const raw of p.rows as Partial<UsageIngestRow>[]) {
+      const name = cleanName(typeof raw.operatorName === 'string' ? raw.operatorName : '');
+      if (!name || !Number.isInteger(raw.operatorId)) throw new WeeklyDataError('Every row needs operatorId (integer) and operatorName');
+      const features = Object.fromEntries(FEATURES.map((f) => [f, false])) as Record<Feature, boolean>;
+      for (const c of Array.isArray(raw.categories) ? raw.categories : []) {
+        const category = CATEGORY_CODES[c as keyof typeof CATEGORY_CODES];
+        if (category) features[category] = true;
+      }
+      const featureUsage: Record<string, FeatureActivity> = {};
+      for (const [code, a] of Object.entries(raw.features ?? {})) {
+        if (!featureByCode(code)) {
+          unknown.add(code);
+          continue;
+        }
+        const events = Math.max(0, Math.round(Number(a?.events)));
+        const days = Math.min(7, Math.max(0, Math.round(Number(a?.days))));
+        if (Number.isFinite(events) && Number.isFinite(days) && events > 0) featureUsage[code] = { events, days };
+      }
+      const m = match(name);
+      records.set(name, {
+        week: p.week,
+        operatorName: name,
+        nameKey: m.key,
+        accountId: m.accountId,
+        features,
+        featureCount: FEATURES.filter((f) => features[f]).length,
+        operatorId: raw.operatorId as number,
+        featureUsage,
+      });
+    }
+    const rows = [...records.values()];
+    await this.store.replaceUsage(p.week, rows, by);
+    return { ...this.result('usage', [p.week], rows, match), unknownFeatures: [...unknown].sort() };
+  }
+
   /** Uploads so far, names still unmatched in the latest weeks, and the accounts they can be matched to. */
   async summary() {
     const [uploads, links, accounts, usage, tickets] = await Promise.all([this.store.uploads(20), this.store.nameLinks(), this.accounts(), this.store.usageWeek(), this.store.ticketsWeek()]);
@@ -75,15 +145,15 @@ export class WeeklyDataService {
   }
 
   /** The latest `weeks` weeks for one account, newest first. */
-  async forAccount(accountId: string, weeks = 12) {
+  async forAccount(accountId: string, weeks = 12): Promise<{ usage: UsageWithFeatures[]; tickets: WeeklyTicketRecord[] }> {
     const [usage, tickets] = await Promise.all([this.store.usageFor(accountId, weeks), this.store.ticketsFor(accountId, weeks)]);
-    return { usage, tickets };
+    return { usage: usage.map(withFeatureNames), tickets };
   }
 
   /** Every operator in one week (the latest when omitted). */
   async week(kind: WeeklyKind, week?: string) {
     const w = week ? parseWeek(week) : undefined;
-    return kind === 'usage' ? this.store.usageWeek(w) : this.store.ticketsWeek(w);
+    return kind === 'usage' ? (await this.store.usageWeek(w)).map(withFeatureNames) : this.store.ticketsWeek(w);
   }
 
   private result(kind: WeeklyKind, weeks: string[], rows: readonly { operatorName: string; accountId: string | null; nameKey: string }[], match: ReturnType<WeeklyDataService['matcherSync']>): UploadResult {
@@ -117,3 +187,16 @@ export class WeeklyDataService {
     return [...(await this.runs.operatorsForRun(run.id)).snapshot.accounts];
   }
 }
+
+/** Feature codes → names (most used first); system features (login, flags, settings) are not product usage, so they stay out. */
+function withFeatureNames(r: WeeklyUsageRecord): UsageWithFeatures {
+  const featureUsage = Object.entries(r.featureUsage ?? {})
+    .flatMap(([code, a]) => {
+      const f = featureByCode(code);
+      return f && f.module !== 'System / Platform' ? [{ code, name: f.name, module: f.module, events: a.events, days: a.days }] : [];
+    })
+    .sort((a, b) => b.events - a.events || a.name.localeCompare(b.name));
+  return { ...r, featureUsage };
+}
+
+const mondayOfIso = (iso: string): string => mondayOf(new Date(`${iso}T12:00:00Z`), 'UTC');

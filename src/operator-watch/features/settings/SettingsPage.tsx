@@ -284,7 +284,7 @@ export function SettingsPage() {
         </Field>
       </div>
 
-      <WeeklyData />
+      <WeeklyData syncTokenSet={server.weeklyIngestToken} />
 
       <div className="card">
         <h2 className="st">

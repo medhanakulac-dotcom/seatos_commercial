@@ -31,6 +31,7 @@ Operator Watch (from `rik-seatos/cs-operator-watch`) now runs inside this site:
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_ADDRESS` | To send approved emails over SMTP (see `.env.example`) |
 | `AUTH_ADMIN_EMAILS` | Optional. Admins of the main site already become Operator Watch admins on first sign-in |
 | `TMS_TOOLS_MCP_URL`, `TMS_TOOLS_MCP_TOKEN` | Optional. A SeatOS MCP server reachable from Vercel: live booking numbers in chat, operator id lookup |
+| `WEEKLY_INGEST_TOKEN` | Optional. Bearer token the weekly BigQuery sync (`bigquery/weekly-sync.gs`, a Google Apps Script) uses to post feature usage to `/api/ow/ingest/weekly-usage`; the sync is off while it is unset. `openssl rand -hex 32`. Setup: `bigquery/README.md` |
 | `OW_MODEL`, `OW_MEMORY_MODEL` | Optional. Default `claude-opus-5-5` |
 
 The Supabase URL and anon key are read from the site's existing `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`.

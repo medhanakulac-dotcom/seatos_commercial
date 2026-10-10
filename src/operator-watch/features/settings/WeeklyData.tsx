@@ -103,8 +103,9 @@ function Unmatched({ data }: { data: WeeklySummary }) {
 }
 
 /** Settings → Weekly data: the two Looker exports uploaded every Sunday night, and name matching. */
-export function WeeklyData() {
+export function WeeklyData({ syncTokenSet }: { syncTokenSet: boolean }) {
   const { data } = useQuery({ queryKey: summaryKey, queryFn: adminApi.weeklyData });
+  const lastSync = data?.uploads.filter((u) => u.uploadedBy === 'bigquery-sync').sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))[0];
   const [ticketWeek, setTicketWeek] = useState(thisMonday);
   return (
     <div className="card">
@@ -112,7 +113,26 @@ export function WeeklyData() {
         <span>Weekly data</span>
         <span className="d">upload every Sunday night · read by Claude and the MCP tools</span>
       </h2>
-      <Slot n={1} title="Activity (WAO)" hint="Looker → SeatOS H2 WAO Dashboard → Usage Table → Export CSV" kind="usage" onDone={(r) => r.weeks[0] && setTicketWeek(r.weeks[0])} />
+      <div className="task" style={{ alignItems: 'flex-start' }}>
+        <div className="grow">
+          <b>Automatic sync from BigQuery</b>
+          <div className="d">
+            A Google Apps Script runs the feature-usage query every day and sends the current and previous week here. It replaces the Activity file below.
+          </div>
+          <div style={{ marginTop: 6 }}>
+            {syncTokenSet ? <span className="ok">✓ sync token set</span> : <span className="no">✗ WEEKLY_INGEST_TOKEN is not set on the server — the sync is off</span>}
+            {' · '}
+            {lastSync ? (
+              <span>
+                last sync {formatEventTime(lastSync.uploadedAt)} · week of {lastSync.week} · {lastSync.rows} operators, {lastSync.matched} matched
+              </span>
+            ) : (
+              <span className="d">no sync received yet</span>
+            )}
+          </div>
+        </div>
+      </div>
+      <Slot n={1} title="Activity (WAO)" hint="Only without the BigQuery sync: Looker → SeatOS H2 WAO Dashboard → Usage Table → Export CSV" kind="usage" onDone={(r) => r.weeks[0] && setTicketWeek(r.weeks[0])} />
       <div className="task">
         <div className="grow">
           <span className="d">Tickets file week (Monday) — set automatically from the activity file</span>

@@ -45,6 +45,14 @@ describeDb('PgWeeklyDataStore', () => {
     expect((await store.usageWeek()).map((r) => r.operatorName)).toEqual(['Alpha']); // Bravo replaced away
   });
 
+  it('round-trips the operator id and per-feature activity of a BigQuery sync row', async () => {
+    const row: WeeklyUsageRecord = { ...usage('2026-10-12', 'Delta', 'D-4', 3), operatorId: 28271, featureUsage: { bl: { events: 120, days: 5 }, rm: { events: 3, days: 1 } } };
+    await store.replaceUsage('2026-10-12', [row, usage('2026-10-12', 'Echo', null, 1)], 'bigquery-sync');
+    const [back] = await store.usageFor('D-4', 5);
+    expect(back).toMatchObject({ operatorId: 28271, featureUsage: { bl: { events: 120, days: 5 }, rm: { events: 3, days: 1 } } });
+    expect((await store.usageWeek('2026-10-12')).find((r) => r.operatorName === 'Echo')).toMatchObject({ operatorId: null, featureUsage: null }); // CSV-style row
+  });
+
   it('stores tickets with GMV, lists uploads, and applies a hand-made link to stored rows', async () => {
     await store.replaceTickets(
       '2026-10-05',

@@ -63,6 +63,7 @@ import { AdminController } from '../admin/admin.controller';
 import { McpController } from '../agent/mcp.controller';
 import { InternalController } from '../internal/internal.controller';
 import { WeeklyDataController } from '../weekly/weekly-data.controller';
+import { WeeklyIngestController } from '../weekly/weekly-ingest.controller';
 import { WeeklyDataService } from '../../domain/workspace/services/weekly-data.service';
 import { PgWeeklyDataStore } from '../../infrastructure/database/pg-weekly-data.store';
 import { InMemoryWeeklyDataStore } from '../../infrastructure/workspace-mocks/in-memory-weekly-data.store';
@@ -77,7 +78,7 @@ const AGENT_STORE = Symbol('AGENT_STORE');
  */
 @Module({
   imports: [AuthModule, DatabaseModule, EmailModule],
-  controllers: [WorkspaceController, AdminController, McpController, InternalController, WeeklyDataController],
+  controllers: [WorkspaceController, AdminController, McpController, InternalController, WeeklyDataController, WeeklyIngestController],
   providers: [
     {
       provide: WORKSPACE_STORE,

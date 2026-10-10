@@ -16,6 +16,13 @@ const FEATURES = Object.keys(SHORT) as Feature[];
 /** The weekly Looker uploads for this operator: features used (WAO) and tickets/GMV, newest first. */
 export function WeeklyNumbers({ accountId }: { accountId: string }) {
   const { data, isPending, error } = useQuery({ queryKey: ['workspace', 'weekly', accountId], queryFn: () => workspaceApi.weekly(accountId), staleTime: 60_000 });
+  // The two newest weeks that carry per-feature detail (BigQuery sync): what it uses now and what changed.
+  const detailed = (data?.usage ?? []).filter((u) => u.featureUsage?.length).sort((a, b) => b.week.localeCompare(a.week));
+  const latest = detailed[0];
+  const before = new Set((detailed[1]?.featureUsage ?? []).map((f) => f.name));
+  const now = new Set((latest?.featureUsage ?? []).map((f) => f.name));
+  const started = detailed[1] ? [...now].filter((n) => !before.has(n)) : [];
+  const stopped = detailed[1] ? [...before].filter((n) => !now.has(n)) : [];
   const weeks = data ? [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week)])].sort().reverse().slice(0, 8) : [];
   return (
     <div className="card">
@@ -55,6 +62,26 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
             })}
           </tbody>
         </table>
+      )}
+      {latest && (
+        <div style={{ marginTop: 12 }}>
+          <div className="d" style={{ marginBottom: 4 }}>
+            Features used, week of {latest.week.slice(5)} <span title="events · days active">(events · days)</span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {latest.featureUsage!.map((f) => (
+              <span key={f.code} className="tg" title={f.module}>
+                {f.name} · {f.events} · {f.days}d
+              </span>
+            ))}
+          </div>
+          {(started.length > 0 || stopped.length > 0) && (
+            <div className="d" style={{ marginTop: 6 }}>
+              {started.length > 0 && <div>New vs last week: {started.join(', ')}</div>}
+              {stopped.length > 0 && <div>Stopped since last week: {stopped.join(', ')}</div>}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

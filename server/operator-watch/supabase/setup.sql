@@ -402,6 +402,23 @@ $ow_migration$;
 end
 $ow$;
 
+do $ow$
+begin
+  if not exists (select 1 from operator_watch.schema_migrations where name = '008_feature_usage.sql') then
+    execute $ow_migration$
+-- Feature-level usage from BigQuery (the weekly sync): for each operator and week, which SeatOS features were used,
+-- how many events and on how many days. feature_usage is { "<feature code>": { "events": n, "days": n } } using the
+-- feature codes of the Feature Event Map (bf = Booking Form, rm = Route Management, ...). operator_id is the SeatOS
+-- operator id (dwh.dim_operator.operator_id), null for rows that came from a CSV upload.
+alter table weekly_usage add column operator_id integer;
+alter table weekly_usage add column feature_usage jsonb;
+$ow_migration$;
+    insert into operator_watch.schema_migrations (name) values ('008_feature_usage.sql');
+    raise notice 'Applied 008_feature_usage.sql';
+  end if;
+end
+$ow$;
+
 reset role;
 reset search_path;
 
