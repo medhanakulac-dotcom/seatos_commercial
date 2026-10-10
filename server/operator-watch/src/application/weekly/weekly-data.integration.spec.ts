@@ -186,6 +186,26 @@ describe('Weekly data HTTP integration', () => {
     expect(history).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'tickets', week, rows: 2, uploadedBy: 'bigquery-sync' })]));
   });
 
+  it('takes the price comparison from the BigQuery sync: token needed, matched to the account, replaced as a snapshot, served with the weekly numbers', async () => {
+    const [a, b] = accounts;
+    const seg = { from: 'Phuket', to: 'Phi Phi', vehicleType: 'Speedboat', vehicleClass: 'Standard', tickets: 120, avgPrice: 900, peerAvgPrice: 800, peers: 3, pct: 12.5 };
+    const row = { operatorId: 1, operatorName: a.name, currency: 'thb', ticketsCompared: 400, segments: 4, pricePct: 8.123, detail: [seg] };
+    const body = { windowDays: 90, rows: [row, { ...row, operatorId: 3, operatorName: 'Unknown Sync Bus' }] };
+    expect((await ingest(body, null, 'pricing')).statusCode).toBe(401);
+    expect((await ingest({ ...body, windowDays: 0 }, INGEST_TOKEN, 'pricing')).statusCode).toBe(400);
+    expect((await ingest({ windowDays: 90, rows: [{ ...row, pricePct: 'x' }] }, INGEST_TOKEN, 'pricing')).statusCode).toBe(400);
+    const res = await ingest(body, INGEST_TOKEN, 'pricing');
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ rows: 2, matched: 1 });
+    const weekly = (await call('GET', `/workspace/accounts/${a.id}/weekly`, 'viewer')).json();
+    expect(weekly.pricing).toEqual([expect.objectContaining({ currency: 'THB', pricePct: 8.12, segments: 4, ticketsCompared: 400, windowDays: 90, detail: [seg] })]);
+    expect((await call('GET', `/workspace/accounts/${b.id}/weekly`, 'viewer')).json().pricing).toEqual([]);
+    expect((await mcp('get_weekly_numbers', { operator_id: a.id })).pricing).toHaveLength(1);
+    // A later sync replaces the whole snapshot.
+    expect((await ingest({ windowDays: 90, rows: [] }, INGEST_TOKEN, 'pricing')).statusCode).toBe(200);
+    expect((await call('GET', `/workspace/accounts/${a.id}/weekly`, 'viewer')).json().pricing).toEqual([]);
+  });
+
   it('keeps the sync off until its token is set', async () => {
     const keep = process.env.WEEKLY_INGEST_TOKEN;
     delete process.env.WEEKLY_INGEST_TOKEN;

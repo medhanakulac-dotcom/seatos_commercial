@@ -59,7 +59,7 @@ export function buildMcpServer(
       'get_weekly_numbers',
       {
         description:
-          "One operator's weekly SeatOS numbers synced from BigQuery, newest week first: WAO (features used of 7, and which), tickets sold.",
+          "One operator's weekly SeatOS numbers synced from BigQuery, newest week first: WAO (features used of 7, and which), tickets sold, and its selling price vs other operators on the same route, vehicle type and class.",
         inputSchema: { operator_id: z.string().min(1).max(64), weeks: z.number().int().min(1).max(52).default(8) },
         annotations: { readOnlyHint: true },
       },

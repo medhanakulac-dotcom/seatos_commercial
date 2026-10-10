@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import { FEATURES } from '../../domain/workspace/services/weekly-data';
-import { WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
+import { PricingRecord, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
 import { migrate } from './migrator';
 import { PgWeeklyDataStore } from './pg-weekly-data.store';
 
@@ -25,7 +25,7 @@ describeDb('PgWeeklyDataStore', () => {
     pool = new Pool({ connectionString: url });
     await migrate(pool);
     store = new PgWeeklyDataStore(pool);
-    await pool.query('delete from weekly_usage; delete from weekly_tickets; delete from operator_name_links;');
+    await pool.query('delete from weekly_usage; delete from weekly_tickets; delete from operator_name_links; delete from operator_pricing;');
   });
 
   afterAll(async () => {
@@ -76,5 +76,27 @@ describeDb('PgWeeklyDataStore', () => {
         expect.objectContaining({ kind: 'usage', week: '2026-10-05', rows: 1, matched: 1, uploadedBy: 'b@seatos.com' }),
       ]),
     );
+  });
+
+  it('keeps the price comparison as one snapshot and follows a hand-made match', async () => {
+    const rec = (operatorId: number, name: string, accountId: string | null): PricingRecord => ({
+      operatorName: name,
+      nameKey: name.toLowerCase().replace(/\W/g, ''),
+      accountId,
+      operatorId,
+      currency: 'THB',
+      ticketsCompared: 300,
+      segments: 3,
+      pricePct: -4.5,
+      windowDays: 90,
+      detail: [{ from: 'A', to: 'B', vehicleType: 'Bus', vehicleClass: 'VIP', tickets: 40, avgPrice: 500, peerAvgPrice: 520, peers: 2, pct: -3.8 }],
+      computedAt: new Date().toISOString(),
+    });
+    await store.replacePricing([rec(1, 'Alpha', 'D-1'), rec(2, 'Bravo', null)], 'sync');
+    expect(await store.pricingFor('D-1')).toEqual([expect.objectContaining({ operatorId: 1, currency: 'THB', pricePct: -4.5, detail: [expect.objectContaining({ pct: -3.8 })] })]);
+    await store.setNameLink('bravo', 'D-2', 'a@seatos.com');
+    expect(await store.pricingFor('D-2')).toHaveLength(1);
+    await store.replacePricing([rec(1, 'Alpha', 'D-1')], 'sync');
+    expect(await store.pricingFor('D-2')).toEqual([]);
   });
 });

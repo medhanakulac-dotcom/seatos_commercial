@@ -312,6 +312,30 @@ export interface WeeklyTickets {
   tickets: number;
 }
 
+export interface WeeklyPricingSegment {
+  from: string;
+  to: string;
+  vehicleType: string;
+  vehicleClass: string;
+  tickets: number;
+  avgPrice: number;
+  peerAvgPrice: number;
+  peers: number;
+  /** vs the other operators on the same route, vehicle type and class (+ = more expensive). */
+  pct: number;
+}
+
+export interface WeeklyPricing {
+  currency: string;
+  ticketsCompared: number;
+  segments: number;
+  /** Ticket-weighted difference over all compared segments (+ = more expensive). */
+  pricePct: number;
+  windowDays: number;
+  detail: WeeklyPricingSegment[];
+  computedAt: string;
+}
+
 export interface WeeklySummary {
   uploads: { kind: 'usage' | 'tickets'; week: string; rows: number; matched: number; uploadedAt: string; uploadedBy: string }[];
   unmatched: { name: string; key: string; in: ('usage' | 'tickets')[] }[];

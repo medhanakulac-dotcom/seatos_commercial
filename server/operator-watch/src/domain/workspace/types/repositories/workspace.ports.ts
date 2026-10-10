@@ -382,6 +382,37 @@ export interface WeeklyTicketRecord extends TicketRow {
   readonly accountId: string | null;
 }
 
+/** One route + vehicle type + vehicle class where an operator's average ticket price was compared with the other operators'. */
+export interface PricingSegment {
+  readonly from: string;
+  readonly to: string;
+  readonly vehicleType: string;
+  readonly vehicleClass: string;
+  readonly tickets: number;
+  readonly avgPrice: number;
+  readonly peerAvgPrice: number;
+  readonly peers: number;
+  /** avgPrice vs the peers' average, in percent (+ = more expensive). */
+  readonly pct: number;
+}
+
+/** How one operator's selling price compares with other operators on the same routes (one currency), from the BigQuery sync. */
+export interface PricingRecord {
+  readonly operatorName: string;
+  readonly nameKey: string;
+  readonly accountId: string | null;
+  readonly operatorId: number;
+  readonly currency: string;
+  readonly ticketsCompared: number;
+  readonly segments: number;
+  /** Ticket-weighted price difference vs peers over all compared segments, in percent (+ = more expensive). */
+  readonly pricePct: number;
+  readonly windowDays: number;
+  /** The segments that differ most, biggest first. */
+  readonly detail: readonly PricingSegment[];
+  readonly computedAt: string;
+}
+
 export interface WeeklyUpload {
   readonly kind: WeeklyKind;
   readonly week: string;
@@ -409,5 +440,8 @@ export interface WeeklyDataStore {
   nameLinks(): Promise<Map<string, string | null>>;
   /** Saves a hand-made match and applies it to every stored row with that name. */
   setNameLink(nameKey: string, accountId: string | null, by: string): Promise<void>;
+  /** The price comparison is one snapshot: a sync replaces all of it. */
+  replacePricing(rows: readonly PricingRecord[], by: string): Promise<void>;
+  pricingFor(accountId: string): Promise<PricingRecord[]>;
 }
 export const WEEKLY_DATA_STORE = Symbol('WEEKLY_DATA_STORE');

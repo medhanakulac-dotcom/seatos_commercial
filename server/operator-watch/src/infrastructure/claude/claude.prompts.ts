@@ -4,6 +4,7 @@
  * over. Keep these strings static: anything that changes per request goes in the user message, which keeps the
  * prompt cache valid.
  */
+import type { PricingRecord } from '../../domain/workspace/types/repositories/workspace.ports';
 import { formatCsToolkit } from './cs-toolkit';
 
 /** The team's CS Toolkit, appended to the assessment and chat prompts (static, so it stays in the cached prefix). */
@@ -48,7 +49,7 @@ Base every statement on the data you are given. Never invent numbers, bookings, 
   many of the 7 features it used that week, which ones, and tickets sold. When a week lists "features
   used", those are the actual SeatOS features (e.g. Booking List, Route Management) with event counts and active days;
   compare weeks to see what it started or stopped using, and tie the next step to a feature it does not use yet. Use the trend (rising,
-  falling, stopped) as evidence; an operator with no ticket row sold nothing that week. Never invent numbers that
+  falling, stopped) as evidence; a price line, when present, says how its selling price compares with other operators on the same routes; an operator with no ticket row sold nothing that week. Never invent numbers that
   are not there. Never ask for an upload: when numbers are
   missing, say so and rely on the rest of the data.
 - The message also carries the operator's recent HubSpot activity: notes, meetings, calls, emails, tasks and logged
@@ -84,6 +85,12 @@ Facts
   rankings and comparisons). Say which week a number is for. Nobody uploads files for these: never tell a colleague to
   upload a file or ask for one. When the numbers are missing or stale, say the BigQuery sync has not delivered them
   yet and that an admin can check Settings → Weekly data; then work from what you do have (HubSpot, notes, health).
+- get_weekly_numbers also returns the operator's selling price compared with other operators on the same route, vehicle
+  type and vehicle class (BigQuery, one line per currency): the overall difference in percent (plus means more
+  expensive) and the segments that differ most. Quote it with the number of segments and tickets it rests on, and
+  never compare prices across currencies. A small segment count is weak evidence: say so. When the operator is
+  clearly cheaper or dearer, use it in retention advice (room to raise prices, or the risk of losing sales to cheaper
+  operators). If no price line is present, there were too few comparable sales; do not guess.
 - What was discussed with the operator — HubSpot notes, meetings (with their notes), calls, emails, tasks and logged
   LINE/WhatsApp/SMS messages — comes from get_hubspot_activity. Use it for questions about history, promises,
   complaints, meetings or "what did we last talk about"; filter by type when the question is about one kind.
@@ -196,16 +203,27 @@ export function formatActivity(items: readonly { type: string; at: string; title
     .join('\n');
 }
 
+/** The price comparison for one currency: the overall difference and the segments that differ most. */
+function formatPricing(p: PricingRecord): string {
+  const sign = (n: number) => `${n > 0 ? '+' : ''}${n}%`;
+  const top = p.detail.slice(0, 5).map((d) => `${d.from}→${d.to} ${d.vehicleType}/${d.vehicleClass}: ${d.avgPrice} vs ${d.peerAvgPrice} ${p.currency} (${sign(d.pct)}, ${d.tickets} tickets)`);
+  return `- selling price vs other operators on the same route, vehicle type and class (${p.currency}, last ${p.windowDays} days): ${sign(p.pricePct)} across ${p.segments} segments, ${p.ticketsCompared} tickets compared${top.length ? `\n  biggest differences: ${top.join('; ')}` : ''}`;
+}
+
 /** Weekly SeatOS numbers (BigQuery sync) for one operator, newest week first. */
 export function formatWeekly(data: {
   usage: readonly { week: string; featureCount: number; features: Readonly<Record<string, boolean>>; featureUsage?: readonly { name: string; events: number; days: number }[] }[];
   tickets: readonly { week: string; tickets: number }[];
   /** Weeks the sync delivered for anyone: no usage row in one of them means no tracked activity (WAO 0/7). */
   usageWeeks?: readonly string[];
+  /** Price vs other operators on the same route + vehicle type + vehicle class (BigQuery), one entry per currency. */
+  pricing?: readonly PricingRecord[];
 }): string {
+  const priceLines = (data.pricing ?? []).map(formatPricing);
   const weeks = [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week), ...(data.usageWeeks ?? [])])].sort().reverse();
-  if (!weeks.length) return 'No weekly SeatOS numbers have reached the workspace for this operator yet (they sync from BigQuery automatically; nobody uploads files).';
-  return weeks
+  if (!weeks.length && !priceLines.length) return 'No weekly SeatOS numbers have reached the workspace for this operator yet (they sync from BigQuery automatically; nobody uploads files).';
+  const prices = priceLines.length ? `\n${priceLines.join('\n')}` : '';
+  return (weeks
     .map((w) => {
       const u = data.usage.find((x) => x.week === w);
       const t = data.tickets.find((x) => x.week === w);
@@ -213,5 +231,5 @@ export function formatWeekly(data: {
       const detail = u?.featureUsage?.length ? `\n  features used: ${u.featureUsage.slice(0, 12).map((f) => `${f.name} ${f.events} events/${f.days}d`).join(', ')}` : '';
       return `- week of ${w}: ${u ? `WAO ${u.featureCount}/7 (${used || 'no features used'})` : data.usageWeeks?.includes(w) ? 'WAO 0/7 (no tracked activity in the SeatOS app)' : 'no usage data for this week'}; ${t ? `${t.tickets} tickets` : 'no ticket row (no sales recorded)'}${detail}`;
     })
-    .join('\n');
+    .join('\n')) + prices;
 }

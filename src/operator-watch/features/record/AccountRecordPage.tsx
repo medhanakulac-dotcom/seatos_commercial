@@ -379,7 +379,6 @@ export function AccountRecordPage() {
       <div className="rl">
         <div className="grid" style={{ gap: 18, minWidth: 0 }}>
           {props}
-          <WeeklyNumbers accountId={a.id} />
           {deals}
           {owner}
           {approval}
@@ -387,6 +386,7 @@ export function AccountRecordPage() {
         </div>
         <div className="grid" style={{ gap: 18, minWidth: 0 }}>
           <div>{center}</div>
+          <WeeklyNumbers accountId={a.id} />
           <AssistantChat accountId={a.id} accountName={a.name} />
         </div>
       </div>

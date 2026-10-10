@@ -1,4 +1,4 @@
-import { WeeklyDataStore, WeeklyTicketRecord, WeeklyUpload, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
+import { PricingRecord, WeeklyDataStore, WeeklyTicketRecord, WeeklyUpload, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
 
 type Stamp = { uploadedAt: string; uploadedBy: string };
 
@@ -6,6 +6,7 @@ type Stamp = { uploadedAt: string; uploadedBy: string };
 export class InMemoryWeeklyDataStore implements WeeklyDataStore {
   private usage: (WeeklyUsageRecord & Stamp)[] = [];
   private tickets: (WeeklyTicketRecord & Stamp)[] = [];
+  private pricing: PricingRecord[] = [];
   private readonly links = new Map<string, string | null>();
 
   async replaceUsage(week: string, rows: readonly WeeklyUsageRecord[], by: string): Promise<void> {
@@ -58,6 +59,15 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
     this.links.set(nameKey, accountId);
     this.usage = this.usage.map((r) => (r.nameKey === nameKey ? { ...r, accountId } : r));
     this.tickets = this.tickets.map((r) => (r.nameKey === nameKey ? { ...r, accountId } : r));
+    this.pricing = this.pricing.map((r) => (r.nameKey === nameKey ? { ...r, accountId } : r));
+  }
+
+  async replacePricing(rows: readonly PricingRecord[]): Promise<void> {
+    this.pricing = [...rows];
+  }
+
+  async pricingFor(accountId: string): Promise<PricingRecord[]> {
+    return this.pricing.filter((r) => r.accountId === accountId).sort((a, b) => b.ticketsCompared - a.ticketsCompared);
   }
 }
 

@@ -113,6 +113,59 @@ var SKIP_FEATURES = ['ga4', 'pin'];
 function syncAll() {
   syncWeek_(0); // this week so far
   syncWeek_(1); // last week, final
+  syncPricing(); // price vs other operators (own error handling: a failure here must not hide the weekly sync)
+}
+
+// Price comparison: each operator's average ticket price vs the other operators selling the SAME route (from/to station),
+// vehicle type and vehicle class, in the same currency. Confirmed bookings of the last PRICE_WINDOW_DAYS days.
+var PRICE_WINDOW_DAYS = 90;
+var PRICE_MIN_PEER_TICKETS = 10;   // the others must have sold at least this many tickets in the segment
+var PRICE_MIN_OWN_TICKETS = 5;     // and the operator itself at least this many
+var PRICE_MIN_OPERATOR_TICKETS = 100; // an operator needs this many compared tickets overall to be reported
+var PRICE_DETAIL_SEGMENTS = 8;
+
+function syncPricing() {
+  var rows = runQuery_(pricingSql_()).map(function (r) {
+    return {
+      operatorId: Number(r[0]), operatorName: r[1], currency: r[2], from: r[3], to: r[4], vehicleType: r[5], vehicleClass: r[6],
+      tickets: Number(r[7]), avgPrice: Number(r[8]), peerAvgPrice: Number(r[9]), peers: Number(r[10]),
+    };
+  });
+  var byOperator = {};
+  rows.forEach(function (s) {
+    var key = s.operatorId + '|' + s.currency;
+    var o = byOperator[key] || (byOperator[key] = { operatorId: s.operatorId, operatorName: s.operatorName, currency: s.currency, ticketsCompared: 0, segments: 0, own: 0, peer: 0, segs: [] });
+    o.ticketsCompared += s.tickets;
+    o.segments += 1;
+    o.own += s.tickets * s.avgPrice;
+    o.peer += s.tickets * s.peerAvgPrice; // what the same tickets would have cost at the others' average price
+    o.segs.push({ from: s.from, to: s.to, vehicleType: s.vehicleType, vehicleClass: s.vehicleClass, tickets: s.tickets, avgPrice: round_(s.avgPrice, 2), peerAvgPrice: round_(s.peerAvgPrice, 2), peers: s.peers, pct: round_(100 * (s.avgPrice / s.peerAvgPrice - 1), 1) });
+  });
+  var out = Object.keys(byOperator).map(function (k) { return byOperator[k]; })
+    .filter(function (o) { return o.ticketsCompared >= PRICE_MIN_OPERATOR_TICKETS && o.peer > 0; })
+    .map(function (o) {
+      o.segs.sort(function (a, b) { return Math.abs(b.pct) * b.tickets - Math.abs(a.pct) * a.tickets; });
+      return { operatorId: o.operatorId, operatorName: o.operatorName, currency: o.currency, ticketsCompared: o.ticketsCompared, segments: o.segments, pricePct: round_(100 * (o.own / o.peer - 1), 1), detail: o.segs.slice(0, PRICE_DETAIL_SEGMENTS) };
+    });
+  return post_('pricing', { windowDays: PRICE_WINDOW_DAYS, rows: out });
+}
+
+function round_(n, digits) {
+  var f = Math.pow(10, digits);
+  return Math.round(n * f) / f;
+}
+
+function pricingSql_() {
+  return 'WITH b AS (SELECT t.operator_id, t.operator_name, t.currency, f.from_station, f.to_station, f.vehicle_type, f.vehicle_class, t.tickets, t.total_price ' +
+    'FROM `' + PROJECT_ID + '.raw_tables.tc_export_bookings_table` t JOIN `' + PROJECT_ID + '.dwh.fact_booking` f USING (book_id) ' +
+    'WHERE t.status = \'CONFIRMED\' AND t.booked_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ' + PRICE_WINDOW_DAYS + ' DAY) AND t.tickets > 0 AND t.total_price > 0), ' +
+    'seg AS (SELECT operator_id, ANY_VALUE(operator_name) AS operator_name, currency, from_station, to_station, vehicle_type, vehicle_class, SUM(tickets) AS tickets, SUM(total_price) AS total ' +
+    'FROM b WHERE from_station IS NOT NULL AND to_station IS NOT NULL AND vehicle_type IS NOT NULL AND vehicle_class IS NOT NULL ' +
+    'GROUP BY operator_id, currency, from_station, to_station, vehicle_type, vehicle_class), ' +
+    'cmp AS (SELECT *, SUM(total) OVER w - total AS peer_total, SUM(tickets) OVER w - tickets AS peer_tickets, COUNT(*) OVER w - 1 AS peers FROM seg ' +
+    'WINDOW w AS (PARTITION BY currency, from_station, to_station, vehicle_type, vehicle_class)) ' +
+    'SELECT operator_id, operator_name, currency, from_station, to_station, vehicle_type, vehicle_class, tickets, total / tickets AS avg_price, peer_total / peer_tickets AS peer_avg_price, peers ' +
+    'FROM cmp WHERE peers >= 1 AND peer_tickets >= ' + PRICE_MIN_PEER_TICKETS + ' AND tickets >= ' + PRICE_MIN_OWN_TICKETS;
 }
 
 /** Backfill: syncBack(12) sends the last 12 weeks, oldest first. */

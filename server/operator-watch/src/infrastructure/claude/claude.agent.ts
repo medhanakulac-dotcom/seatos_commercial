@@ -4,6 +4,7 @@ import { z } from 'zod/v4';
 import { Actor, CRM_ACTIVITY_TYPES, CrmActivity } from '../../domain/workspace/entities/workspace.entities';
 import { WorkspaceSettings } from '../../domain/workspace/services/settings';
 import type { TicketsView, UsageWithFeatures } from '../../domain/workspace/services/weekly-data.service';
+import type { PricingRecord } from '../../domain/workspace/types/repositories/workspace.ports';
 import {
   AccountAssistant,
   AccountContext,
@@ -28,7 +29,7 @@ export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
 
 /** Weekly numbers synced from BigQuery (WeeklyDataService). */
 export interface WeeklyLookup {
-  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[] }>;
+  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing?: PricingRecord[] }>;
   week(kind: 'usage' | 'tickets', week?: string): Promise<(UsageWithFeatures | TicketsView)[]>;
 }
 

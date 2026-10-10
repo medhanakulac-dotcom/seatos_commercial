@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CrmAccount } from '../entities/workspace.entities';
-import { Clock, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
+import { Clock, PricingRecord, PricingSegment, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
 import { RunService } from './run.service';
 import { CATEGORY_CODES, featureByCode } from './seatos-features';
 import { cleanName, FEATURES, FeatureActivity, Feature, mondayOf, nameKey, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
@@ -144,6 +144,59 @@ export class WeeklyDataService {
     return this.result('tickets', [p.week], rows, match);
   }
 
+  /**
+   * The BigQuery price comparison: per operator and currency, the ticket-weighted price difference vs other operators on
+   * the same route + vehicle type + vehicle class, with the segments that differ most. A snapshot: replaces the previous one.
+   */
+  async ingestPricing(payload: unknown, by: string): Promise<{ rows: number; matched: number }> {
+    const p = (payload ?? {}) as { windowDays?: unknown; rows?: unknown };
+    const windowDays = Math.round(Number(p.windowDays));
+    if (!Number.isFinite(windowDays) || windowDays < 1 || windowDays > 366) throw new WeeklyDataError('windowDays must be 1–366');
+    if (!Array.isArray(p.rows)) throw new WeeklyDataError('rows must be a list');
+    if (p.rows.length > MAX_INGEST_ROWS) throw new WeeklyDataError(`At most ${MAX_INGEST_ROWS} rows`);
+    const match = await this.matcher();
+    const num = (v: unknown, what: string): number => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) throw new WeeklyDataError(`${what} must be a number`);
+      return n;
+    };
+    const computedAt = this.clock.now().toISOString();
+    const records = new Map<string, PricingRecord>();
+    for (const raw of p.rows as Record<string, unknown>[]) {
+      const name = cleanName(typeof raw.operatorName === 'string' ? raw.operatorName : '');
+      const currency = typeof raw.currency === 'string' ? raw.currency.trim().toUpperCase() : '';
+      if (!name || !currency || !Number.isInteger(raw.operatorId)) throw new WeeklyDataError('Every row needs operatorId (integer), operatorName and currency');
+      const detail: PricingSegment[] = (Array.isArray(raw.detail) ? raw.detail : []).slice(0, 20).map((d: Record<string, unknown>) => ({
+        from: String(d.from ?? ''),
+        to: String(d.to ?? ''),
+        vehicleType: String(d.vehicleType ?? ''),
+        vehicleClass: String(d.vehicleClass ?? ''),
+        tickets: Math.round(num(d.tickets, 'detail.tickets')),
+        avgPrice: num(d.avgPrice, 'detail.avgPrice'),
+        peerAvgPrice: num(d.peerAvgPrice, 'detail.peerAvgPrice'),
+        peers: Math.round(num(d.peers, 'detail.peers')),
+        pct: num(d.pct, 'detail.pct'),
+      }));
+      const m = match(name);
+      records.set(`${raw.operatorId}|${currency}`, {
+        operatorName: name,
+        nameKey: m.key,
+        accountId: m.accountId,
+        operatorId: raw.operatorId as number,
+        currency,
+        ticketsCompared: Math.round(num(raw.ticketsCompared, 'ticketsCompared')),
+        segments: Math.round(num(raw.segments, 'segments')),
+        pricePct: Math.round(num(raw.pricePct, 'pricePct') * 100) / 100,
+        windowDays,
+        detail,
+        computedAt,
+      });
+    }
+    const rows = [...records.values()];
+    await this.store.replacePricing(rows, by);
+    return { rows: rows.length, matched: rows.filter((r) => r.accountId).length };
+  }
+
   /** Uploads so far, names still unmatched in the latest weeks, and the accounts they can be matched to. */
   async summary() {
     const [uploads, links, accounts, usage, tickets] = await Promise.all([this.store.uploads(20), this.store.nameLinks(), this.accounts(), this.store.usageWeek(), this.store.ticketsWeek()]);
@@ -172,11 +225,16 @@ export class WeeklyDataService {
   }
 
   /** The latest `weeks` weeks for one account, newest first. */
-  async forAccount(accountId: string, weeks = 12): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[] }> {
-    const [usage, tickets, usageWeeks] = await Promise.all([this.store.usageFor(accountId, weeks), this.store.ticketsFor(accountId, weeks), this.store.usageWeeks(weeks)]);
+  async forAccount(accountId: string, weeks = 12): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing: PricingRecord[] }> {
+    const [usage, tickets, usageWeeks, pricing] = await Promise.all([
+      this.store.usageFor(accountId, weeks),
+      this.store.ticketsFor(accountId, weeks),
+      this.store.usageWeeks(weeks),
+      this.store.pricingFor(accountId),
+    ]);
     // usageWeeks: weeks the sync delivered for anyone. The sync sends operators that had tracked events, so an account
     // without a usage row in one of those weeks was inactive in the SeatOS app (WAO 0/7), not "unknown".
-    return { usage: usage.map(withFeatureNames), tickets: tickets.map(withoutGmv), usageWeeks };
+    return { usage: usage.map(withFeatureNames), tickets: tickets.map(withoutGmv), usageWeeks, pricing };
   }
 
   /** Every operator in one week (the latest when omitted). */

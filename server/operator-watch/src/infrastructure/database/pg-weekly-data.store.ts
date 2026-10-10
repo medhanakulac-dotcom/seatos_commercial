@@ -1,6 +1,6 @@
 import { Pool, QueryResultRow } from 'pg';
 import { FEATURES, Feature } from '../../domain/workspace/services/weekly-data';
-import { WeeklyDataStore, WeeklyTicketRecord, WeeklyUpload, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
+import { PricingRecord, WeeklyDataStore, WeeklyTicketRecord, WeeklyUpload, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
 
 /** node-postgres turns a `date` into local midnight, so read it back with local fields (not UTC) to keep the day. */
 const day = (v: unknown): string =>
@@ -24,6 +24,20 @@ const toTickets = (r: QueryResultRow): WeeklyTicketRecord => ({
   accountId: r.account_id,
   gmvUsd: Number(r.gmv_usd),
   tickets: r.tickets,
+});
+
+const toPricing = (r: QueryResultRow): PricingRecord => ({
+  operatorName: r.operator_name,
+  nameKey: r.name_key,
+  accountId: r.account_id,
+  operatorId: r.operator_id,
+  currency: r.currency,
+  ticketsCompared: r.tickets_compared,
+  segments: r.segments,
+  pricePct: Number(r.price_pct),
+  windowDays: r.window_days,
+  detail: r.detail ?? [],
+  computedAt: new Date(r.computed_at).toISOString(),
 });
 
 /** Weekly uploads in Postgres (migrations/007_weekly_data.sql). */
@@ -93,6 +107,7 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
       );
       await client.query('update weekly_usage set account_id = $2 where name_key = $1', [nameKey, accountId]);
       await client.query('update weekly_tickets set account_id = $2 where name_key = $1', [nameKey, accountId]);
+      await client.query('update operator_pricing set account_id = $2 where name_key = $1', [nameKey, accountId]);
       await client.query('commit');
     } catch (error) {
       await client.query('rollback');
@@ -100,6 +115,34 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
     } finally {
       client.release();
     }
+  }
+
+  async replacePricing(rows: readonly PricingRecord[], by: string): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('begin');
+      await client.query('delete from operator_pricing');
+      for (const r of rows) {
+        await client.query(
+          `insert into operator_pricing (operator_name, name_key, account_id, operator_id, currency, tickets_compared, segments, price_pct, window_days, detail, uploaded_by)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           on conflict (operator_id, currency) do update set operator_name = excluded.operator_name, name_key = excluded.name_key, account_id = excluded.account_id,
+             tickets_compared = excluded.tickets_compared, segments = excluded.segments, price_pct = excluded.price_pct, window_days = excluded.window_days,
+             detail = excluded.detail, computed_at = now(), uploaded_by = excluded.uploaded_by`,
+          [r.operatorName, r.nameKey, r.accountId, r.operatorId, r.currency, r.ticketsCompared, r.segments, r.pricePct, r.windowDays, JSON.stringify(r.detail), by],
+        );
+      }
+      await client.query('commit');
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async pricingFor(accountId: string): Promise<PricingRecord[]> {
+    return (await this.pool.query('select * from operator_pricing where account_id = $1 order by tickets_compared desc', [accountId])).rows.map(toPricing);
   }
 
   private async weekRows(table: string, week: string | undefined, order: string): Promise<QueryResultRow[]> {
