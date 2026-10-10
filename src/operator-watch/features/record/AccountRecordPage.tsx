@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAccount, useZeroTicketIds } from '../../api/queries';
 import type { CaseEvent } from '../../api/types';
 import { Avatar, HealthTag, SegTag, ZeroTicketTag } from '../../components/tags';
+import { Tour, type TourStep } from '../../components/Tour';
 import { formatEventTime, money, ownerName } from '../../lib/format';
 import { AssistantChat } from './AssistantChat';
 import { HubSpotActivity } from './HubSpotActivity';
@@ -11,6 +12,39 @@ import { useNotes } from './useNotes';
 import { WeeklyNumbers } from './WeeklyNumbers';
 
 type Tab = 'overview' | 'activity';
+
+const RECORD_TOUR: TourStep[] = [
+  {
+    target: '[data-tour="head"]',
+    title: 'The account at a glance',
+    body: 'Name, segment and health, plus a Zero ticket tag when it sold no tickets in the last two weeks. "Log note" adds a note to the activity and sends it to HubSpot.',
+  },
+  {
+    target: '[data-tour="about"]',
+    title: 'About this account',
+    body: 'Owner, country, deal amount, its health in HubSpot, the playbook it is on, the main contact, and the link to its SeatOS operator.',
+  },
+  {
+    target: '[data-tour="deals"]',
+    title: 'HubSpot deals',
+    body: 'Its deals with stage and amount. "Open" jumps to the deal in HubSpot.',
+  },
+  {
+    target: '[data-tour="summary"]',
+    title: 'Summary and next step',
+    body: 'A short read of the situation, the suggested next step, the signals this week and the playbook. Use the Overview and Activity tabs above to switch to notes and the HubSpot history.',
+  },
+  {
+    target: '[data-tour="weekly"]',
+    title: 'SeatOS numbers',
+    body: 'WAO per week (how many of the 7 product areas it used), the features it used in the latest week with events and active days, what is new or stopped, and tickets sold. When enough comparable sales exist, it also shows its price against other operators on the same city route, vehicle type and class.',
+  },
+  {
+    target: '[data-tour="chat"]',
+    title: 'Ask about this account',
+    body: 'Ask about its numbers, its history or what to do next. The assistant reads the account data and the CS Toolkit, and everyone on the team sees the conversation. A chat that has been quiet for 10 minutes starts fresh.',
+  },
+];
 
 function SyncTag({ event, hasDeal, onRetry }: { event: CaseEvent; hasDeal: boolean; onRetry: () => void }) {
   if (event.kind !== 'note' || !event.crmSync) return null;
@@ -55,7 +89,7 @@ export function AccountRecordPage() {
   };
 
   const props = (
-    <div className="card">
+    <div className="card" data-tour="about">
       <h2 className="st">
         <span>About this account</span>
       </h2>
@@ -90,7 +124,7 @@ export function AccountRecordPage() {
   );
 
   const deals = (
-    <div className="card">
+    <div className="card" data-tour="deals">
       <h2 className="st">
         <span>HubSpot deals</span>
         <span className="d">{a.deals.length}</span>
@@ -207,7 +241,7 @@ export function AccountRecordPage() {
         <button onClick={() => navigate('/accounts')}>Accounts</button>{' '}
         / {a.name}
       </div>
-      <div className="rh">
+      <div className="rh" data-tour="head">
         <Avatar name={a.name} />
         <div>
           <h1 style={{ margin: 0 }}>{a.name}</h1>
@@ -218,6 +252,7 @@ export function AccountRecordPage() {
           </div>
         </div>
         <div className="row" style={{ marginLeft: 'auto' }}>
+          <Tour id="record" steps={RECORD_TOUR} ready />
           <button className="b" onClick={() => setTab('activity')}>
             Log note
           </button>
@@ -238,9 +273,13 @@ export function AccountRecordPage() {
           {owner}
         </div>
         <div className="grid" style={{ gap: 18, minWidth: 0 }}>
-          <div>{center}</div>
-          <WeeklyNumbers accountId={a.id} />
-          <AssistantChat accountId={a.id} accountName={a.name} />
+          <div data-tour="summary">{center}</div>
+          <div data-tour="weekly">
+            <WeeklyNumbers accountId={a.id} />
+          </div>
+          <div data-tour="chat">
+            <AssistantChat accountId={a.id} accountName={a.name} />
+          </div>
         </div>
       </div>
     </>
