@@ -63,6 +63,7 @@ export const NAV = [
   },
   {
     group: "Operator Watch",
+    badge: { text: "New", bg: "#2DD4BF" },
     items: [
       { tool: "ow-home", label: "Overview", icon: icOwHome, accent: "#2DD4BF" },
       { tool: "ow-accounts", label: "Accounts", icon: icOwAccounts, accent: "#2DD4BF" },

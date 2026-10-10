@@ -201,7 +201,12 @@ export default function PlaybookShell({ userEmail, isAdmin, activeTool, onOpenTo
           <nav className="navx" style={{ padding: "14px 12px", flex: "1", display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto" }}>
             {NAV.map((g, gi) => (
               <div key={g.group} style={{ display: "contents" }}>
-                <div style={{ ...groupLabel, padding: gi === 0 ? "6px 12px 4px" : "14px 12px 4px" }}>{g.group}</div>
+                <div style={{ ...groupLabel, padding: gi === 0 ? "6px 12px 4px" : "14px 12px 4px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  {g.group}
+                  {g.badge && (
+                    <span style={{ fontSize: "9px", fontWeight: "800", color: "#1A1A1A", background: g.badge.bg, padding: "2px 7px", borderRadius: "20px", letterSpacing: "0.4px", whiteSpace: "nowrap" }}>{g.badge.text}</span>
+                  )}
+                </div>
                 {g.items
                   .filter((item) => !item.adminOnly || isAdmin)
                   .map((item) => (
