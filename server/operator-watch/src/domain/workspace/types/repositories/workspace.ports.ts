@@ -449,6 +449,9 @@ export interface WeeklyDataStore {
   /** The price comparison is one snapshot: a sync replaces all of it. */
   replacePricing(rows: readonly PricingRecord[], by: string): Promise<void>;
   pricingFor(accountId: string): Promise<PricingRecord[]>;
+  /** Operator names an account is also reported under (account_aliases): their rows count for the account too. */
+  aliases(): Promise<{ accountId: string; operatorName: string }[]>;
+  addAlias(accountId: string, operatorName: string, by: string): Promise<void>;
   /** When the last price comparison was synced (null = never): without it, "no price line" means "not synced yet", with it, "nobody comparable". */
   pricingSyncedAt(): Promise<string | null>;
 }

@@ -38,6 +38,8 @@ export interface UsageWithFeatures extends Omit<WeeklyUsageRecord, 'featureUsage
 export type TicketsView = Omit<WeeklyTicketRecord, 'gmvUsd'>;
 
 export const MAX_INGEST_ROWS = 3000;
+/** An account can carry a few aliases: read this many rows per week and merge them. */
+const ALIAS_ROWS_PER_WEEK = 4;
 const REMATCH_EVERY_MS = 5 * 60_000;
 /** WAO: an operator is weekly active when it used at least this many of the 7 categories in a week. */
 export const WAO_MIN_CATEGORIES = 3;
@@ -250,6 +252,14 @@ export class WeeklyDataService {
     }
   }
 
+  /** The account is also reported under this operator name: that operator's numbers show on it too. */
+  async addAlias(accountId: string, operatorName: string, by: string): Promise<void> {
+    if (!(await this.accounts()).some((a) => a.id === accountId)) throw new WeeklyDataError(`Account ${accountId} is not in the latest run`);
+    const name = cleanName(operatorName);
+    if (!name) throw new WeeklyDataError('Operator name is empty');
+    await this.store.addAlias(accountId, name, by);
+  }
+
   /** A person matches an uploaded name to an account (or `null` = not an operator we track), for this and later weeks. */
   async link(name: string, accountId: string | null, by: string): Promise<void> {
     if (accountId && !(await this.accounts()).some((a) => a.id === accountId)) throw new WeeklyDataError(`Account ${accountId} is not in the latest run`);
@@ -262,15 +272,15 @@ export class WeeklyDataService {
   async forAccount(accountId: string, weeks = 12): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing: PricingRecord[]; pricingSyncedAt: string | null }> {
     await this.rematchUnmatched();
     const [usage, tickets, usageWeeks, pricing, pricingSyncedAt] = await Promise.all([
-      this.store.usageFor(accountId, weeks),
-      this.store.ticketsFor(accountId, weeks),
+      this.store.usageFor(accountId, weeks * ALIAS_ROWS_PER_WEEK),
+      this.store.ticketsFor(accountId, weeks * ALIAS_ROWS_PER_WEEK),
       this.store.usageWeeks(weeks),
       this.store.pricingFor(accountId),
       this.store.pricingSyncedAt(),
     ]);
     // usageWeeks: weeks the sync delivered for anyone. The sync sends operators that had tracked events, so an account
     // without a usage row in one of those weeks was inactive in the SeatOS app (WAO 0/7), not "unknown".
-    return { usage: usage.map(withFeatureNames), tickets: tickets.map(withoutGmv), usageWeeks, pricing, pricingSyncedAt };
+    return { usage: oneUsagePerWeek(usage).slice(0, weeks).map(withFeatureNames), tickets: sumTicketsPerWeek(tickets.map(withoutGmv)).slice(0, weeks), usageWeeks, pricing, pricingSyncedAt };
   }
 
   /**
@@ -282,7 +292,10 @@ export class WeeklyDataService {
     await this.rematchUnmatched();
     const weeks = await this.store.ticketWeeks(2);
     if (!weeks.length) return { weeks: [], accountIds: [] };
-    const sold = new Set((await Promise.all(weeks.map((w) => this.store.ticketsWeek(w)))).flat().map((r) => r.accountId));
+    const rows = (await Promise.all(weeks.map((w) => this.store.ticketsWeek(w)))).flat();
+    const sold = new Set(rows.map((r) => r.accountId));
+    // An account also reported under another operator name sold what that operator sold.
+    for (const a of await this.store.aliases()) if (rows.some((r) => r.operatorName === a.operatorName)) sold.add(a.accountId);
     return { weeks, accountIds: (await this.accounts()).filter((a) => !sold.has(a.id)).map((a) => a.id) };
   }
 
@@ -293,7 +306,9 @@ export class WeeklyDataService {
   async waoOverview(): Promise<{ week: string | null; accountIds: string[] }> {
     await this.rematchUnmatched();
     const rows = await this.store.usageWeek();
-    return { week: rows[0]?.week ?? null, accountIds: rows.filter((r) => r.accountId && r.featureCount >= WAO_MIN_CATEGORIES).map((r) => r.accountId as string) };
+    const active = new Set(rows.filter((r) => r.accountId && r.featureCount >= WAO_MIN_CATEGORIES).map((r) => r.accountId as string));
+    for (const a of await this.store.aliases()) if (rows.some((r) => r.operatorName === a.operatorName && r.featureCount >= WAO_MIN_CATEGORIES)) active.add(a.accountId);
+    return { week: rows[0]?.week ?? null, accountIds: [...active] };
   }
 
   /**
@@ -368,6 +383,26 @@ function withFeatureNames(r: WeeklyUsageRecord): UsageWithFeatures {
     })
     .sort((a, b) => b.events - a.events || a.name.localeCompare(b.name));
   return { ...r, featureUsage };
+}
+
+/** An account reported under several operator names has several usage rows in a week: the most active one is shown. */
+function oneUsagePerWeek(rows: readonly WeeklyUsageRecord[]): WeeklyUsageRecord[] {
+  const best = new Map<string, WeeklyUsageRecord>();
+  for (const r of rows) {
+    const cur = best.get(r.week);
+    if (!cur || r.featureCount > cur.featureCount) best.set(r.week, r);
+  }
+  return [...best.values()].sort((a, b) => b.week.localeCompare(a.week));
+}
+
+/** ...and several tickets rows: the week's tickets add up. */
+function sumTicketsPerWeek(rows: readonly TicketsView[]): TicketsView[] {
+  const sum = new Map<string, TicketsView>();
+  for (const r of rows) {
+    const cur = sum.get(r.week);
+    sum.set(r.week, cur ? { ...cur, tickets: cur.tickets + r.tickets } : r);
+  }
+  return [...sum.values()].sort((a, b) => b.week.localeCompare(a.week));
 }
 
 const mondayOfIso = (iso: string): string => mondayOf(new Date(`${iso}T12:00:00Z`), 'UTC');

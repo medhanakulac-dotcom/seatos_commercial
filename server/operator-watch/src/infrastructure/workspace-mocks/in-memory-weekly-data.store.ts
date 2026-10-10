@@ -19,11 +19,11 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
   }
 
   async usageFor(accountId: string, limit: number): Promise<WeeklyUsageRecord[]> {
-    return this.usage.filter((r) => r.accountId === accountId).sort(byWeekDesc).slice(0, limit).map(strip);
+    return this.usage.filter((r) => r.accountId === accountId || this.aliased(accountId, r.operatorName)).sort(byWeekDesc).slice(0, limit).map(strip);
   }
 
   async ticketsFor(accountId: string, limit: number): Promise<WeeklyTicketRecord[]> {
-    return this.tickets.filter((r) => r.accountId === accountId).sort(byWeekDesc).slice(0, limit).map(strip);
+    return this.tickets.filter((r) => r.accountId === accountId || this.aliased(accountId, r.operatorName)).sort(byWeekDesc).slice(0, limit).map(strip);
   }
 
   async usageWeeks(limit: number): Promise<string[]> {
@@ -82,12 +82,26 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
     this.pricingSyncedAtValue = new Date().toISOString();
   }
 
+  private readonly aliasRows: { accountId: string; operatorName: string }[] = [];
+
+  private aliased(accountId: string, operatorName: string): boolean {
+    return this.aliasRows.some((a) => a.accountId === accountId && a.operatorName === operatorName);
+  }
+
+  async aliases(): Promise<{ accountId: string; operatorName: string }[]> {
+    return [...this.aliasRows];
+  }
+
+  async addAlias(accountId: string, operatorName: string): Promise<void> {
+    if (!this.aliased(accountId, operatorName)) this.aliasRows.push({ accountId, operatorName });
+  }
+
   async pricingSyncedAt(): Promise<string | null> {
     return this.pricingSyncedAtValue;
   }
 
   async pricingFor(accountId: string): Promise<PricingRecord[]> {
-    return this.pricing.filter((r) => r.accountId === accountId).sort((a, b) => b.ticketsCompared - a.ticketsCompared);
+    return this.pricing.filter((r) => r.accountId === accountId || this.aliased(accountId, r.operatorName)).sort((a, b) => b.ticketsCompared - a.ticketsCompared);
   }
 }
 

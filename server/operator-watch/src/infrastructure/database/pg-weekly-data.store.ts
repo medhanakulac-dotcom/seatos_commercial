@@ -61,11 +61,11 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
   }
 
   async usageFor(accountId: string, limit: number): Promise<WeeklyUsageRecord[]> {
-    return (await this.pool.query('select * from weekly_usage where account_id = $1 order by week desc limit $2', [accountId, limit])).rows.map(toUsage);
+    return (await this.pool.query('select * from weekly_usage where account_id = $1 or operator_name in (select operator_name from account_aliases where account_id = $1) order by week desc limit $2', [accountId, limit])).rows.map(toUsage);
   }
 
   async ticketsFor(accountId: string, limit: number): Promise<WeeklyTicketRecord[]> {
-    return (await this.pool.query('select * from weekly_tickets where account_id = $1 order by week desc limit $2', [accountId, limit])).rows.map(toTickets);
+    return (await this.pool.query('select * from weekly_tickets where account_id = $1 or operator_name in (select operator_name from account_aliases where account_id = $1) order by week desc limit $2', [accountId, limit])).rows.map(toTickets);
   }
 
   async usageWeeks(limit: number): Promise<string[]> {
@@ -162,7 +162,15 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
   }
 
   async pricingFor(accountId: string): Promise<PricingRecord[]> {
-    return (await this.pool.query('select * from operator_pricing where account_id = $1 order by tickets_compared desc', [accountId])).rows.map(toPricing);
+    return (await this.pool.query('select * from operator_pricing where account_id = $1 or operator_name in (select operator_name from account_aliases where account_id = $1) order by tickets_compared desc', [accountId])).rows.map(toPricing);
+  }
+
+  async aliases(): Promise<{ accountId: string; operatorName: string }[]> {
+    return (await this.pool.query('select account_id, operator_name from account_aliases')).rows.map((r) => ({ accountId: r.account_id, operatorName: r.operator_name }));
+  }
+
+  async addAlias(accountId: string, operatorName: string, by: string): Promise<void> {
+    await this.pool.query('insert into account_aliases (account_id, operator_name, set_by) values ($1, $2, $3) on conflict do nothing', [accountId, operatorName, by]);
   }
 
   async pricingSyncedAt(): Promise<string | null> {

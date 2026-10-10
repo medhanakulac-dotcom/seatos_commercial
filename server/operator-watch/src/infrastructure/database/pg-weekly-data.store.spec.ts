@@ -111,4 +111,15 @@ describeDb('PgWeeklyDataStore', () => {
     expect((await store.usageFor('D-9', 5)).map((r) => r.operatorName)).toEqual(['Known Ferry']);
     expect(await store.nameLinks()).toEqual(new Map());
   });
+
+  it('shows an account the rows of an operator name it is also reported under', async () => {
+    await pool.query('delete from weekly_usage; delete from weekly_tickets; delete from account_aliases;');
+    await store.replaceUsage('2026-10-12', [usage('2026-10-12', 'Own Name', 'D-1', 1), usage('2026-10-12', 'Other Operator', 'D-2', 5)], 'sync');
+    expect((await store.usageFor('D-1', 10)).map((r) => r.operatorName)).toEqual(['Own Name']);
+    await store.addAlias('D-1', 'Other Operator', 'test');
+    await store.addAlias('D-1', 'Other Operator', 'test'); // twice: no error, one row
+    expect((await store.usageFor('D-1', 10)).map((r) => r.operatorName).sort()).toEqual(['Other Operator', 'Own Name']);
+    expect(await store.aliases()).toEqual([{ accountId: 'D-1', operatorName: 'Other Operator' }]);
+    expect((await store.usageFor('D-2', 10)).map((r) => r.operatorName)).toEqual(['Other Operator']); // the other account keeps its own data
+  });
 });

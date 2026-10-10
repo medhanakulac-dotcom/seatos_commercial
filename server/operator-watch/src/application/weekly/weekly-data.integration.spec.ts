@@ -4,6 +4,7 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import { AppModule } from '../../app.module';
 import { AUTH_REPOSITORY, InMemoryAuthRepository, Role } from '../../auth/auth.repository';
 import { IDENTITY_VERIFIER, StaticIdentityVerifier } from '../../auth/identity.verifier';
+import { WeeklyDataService } from '../../domain/workspace/services/weekly-data.service';
 import { TMS_DIRECTORY } from '../../domain/workspace/types/repositories/workspace.ports';
 
 type Method = 'GET' | 'POST' | 'PUT';
@@ -238,6 +239,22 @@ describe('Weekly data HTTP integration', () => {
     expect(inc.operators.map((o: { operatorName: string }) => o.operatorName)).toEqual([a.name]);
     expect(inc.operators[0]).toMatchObject({ accountId: a.id, events: 50, activeWeeks: 2, byWeek: { '2026-12-07': { events: 40, days: 3 }, '2026-11-30': { events: 10, days: 2 } } });
     expect((await call('GET', '/workspace/feature-usage?feature=nope', 'viewer')).statusCode).toBe(400);
+  });
+
+  it('shows an aliased account the usage and tickets of the other operator name, and does not call it zero ticket', async () => {
+    const [a, b] = accounts;
+    const week = '2027-01-04';
+    const send = (path: string, rows: unknown[]) => ingest({ week, rows }, INGEST_TOKEN, path);
+    expect((await send('weekly-tickets', [{ operatorId: 7, operatorName: 'Alias Target Ferry', tickets: 900 }])).statusCode).toBe(200);
+    expect((await send('weekly-usage', [{ operatorId: 7, operatorName: 'Alias Target Ferry', categories: ['r', 't', 'a', 'i'], features: { bf: { events: 30, days: 4 } } }])).statusCode).toBe(200);
+    expect((await call('GET', '/workspace/zero-tickets', 'viewer')).json().accountIds).toContain(b.id);
+    await app.get(WeeklyDataService).addAlias(b.id, 'Alias Target Ferry', 'test');
+    const weekly = (await call('GET', `/workspace/accounts/${b.id}/weekly`, 'viewer')).json();
+    expect(weekly.tickets.find((t: { week: string }) => t.week === week)).toMatchObject({ tickets: 900 });
+    expect(weekly.usage.find((u: { week: string }) => u.week === week)).toMatchObject({ featureCount: 4 });
+    expect((await call('GET', '/workspace/zero-tickets', 'viewer')).json().accountIds).not.toContain(b.id);
+    expect((await call('GET', '/workspace/wao', 'viewer')).json().accountIds).toContain(b.id);
+    expect(a.id).not.toBe(b.id);
   });
 
   it('keeps the sync off until its token is set', async () => {
