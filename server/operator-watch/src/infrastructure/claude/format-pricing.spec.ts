@@ -4,7 +4,7 @@ const base = { usage: [], tickets: [{ week: '2026-10-05', tickets: 40 }] };
 
 describe('formatWeekly price line', () => {
   it('says the comparison has not synced when it never ran', () => {
-    expect(formatWeekly({ ...base, pricing: [], pricingSyncedAt: null })).toContain('has not synced from BigQuery yet');
+    expect(formatWeekly({ ...base, pricing: [], pricingSyncedAt: null })).toContain('comparison is not available yet');
   });
 
   it('says why when it ran but nobody is comparable', () => {

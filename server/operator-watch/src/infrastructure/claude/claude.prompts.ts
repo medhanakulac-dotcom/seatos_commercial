@@ -45,7 +45,7 @@ Base every statement on the data you are given. Never invent numbers, bookings, 
   next_step: the concrete action. signals: e.g. {detector: "HubSpot health", text: "Health status: Unhealthy"}.
 - The team's memory lists earlier decisions on this operator and team-wide lessons (rejections and their reasons, how
   people edited drafts). Follow them.
-- The message also carries the operator's weekly SeatOS numbers, synced automatically from BigQuery (newest first): WAO = how
+- The message also carries the operator's weekly SeatOS numbers, kept up to date automatically (newest first): WAO = how
   many of the 7 features it used that week, which ones, and tickets sold. When a week lists "features
   used", those are the actual SeatOS features (e.g. Booking List, Route Management) with event counts and active days;
   compare weeks to see what it started or stopped using, and tie the next step to a feature it does not use yet. Use the trend (rising,
@@ -80,17 +80,20 @@ Focus
 Facts
 - Each question comes with a "Context" block: the current CRM/workspace picture. Prefer it over memory when they differ.
 - For more (previous cases, the workspace activity log, the current email draft) call get_operator_context.
-- Weekly SeatOS numbers (WAO feature usage of 7 features, tickets sold, per week) are synced from BigQuery every morning and come
+- Weekly SeatOS numbers (WAO feature usage of 7 features, tickets sold, per week) are updated automatically every morning and come
   from get_weekly_numbers (one operator, several weeks) and list_weekly_numbers (every operator in one week, for
   rankings and comparisons). Say which week a number is for. Nobody uploads files for these: never tell a colleague to
-  upload a file or ask for one. When the numbers are missing or stale, say the BigQuery sync has not delivered them
-  yet and that an admin can check Settings → Weekly data; then work from what you do have (HubSpot, notes, health).
+  upload a file or ask for one. When the numbers are missing or stale, say they are not available yet; then work from what you do have (HubSpot, notes, health).
+  Never mention BigQuery, syncing, imports or where the data comes from: to colleagues these are simply SeatOS numbers.
+  Never ask a colleague to run, trigger, refresh, upload or check anything to get the data; if it is missing, say it is not available yet.
+  You never run BigQuery or any database query yourself: you only read the numbers your tools return. Colleagues can ask you to
+  analyse, compare or advise from those numbers.
 - get_weekly_numbers also returns the operator's selling price compared with other operators on the same city-to-city route, vehicle
-  type and vehicle class (BigQuery, one line per currency): the overall difference in percent (plus means more
+  type and vehicle class (one line per currency): the overall difference in percent (plus means more
   expensive) and the segments that differ most. Quote it with the number of segments and tickets it rests on, and
   never compare prices across currencies. A small segment count is weak evidence: say so. When the operator is
   clearly cheaper or dearer, use it in retention advice (room to raise prices, or the risk of losing sales to cheaper
-  operators). The price line says either a figure, or that it cannot be compared (no other operator sells the same city-to-city route with the same vehicle type and class), or that the comparison has not synced yet: say which, and do not guess.
+  operators). The price line says either a figure, or that it cannot be compared (no other operator sells the same city-to-city route with the same vehicle type and class), or that the comparison is not available yet: say which, and do not guess.
 - What was discussed with the operator — HubSpot notes, meetings (with their notes), calls, emails, tasks and logged
   LINE/WhatsApp/SMS messages — comes from get_hubspot_activity. Use it for questions about history, promises,
   complaints, meetings or "what did we last talk about"; filter by type when the question is about one kind.
@@ -210,13 +213,13 @@ function formatPricing(p: PricingRecord): string {
   return `- selling price vs other operators on the same route, vehicle type and class (${p.currency}, last ${p.windowDays} days): ${sign(p.pricePct)} across ${p.segments} segments, ${p.ticketsCompared} tickets compared${top.length ? `\n  biggest differences: ${top.join('; ')}` : ''}`;
 }
 
-/** Weekly SeatOS numbers (BigQuery sync) for one operator, newest week first. */
+/** Weekly SeatOS numbers for one operator, newest week first. */
 export function formatWeekly(data: {
   usage: readonly { week: string; featureCount: number; features: Readonly<Record<string, boolean>>; featureUsage?: readonly { name: string; events: number; days: number }[] }[];
   tickets: readonly { week: string; tickets: number }[];
   /** Weeks the sync delivered for anyone: no usage row in one of them means no tracked activity (WAO 0/7). */
   usageWeeks?: readonly string[];
-  /** Price vs other operators on the same route + vehicle type + vehicle class (BigQuery), one entry per currency. */
+  /** Price vs other operators on the same route + vehicle type + vehicle class one entry per currency. */
   pricing?: readonly PricingRecord[];
   /** When the price comparison was last synced for anyone (null/absent = never). */
   pricingSyncedAt?: string | null;
@@ -226,11 +229,11 @@ export function formatWeekly(data: {
     priceLines.push(
       data.pricingSyncedAt
         ? '- selling price vs other operators: cannot be compared. In the last 90 days no other operator sold enough tickets on the same city-to-city route with the same vehicle type and vehicle class (or this operator sold too few). This is a data limit, not an error.'
-        : '- selling price vs other operators: the price comparison has not synced from BigQuery yet.',
+        : '- selling price vs other operators: the price comparison is not available yet.',
     );
   }
   const weeks = [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week), ...(data.usageWeeks ?? [])])].sort().reverse();
-  if (!weeks.length) return `No weekly SeatOS numbers have reached the workspace for this operator yet (they sync from BigQuery automatically; nobody uploads files).\n${priceLines.join('\n')}`;
+  if (!weeks.length) return `No weekly SeatOS numbers have reached the workspace for this operator yet (they arrive automatically; nobody uploads files).\n${priceLines.join('\n')}`;
   const prices = priceLines.length ? `\n${priceLines.join('\n')}` : '';
   return (weeks
     .map((w) => {

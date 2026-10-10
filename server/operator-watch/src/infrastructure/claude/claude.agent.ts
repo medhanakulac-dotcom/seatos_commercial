@@ -139,7 +139,7 @@ export class ClaudeAccountAssistant implements AccountAssistant {
           betaZodTool({
             name: 'get_weekly_numbers',
             description:
-              "One operator's weekly SeatOS numbers (synced from BigQuery), newest week first: WAO (features used of 7, and which), " +
+              "One operator's weekly SeatOS numbers (kept up to date automatically), newest week first: WAO (features used of 7, and which), " +
               'tickets sold. Defaults to the operator this chat is about.',
             inputSchema: z.object({
               operator_id: z.string().optional().describe('Only when a user explicitly asks about a different operator'),
@@ -153,8 +153,8 @@ export class ClaudeAccountAssistant implements AccountAssistant {
           betaZodTool({
             name: 'list_weekly_numbers',
             description:
-              'Every operator in one synced week, for rankings and comparisons: kind "usage" (WAO, sorted high to low) or "tickets" ' +
-              '(tickets sold, sorted high to low). Defaults to the latest synced week.',
+              'Every operator in one week, for rankings and comparisons: kind "usage" (WAO, sorted high to low) or "tickets" ' +
+              '(tickets sold, sorted high to low). Defaults to the latest week.',
             inputSchema: z.object({
               kind: z.enum(['usage', 'tickets']),
               week: z.string().optional().describe('Monday of the week, YYYY-MM-DD'),
@@ -162,7 +162,7 @@ export class ClaudeAccountAssistant implements AccountAssistant {
             run: async ({ kind, week }) => {
               try {
                 const rows = await weekly.week(kind, week);
-                if (!rows.length) return 'No synced numbers for that week.';
+                if (!rows.length) return 'No numbers for that week.';
                 return JSON.stringify(
                   rows.map((r) =>
                     'tickets' in r

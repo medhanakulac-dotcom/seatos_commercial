@@ -209,7 +209,7 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
         <div className="d" style={{ marginTop: 14 }}>
           {data.pricingSyncedAt
             ? 'Price vs market: cannot be compared — in the last 90 days no other operator sold enough tickets on the same city-to-city route with the same vehicle type and class.'
-            : 'Price vs market: the BigQuery price comparison has not synced yet.'}
+            : 'Price vs market: not available yet.'}
         </div>
       ) : null}
       {latest && (

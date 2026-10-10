@@ -56,23 +56,23 @@ export function WeeklyData({ syncTokenSet }: { syncTokenSet: boolean }) {
     <div className="card">
       <h2 className="st">
         <span>Weekly data</span>
-        <span className="d">synced from BigQuery every morning · read by Claude and the MCP tools</span>
+        <span className="d">updated automatically every morning · read by Claude and the MCP tools</span>
       </h2>
       <div className="task" style={{ alignItems: 'flex-start' }}>
         <div className="grow">
-          <b>Automatic sync from BigQuery</b>
+          <b>Automatic daily update</b>
           <div className="d">
-            A Google Apps Script runs the feature-usage and ticket queries every day and sends the current and previous week here. Nothing needs to be uploaded.
+            The feature-usage and ticket numbers are refreshed every day for the current and previous week. Nothing needs to be uploaded.
           </div>
           <div style={{ marginTop: 6 }}>
-            {syncTokenSet ? <span className="ok">✓ sync token set</span> : <span className="no">✗ WEEKLY_INGEST_TOKEN is not set on the server — the sync is off</span>}
+            {syncTokenSet ? <span className="ok">✓ update key set</span> : <span className="no">✗ WEEKLY_INGEST_TOKEN is not set on the server — the daily update is off</span>}
             {' · '}
             {lastSync ? (
               <span>
-                last sync {formatEventTime(lastSync.uploadedAt)} · week of {lastSync.week} · {lastSync.rows} operators, {lastSync.matched} matched
+                last update {formatEventTime(lastSync.uploadedAt)} · week of {lastSync.week} · {lastSync.rows} operators, {lastSync.matched} matched
               </span>
             ) : (
-              <span className="d">no sync received yet</span>
+              <span className="d">no update received yet</span>
             )}
           </div>
         </div>
@@ -81,7 +81,7 @@ export function WeeklyData({ syncTokenSet }: { syncTokenSet: boolean }) {
       {data?.uploads.length ? (
         <div style={{ marginTop: 14 }}>
           <div className="d" style={{ marginBottom: 4 }}>
-            Recent syncs
+            Recent updates
           </div>
           {data.uploads.slice(0, 8).map((u) => (
             <div className="d" key={`${u.kind}-${u.week}`}>
