@@ -4,7 +4,12 @@ import { awaitingReview, ownerFromKey } from '../../lib/format';
 
 const HEALTH_RANK: Record<Health, number> = { Unhealthy: 0, Adopted: 1, Healthy: 2 };
 
+/** A case still being worked: waiting for review, approved, on hold, returned, or a reactive-only account. */
+const OPEN_STATES: readonly AccountSummary['state'][] = ['pending', 'approved', 'hold', 'rejected', 'reactive'];
+
 export const VIEWS: { key: AccountsView; label: string; match: (a: AccountSummary) => boolean }[] = [
+  { key: 'open', label: 'Open cases', match: (a) => OPEN_STATES.includes(a.state) },
+  { key: 'closed', label: 'Closed cases', match: (a) => a.state === 'closed' },
   { key: 'all', label: 'All accounts', match: () => true },
   { key: 'approval', label: 'Needs approval', match: awaitingReview },
   { key: 'unhealthy', label: 'Unhealthy', match: (a) => !a.dormant && a.health === 'Unhealthy' },

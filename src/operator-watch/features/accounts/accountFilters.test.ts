@@ -17,8 +17,16 @@ const accounts: AccountSummary[] = [
 const names = (list: AccountSummary[]) => list.map((a) => a.name);
 
 describe('filterAccounts', () => {
-  it('sorts by priority by default', () => {
-    expect(names(filterAccounts(accounts, DEFAULT_ACCOUNTS))).toEqual(['Alpha', 'Delta', 'Bravo', 'Charlie']);
+  it('shows open cases by default, sorted by priority', () => {
+    expect(DEFAULT_ACCOUNTS.view).toBe('open');
+    expect(names(filterAccounts(accounts, DEFAULT_ACCOUNTS))).toEqual(['Alpha', 'Bravo', 'Charlie']);
+    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all' }))).toEqual(['Alpha', 'Delta', 'Bravo', 'Charlie']);
+  });
+
+  it('has a filter for closed cases', () => {
+    const withClosed = [...accounts, { ...base, id: 'D-5', name: 'Echo', state: 'closed' as const, drafted: false, priority: 5 }];
+    expect(names(filterAccounts(withClosed, { ...DEFAULT_ACCOUNTS, view: 'closed' }))).toEqual(['Echo']);
+    expect(names(filterAccounts(withClosed, DEFAULT_ACCOUNTS))).not.toContain('Echo');
   });
 
   it('applies the saved views', () => {
@@ -41,6 +49,6 @@ describe('filterAccounts', () => {
   it('starts name columns ascending and others descending', () => {
     expect(initialDirection('op')).toBe(1);
     expect(initialDirection('signals')).toBe(-1);
-    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, sort: 'op', dir: -1 }))).toEqual(['Delta', 'Charlie', 'Bravo', 'Alpha']);
+    expect(names(filterAccounts(accounts, { ...DEFAULT_ACCOUNTS, view: 'all', sort: 'op', dir: -1 }))).toEqual(['Delta', 'Charlie', 'Bravo', 'Alpha']);
   });
 });
