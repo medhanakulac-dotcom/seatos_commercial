@@ -11,7 +11,13 @@ describe('CS Toolkit given to Claude', () => {
 
   it('puts every rule and tip in the prompt', () => {
     const text = formatCsToolkit();
-    expect(text).toContain('10. Help operators grow');
-    for (const t of CS_TIPS) expect(text).toContain(`Tip ${t.n} — ${t.title}`);
+    for (const r of CS_GOLDEN_RULES) expect(text).toContain(r);
+    for (const t of CS_TIPS) expect(text).toContain(`- ${t.title}:`);
+  });
+
+  it('is unnumbered, so the assistant cannot cite rule or tip numbers', () => {
+    const text = formatCsToolkit();
+    expect(text).not.toMatch(/Tip \d/);
+    expect(text).not.toMatch(/^\d+\. /m);
   });
 });

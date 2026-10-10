@@ -464,7 +464,8 @@ export const CS_TIPS: readonly CsTip[] = [
 
 /** The toolkit as a compact prompt block: the rules, then each tip as one line with its checklist. */
 export function formatCsToolkit(): string {
-  const rules = CS_GOLDEN_RULES.map((r, i) => `${i + 1}. ${r}`).join('\n');
-  const tips = CS_TIPS.map((t) => `Tip ${t.n} — ${t.title}: ${t.body} (${t.bullets.join('; ')}) → ${t.tip}`).join('\n');
-  return `Golden rules\n${rules}\n\nThe 30 CS tips\n${tips}`;
+  // Unnumbered on purpose: the assistant applies the advice and never cites rule or tip numbers.
+  const rules = CS_GOLDEN_RULES.map((r) => `- ${r}`).join('\n');
+  const tips = CS_TIPS.map((t) => `- ${t.title}: ${t.body} (${t.bullets.join('; ')}) → ${t.tip}`).join('\n');
+  return `Golden rules\n${rules}\n\nCS tips\n${tips}`;
 }
