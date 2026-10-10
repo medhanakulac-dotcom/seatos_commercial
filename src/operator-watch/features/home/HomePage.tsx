@@ -3,9 +3,42 @@ import { useAccounts, useMe, useMeta, useWao, useZeroTicketIds } from '../../api
 import { Avatar, HealthTag, SegTag, ZeroTicketTag } from '../../components/tags';
 import { useUiState } from '../../app/UiState';
 import { greeting, ownerKey, ownerName } from '../../lib/format';
+import { Tour, type TourStep } from '../../components/Tour';
 import { FeatureUsageCard } from './FeatureUsageCard';
 import { PlaybookGuide } from './PlaybookGuide';
 import { PlaybookMatrix } from './PlaybookMatrix';
+
+const HOME_TOUR: TourStep[] = [
+  {
+    target: '[data-tour="kpis"]',
+    title: 'Your numbers at a glance',
+    body: 'WAO is the share of accounts that used at least 3 of the 7 product areas in the latest week. 0 ticket counts accounts that sold nothing in the last two weeks. Rescue counts accounts on the Rescue playbook. Click a card to open that list in Accounts.',
+  },
+  {
+    target: '[data-tour="feature-usage"]',
+    title: 'See who uses a feature',
+    body: 'Search or pick a feature to see which operators used it in each of the last four weeks. A week counts as active from 3 events. Click a row to open the account.',
+  },
+  {
+    target: '[data-tour="attention"]',
+    title: 'Needs attention',
+    body: 'The accounts to look at first: ranked by priority, then accounts with no tickets, then the ones with the most signals.',
+  },
+  {
+    target: '[data-tour="rescue"]',
+    title: 'Rescue accounts',
+    body: 'Accounts on the Rescue playbook (unhealthy product usage), no-ticket accounts first. "All" opens the full list in Accounts.',
+  },
+  {
+    target: '[data-tour="owner"]',
+    title: 'Filter by owner',
+    body: 'Pick an owner to see only their accounts. The numbers and lists on this page follow the filter.',
+  },
+  {
+    title: 'That is the overview',
+    body: 'Open Accounts in the menu to browse every account. You can replay this tour any time with the Take tour button.',
+  },
+];
 
 export function HomePage() {
   const { data: allAccounts, isPending } = useAccounts();
@@ -61,18 +94,21 @@ export function HomePage() {
             Playbook status is updated every Monday{meta.run ? ` · last update ${meta.run.label}` : ''}
           </div>
         </div>
+        <div className="row">
+          <Tour id="home" steps={HOME_TOUR} ready />
+        </div>
       </div>
-      <div className="grid g4" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+      <div className="grid g4" data-tour="kpis" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
         {kpi('WAO', wao?.week ? `WEEK OF ${wao.week.slice(5)}` : 'NO DATA', wao?.week ? `${waoPct}%` : '—', wao?.week ? `${waoCount} of ${accounts.length} accounts used 3+ of 7 features` : 'no usage data yet', '', toAccounts({ view: 'all' }))}
         {kpi('0 ticket', 'LAST 2 WEEKS', zeroCount, 'accounts with no tickets sold', '', toAccounts({ view: 'all', tickets: 'zero' }))}
         {kpi('Rescue', 'PLAYBOOK', rescueCount, 'accounts on the Rescue playbook', '', toAccounts({ view: 'all', pb: 'Rescue' }))}
       </div>
-      <div style={{ marginTop: 18 }}>
+      <div style={{ marginTop: 18 }} data-tour="feature-usage">
         <FeatureUsageCard />
       </div>
       <div className="grid g2" style={{ marginTop: 18, alignItems: 'start' }}>
         <div className="grid" style={{ gap: 18 }}>
-          <div className="card">
+          <div className="card" data-tour="attention">
             <h2 className="st">
               <span>Needs attention</span>
               <button className="b tlb" onClick={() => navigate('/accounts')}>
@@ -102,7 +138,7 @@ export function HomePage() {
           </div>
         </div>
         <div className="grid" style={{ gap: 18 }}>
-          <div className="card">
+          <div className="card" data-tour="rescue">
             <h2 className="st">
               <span>Rescue</span>
               <button className="b tlb" onClick={toAccounts({ view: 'all', pb: 'Rescue' })}>

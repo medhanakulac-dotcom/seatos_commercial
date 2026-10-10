@@ -15,7 +15,7 @@ export function Topbar() {
   return (
     <header className="topbar">
       <GlobalSearch />
-      <label className={`ownerf ${owner !== 'All' ? 'on' : ''}`}>
+      <label className={`ownerf ${owner !== 'All' ? 'on' : ''}`} data-tour="owner">
         <span>Owner</span>
         <select value={owner} onChange={(e) => setOwner(e.target.value)} aria-label="Owner">
           <option value="All">All owners ({accounts.length})</option>
