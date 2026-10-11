@@ -3,7 +3,7 @@ import { CrmAccount } from '../entities/workspace.entities';
 import { Clock, PricingRecord, PricingSegment, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
 import { RunService } from './run.service';
 import { CATEGORY_CODES, featureByCode, SEATOS_FEATURES } from './seatos-features';
-import { cleanName, FEATURES, FeatureActivity, Feature, legacyNameKey, mondayOf, nameKey, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
+import { cleanName, FEATURES, FeatureActivity, Feature, legacyNameKey, mondayOf, nameKey, nameSimilarity, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
 
 export interface UploadResult {
   readonly kind: WeeklyKind;
@@ -40,6 +40,8 @@ export type TicketsView = Omit<WeeklyTicketRecord, 'gmvUsd'>;
 export const MAX_INGEST_ROWS = 3000;
 /** An account can carry a few aliases: read this many rows per week and merge them. */
 const ALIAS_ROWS_PER_WEEK = 4;
+/** A name is suggested for confirmation from this similarity on. */
+const SUGGEST_MIN_SCORE = 0.5;
 const REMATCH_EVERY_MS = 5 * 60_000;
 /** WAO: an operator is weekly active when it used at least this many of the 7 categories in a week. */
 export const WAO_MIN_CATEGORIES = 3;
@@ -227,9 +229,17 @@ export class WeeklyDataService {
         unmatched.set(r.nameKey, { ...u, in: [...u.in, kind] });
       }
     }
+    // Accounts that already have numbers are less likely to be the owner of a name nobody matched.
+    const withData = new Set([...usage, ...tickets].map((r) => r.accountId).filter((id): id is string => !!id));
+    const suggest = (name: string) =>
+      accounts
+        .map((a) => ({ id: a.id, name: a.name, score: nameSimilarity(name, a.name), hasData: withData.has(a.id) }))
+        .filter((c) => c.score >= SUGGEST_MIN_SCORE)
+        .sort((x, y) => Number(x.hasData) - Number(y.hasData) || y.score - x.score)
+        .slice(0, 3);
     return {
       uploads,
-      unmatched: [...unmatched.values()].sort((a, b) => a.name.localeCompare(b.name)),
+      unmatched: [...unmatched.values()].map((u) => ({ ...u, suggestions: suggest(u.name) })).sort((a, b) => (b.suggestions[0]?.score ?? 0) - (a.suggestions[0]?.score ?? 0) || a.name.localeCompare(b.name)),
       ignored: [...links].filter(([, id]) => id === null).map(([key]) => key),
       accounts: accounts.map((a) => ({ id: a.id, name: a.name })).sort((a, b) => a.name.localeCompare(b.name)),
     };

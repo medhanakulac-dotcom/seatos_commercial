@@ -19,12 +19,29 @@ function Unmatched({ data }: { data: WeeklySummary }) {
   return (
     <div style={{ marginTop: 12 }}>
       <div className="d" style={{ marginBottom: 6 }}>
-        These names did not match a HubSpot deal. Pick the account once; it is remembered for every later week.
+        These names did not match a HubSpot account. When one looks like an account, confirm it with one click; otherwise pick the account once. It is remembered for every later week.
       </div>
       {data.unmatched.map((u) => (
-        <div className="task" key={u.key}>
+        <div className="task" key={u.key} style={{ alignItems: 'flex-start' }}>
           <div className="grow">
             <b>{u.name}</b> <span className="d">· in {u.in.join(' and ')}</span>
+            {u.suggestions.length > 0 && (
+              <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+                <span className="d">Looks like:</span>
+                {u.suggestions.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="b tlb"
+                    disabled={link.isPending}
+                    title={c.hasData ? 'This account already has numbers from another name' : 'This account has no numbers yet'}
+                    onClick={() => link.mutate({ name: u.name, accountId: c.id })}
+                  >
+                    Confirm: {c.name} · {Math.round(c.score * 100)}%{c.hasData ? ' · has data' : ''}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <select
             defaultValue=""

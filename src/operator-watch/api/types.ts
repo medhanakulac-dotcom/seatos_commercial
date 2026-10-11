@@ -346,7 +346,7 @@ export interface FeatureUsage {
 
 export interface WeeklySummary {
   uploads: { kind: 'usage' | 'tickets'; week: string; rows: number; matched: number; uploadedAt: string; uploadedBy: string }[];
-  unmatched: { name: string; key: string; in: ('usage' | 'tickets')[] }[];
+  unmatched: { name: string; key: string; in: ('usage' | 'tickets')[]; suggestions: { id: string; name: string; score: number; hasData: boolean }[] }[];
   ignored: string[];
   accounts: { id: string; name: string }[];
 }

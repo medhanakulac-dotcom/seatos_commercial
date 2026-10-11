@@ -1,4 +1,4 @@
-import { cleanName, legacyNameKey, mondayOf, nameKey, parseCsv, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError } from './weekly-data';
+import { cleanName, legacyNameKey, mondayOf, nameKey, nameSimilarity, parseCsv, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError } from './weekly-data';
 
 // Same shape as the Looker exports, with made-up operators.
 const USAGE = `Week,Operator name,inventory_management,distribution_management,reservation_management,trip_management,fleet_management,analytics,accounting,# Feature count
@@ -67,5 +67,17 @@ describe('weekly data parsing', () => {
     expect(parseTicketsCsv('operator_name,Tickets Actual\nX,7\n')).toEqual([{ operatorName: 'X', gmvUsd: 0, tickets: 7 }]); // GMV not needed
     expect(() => parseTicketsCsv('operator_name,GMV,Tickets Actual\nX,abc,1\n')).toThrow(/GMV for "X" is not a number/);
     expect(() => parseTicketsCsv('')).toThrow(/empty/);
+  });
+});
+
+describe('nameSimilarity', () => {
+  it('rates the same business written differently high and unrelated names low', () => {
+    expect(nameSimilarity('The Tanis Fast Cruise', 'Tanis Fast Cruise')).toBe(1);
+    expect(nameSimilarity('Paradise Sea Travel and Tour', 'Paradise Sea Tour and Travel')).toBeGreaterThanOrEqual(0.7);
+    expect(nameSimilarity('Than Car Service', 'Than Car')).toBeGreaterThanOrEqual(0.6);
+    expect(nameSimilarity('Manh Kien Limousine', 'Manh Kien')).toBeGreaterThanOrEqual(0.6);
+    expect(nameSimilarity('Wijaya Persaka', 'PT Wijaya Setia Darma Wijaya Perkasa')).toBeGreaterThanOrEqual(0.5);
+    expect(nameSimilarity('Sinar Tour Lombok', 'Marina Group Fastboat')).toBeLessThan(0.4);
+    expect(nameSimilarity('Bali Magir Trans', 'Bali Tour')).toBeLessThan(0.6);
   });
 });

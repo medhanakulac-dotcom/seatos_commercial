@@ -105,6 +105,60 @@ export function legacyNameKey(name: string): string {
     .replace(/[^\p{L}\p{M}\p{N}]+/gu, '');
 }
 
+const WORD_SPLIT = /[^\p{L}\p{M}\p{N}]+/u;
+const FILLER_WORDS = new Set([...COMPANY_WORDS, 'and', 'tour', 'tours', 'travel', 'transport', 'group']);
+
+function words(name: string): Set<string> {
+  return new Set(cleanName(name).toLowerCase().replace(/&/g, ' and ').split(WORD_SPLIT).filter((w) => w && !FILLER_WORDS.has(w)));
+}
+
+function trigrams(key: string): Set<string> {
+  const out = new Set<string>();
+  for (let i = 0; i < key.length - 2; i++) out.add(key.slice(i, i + 3));
+  return out;
+}
+
+const jaccard = (a: ReadonlySet<string>, b: ReadonlySet<string>): number => {
+  let shared = 0;
+  for (const x of a) if (b.has(x)) shared++;
+  return shared / (a.size + b.size - shared || 1);
+};
+
+function editDistance(a: string, b: string): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+/**
+ * How alike two operator names are, 0 to 1: shared distinctive words, shared letter runs, and edit distance, with a boost
+ * when one name contains the other ("Manh Kien" in "Manh Kien Limousine"). Used only to suggest matches a person confirms.
+ */
+export function nameSimilarity(a: string, b: string): number {
+  const ka = nameKey(a);
+  const kb = nameKey(b);
+  if (!ka || !kb) return 0;
+  if (ka === kb) return 1;
+  const edit = 1 - editDistance(ka, kb) / Math.max(ka.length, kb.length);
+  let score = 0.4 * jaccard(words(a), words(b)) + 0.3 * jaccard(trigrams(ka), trigrams(kb)) + 0.3 * edit;
+  // A shorter name whose every distinctive word (spelling slips allowed) is in the longer one, e.g. "Wijaya Persaka" in
+  // "PT Wijaya Setia Darma Wijaya Perkasa". Needs two distinctive words so one shared word is never enough.
+  const wa = [...words(a)];
+  const wb = [...words(b)];
+  const [few, many] = wa.length <= wb.length ? [wa, wb] : [wb, wa];
+  if (few.length >= 2) {
+    const coverage = few.reduce((sum, w) => sum + Math.max(...many.map((m) => 1 - editDistance(w, m) / Math.max(w.length, m.length))), 0) / few.length;
+    if (coverage >= 0.78) score = Math.max(score, 0.5 + 0.4 * coverage);
+  }
+  const [short, long] = ka.length <= kb.length ? [ka, kb] : [kb, ka];
+  if (short.length >= 5 && long.includes(short)) score = Math.max(score, 0.55 + 0.4 * (short.length / long.length));
+  return Math.min(1, Math.round(score * 100) / 100);
+}
+
 const MONTHS: Record<string, number> = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
 
 /** "Oct 5, 2026" or "2026-10-05" → "2026-10-05". */
