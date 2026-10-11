@@ -336,6 +336,28 @@ export interface WeeklyPricing {
   computedAt: string;
 }
 
+export interface WeeklyCutoffSegment {
+  from: string;
+  to: string;
+  vehicleType: string;
+  vehicleClass: string;
+  bookings: number;
+  avgHours: number;
+  peerAvgHours: number;
+  peers: number;
+}
+
+export interface WeeklyCutoff {
+  bookingsCompared: number;
+  segments: number;
+  /** Hours before departure that booking closes (booking-weighted average). */
+  ownAvgHours: number;
+  marketAvgHours: number;
+  windowDays: number;
+  detail: WeeklyCutoffSegment[];
+  computedAt: string;
+}
+
 export interface FeatureUsage {
   /** Weeks with usage data, newest first (at most four). */
   weeks: string[];

@@ -1,4 +1,4 @@
-import { PricingRecord, WeeklyDataStore, WeeklyTicketRecord, WeeklyUpload, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
+import { CutoffRecord, PricingRecord, WeeklyDataStore, WeeklyTicketRecord, WeeklyUpload, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
 
 type Stamp = { uploadedAt: string; uploadedBy: string };
 
@@ -8,6 +8,8 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
   private tickets: (WeeklyTicketRecord & Stamp)[] = [];
   private pricing: PricingRecord[] = [];
   private pricingSyncedAtValue: string | null = null;
+  private cutoff: CutoffRecord[] = [];
+  private cutoffSyncedAtValue: string | null = null;
   private readonly links = new Map<string, string | null>();
 
   async replaceUsage(week: string, rows: readonly WeeklyUsageRecord[], by: string): Promise<void> {
@@ -64,6 +66,7 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
     this.usage = this.usage.map((r) => (r.nameKey === nameKey && !r.accountId ? { ...r, accountId } : r));
     this.tickets = this.tickets.map((r) => (r.nameKey === nameKey && !r.accountId ? { ...r, accountId } : r));
     this.pricing = this.pricing.map((r) => (r.nameKey === nameKey && !r.accountId ? { ...r, accountId } : r));
+    this.cutoff = this.cutoff.map((r) => (r.nameKey === nameKey && !r.accountId ? { ...r, accountId } : r));
   }
 
   async unmatchedNames(): Promise<{ nameKey: string; operatorName: string }[]> {
@@ -75,6 +78,7 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
     this.usage = this.usage.map((r) => (r.nameKey === nameKey ? { ...r, accountId } : r));
     this.tickets = this.tickets.map((r) => (r.nameKey === nameKey ? { ...r, accountId } : r));
     this.pricing = this.pricing.map((r) => (r.nameKey === nameKey ? { ...r, accountId } : r));
+    this.cutoff = this.cutoff.map((r) => (r.nameKey === nameKey ? { ...r, accountId } : r));
   }
 
   async replacePricing(rows: readonly PricingRecord[]): Promise<void> {
@@ -98,6 +102,19 @@ export class InMemoryWeeklyDataStore implements WeeklyDataStore {
 
   async pricingSyncedAt(): Promise<string | null> {
     return this.pricingSyncedAtValue;
+  }
+
+  async replaceCutoff(rows: readonly CutoffRecord[]): Promise<void> {
+    this.cutoff = [...rows];
+    this.cutoffSyncedAtValue = new Date().toISOString();
+  }
+
+  async cutoffFor(accountId: string): Promise<CutoffRecord[]> {
+    return this.cutoff.filter((r) => r.accountId === accountId || this.aliased(accountId, r.operatorName)).sort((a, b) => b.bookingsCompared - a.bookingsCompared);
+  }
+
+  async cutoffSyncedAt(): Promise<string | null> {
+    return this.cutoffSyncedAtValue;
   }
 
   async pricingFor(accountId: string): Promise<PricingRecord[]> {

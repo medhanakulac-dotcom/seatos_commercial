@@ -6,6 +6,7 @@ import type {
   ChatMessage,
   CrmActivity,
   FeatureUsage,
+  WeeklyCutoff,
   WeeklyPricing,
   WeeklySummary,
   WeeklyTickets,
@@ -57,7 +58,7 @@ export const workspaceApi = {
   wao: () => http.get<{ week: string | null; accountIds: string[] }>('/workspace/wao'),
   featureUsage: (feature?: string) => http.get<FeatureUsage>(`/workspace/feature-usage${feature ? `?feature=${encodeURIComponent(feature)}` : ''}`),
   zeroTickets: () => http.get<{ weeks: string[]; accountIds: string[] }>('/workspace/zero-tickets'),
-  weekly: (id: string) => http.get<{ usage: WeeklyUsage[]; tickets: WeeklyTickets[]; usageWeeks: string[]; pricing?: WeeklyPricing[]; pricingSyncedAt?: string | null }>(`${account(id)}/weekly`),
+  weekly: (id: string) => http.get<{ usage: WeeklyUsage[]; tickets: WeeklyTickets[]; usageWeeks: string[]; pricing?: WeeklyPricing[]; pricingSyncedAt?: string | null; cutoff?: WeeklyCutoff[]; cutoffSyncedAt?: string | null }>(`${account(id)}/weekly`),
   ask: (id: string, question: string) => http.post<{ connected: boolean; messages: ChatMessage[] }>(`${account(id)}/assistant`, { question }),
 };
 

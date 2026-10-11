@@ -207,6 +207,23 @@ describe('Weekly data HTTP integration', () => {
     expect((await call('GET', `/workspace/accounts/${a.id}/weekly`, 'viewer')).json().pricing).toEqual([]);
   });
 
+  it('takes the cut-off comparison from the BigQuery sync: token needed, matched to the account, replaced as a snapshot', async () => {
+    const [a, b] = accounts;
+    const seg = { from: 'Phuket', to: 'Phi Phi', vehicleType: 'speedboat', vehicleClass: 'standard', bookings: 60, avgHours: 2, peerAvgHours: 1.5, peers: 3 };
+    const row = { operatorId: 1, operatorName: a.name, bookingsCompared: 90, segments: 3, ownAvgHours: 2.333, marketAvgHours: 1.8, detail: [seg] };
+    const body = { windowDays: 30, rows: [row, { ...row, operatorId: 3, operatorName: 'Unknown Sync Bus' }] };
+    expect((await ingest(body, null, 'cutoff')).statusCode).toBe(401);
+    expect((await ingest({ ...body, windowDays: 0 }, INGEST_TOKEN, 'cutoff')).statusCode).toBe(400);
+    expect((await ingest({ windowDays: 30, rows: [{ ...row, ownAvgHours: 'x' }] }, INGEST_TOKEN, 'cutoff')).statusCode).toBe(400);
+    const res = await ingest(body, INGEST_TOKEN, 'cutoff');
+    expect(res.json()).toEqual({ rows: 2, matched: 1 });
+    const weekly = (await call('GET', `/workspace/accounts/${a.id}/weekly`, 'viewer')).json();
+    expect(weekly.cutoff).toEqual([expect.objectContaining({ ownAvgHours: 2.33, marketAvgHours: 1.8, segments: 3, bookingsCompared: 90, windowDays: 30, detail: [seg] })]);
+    expect((await call('GET', `/workspace/accounts/${b.id}/weekly`, 'viewer')).json()).toMatchObject({ cutoff: [], cutoffSyncedAt: expect.any(String) });
+    expect((await ingest({ windowDays: 30, rows: [] }, INGEST_TOKEN, 'cutoff')).statusCode).toBe(200);
+    expect((await call('GET', `/workspace/accounts/${a.id}/weekly`, 'viewer')).json().cutoff).toEqual([]);
+  });
+
   it('labels accounts with no tickets in the last two ticket weeks as zero ticket', async () => {
     const [a, b] = accounts;
     expect((await call('GET', '/workspace/zero-tickets', 'viewer')).statusCode).toBe(200);

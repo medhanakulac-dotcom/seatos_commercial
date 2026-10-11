@@ -114,6 +114,7 @@ function syncAll() {
   syncWeek_(0); // this week so far
   syncWeek_(1); // last week, final
   syncPricing(); // price vs other operators (own error handling: a failure here must not hide the weekly sync)
+  syncCutoff(); // booking cut-off vs other operators
 }
 
 // Price comparison: each operator's average ticket price vs the other operators selling the SAME route (from city -> to city;
@@ -149,6 +150,52 @@ function syncPricing() {
       return { operatorId: o.operatorId, operatorName: o.operatorName, currency: o.currency, ticketsCompared: o.ticketsCompared, segments: o.segments, pricePct: round_(100 * (o.own / o.peer - 1), 1), detail: o.segs.slice(0, PRICE_DETAIL_SEGMENTS) };
     });
   return post_('pricing', { windowDays: PRICE_WINDOW_DAYS, rows: out });
+}
+
+// Cut-off comparison: each operator's booking cut-off (fact_booking.cutoff_time, hours before departure) vs the other operators on
+// the SAME route (from city -> to city), vehicle type and vehicle class. Confirmed bookings of the last CUTOFF_WINDOW_DAYS days,
+// bookings without a cut-off are skipped. The average is booking-weighted.
+var CUTOFF_WINDOW_DAYS = 30;
+var CUTOFF_MIN_PEER_BOOKINGS = 10;
+var CUTOFF_MIN_OWN_BOOKINGS = 3;
+var CUTOFF_MIN_OPERATOR_BOOKINGS = 10;
+var CUTOFF_DETAIL_SEGMENTS = 8;
+
+function syncCutoff() {
+  var rows = runQuery_(cutoffSql_()).map(function (r) {
+    return {
+      operatorId: Number(r[0]), operatorName: r[1], from: r[2], to: r[3], vehicleType: r[4], vehicleClass: r[5],
+      bookings: Number(r[6]), avgHours: Number(r[7]), peerAvgHours: Number(r[8]), peers: Number(r[9]),
+    };
+  });
+  var byOperator = {};
+  rows.forEach(function (s) {
+    var o = byOperator[s.operatorId] || (byOperator[s.operatorId] = { operatorId: s.operatorId, operatorName: s.operatorName, bookingsCompared: 0, segments: 0, own: 0, peer: 0, segs: [] });
+    o.bookingsCompared += s.bookings;
+    o.segments += 1;
+    o.own += s.bookings * s.avgHours;
+    o.peer += s.bookings * s.peerAvgHours; // what the same bookings would have had at the others' average cut-off
+    o.segs.push({ from: s.from, to: s.to, vehicleType: s.vehicleType, vehicleClass: s.vehicleClass, bookings: s.bookings, avgHours: round_(s.avgHours, 1), peerAvgHours: round_(s.peerAvgHours, 1), peers: s.peers });
+  });
+  var out = Object.keys(byOperator).map(function (k) { return byOperator[k]; })
+    .filter(function (o) { return o.bookingsCompared >= CUTOFF_MIN_OPERATOR_BOOKINGS; })
+    .map(function (o) {
+      o.segs.sort(function (a, b) { return Math.abs(b.avgHours - b.peerAvgHours) * b.bookings - Math.abs(a.avgHours - a.peerAvgHours) * a.bookings; });
+      return { operatorId: o.operatorId, operatorName: o.operatorName, bookingsCompared: o.bookingsCompared, segments: o.segments,
+        ownAvgHours: round_(o.own / o.bookingsCompared, 2), marketAvgHours: round_(o.peer / o.bookingsCompared, 2), detail: o.segs.slice(0, CUTOFF_DETAIL_SEGMENTS) };
+    });
+  return post_('cutoff', { windowDays: CUTOFF_WINDOW_DAYS, rows: out });
+}
+
+function cutoffSql_() {
+  return 'WITH b AS (SELECT operator_id, operator_name, from_city, to_city, LOWER(TRIM(vehicle_type)) AS vt, LOWER(TRIM(vehicle_class)) AS vc, cutoff_time ' +
+    'FROM `' + PROJECT_ID + '.dwh.fact_booking` WHERE status = \'Confirmed\' AND booked_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ' + CUTOFF_WINDOW_DAYS + ' DAY) ' +
+    'AND cutoff_time IS NOT NULL AND from_city IS NOT NULL AND to_city IS NOT NULL AND vehicle_type IS NOT NULL AND vehicle_class IS NOT NULL), ' +
+    'seg AS (SELECT operator_id, ANY_VALUE(operator_name) AS operator_name, from_city, to_city, vt, vc, COUNT(*) AS bookings, SUM(cutoff_time) AS total FROM b GROUP BY operator_id, from_city, to_city, vt, vc), ' +
+    'cmp AS (SELECT *, SUM(total) OVER w - total AS peer_total, SUM(bookings) OVER w - bookings AS peer_bookings, COUNT(*) OVER w - 1 AS peers FROM seg ' +
+    'WINDOW w AS (PARTITION BY from_city, to_city, vt, vc)) ' +
+    'SELECT operator_id, operator_name, from_city, to_city, vt, vc, bookings, total / bookings AS avg_hours, peer_total / peer_bookings AS peer_avg_hours, peers ' +
+    'FROM cmp WHERE peers >= 1 AND peer_bookings >= ' + CUTOFF_MIN_PEER_BOOKINGS + ' AND bookings >= ' + CUTOFF_MIN_OWN_BOOKINGS;
 }
 
 function round_(n, digits) {

@@ -413,6 +413,36 @@ export interface PricingRecord {
   readonly computedAt: string;
 }
 
+/** One route + vehicle type + vehicle class where an operator's booking cut-off (hours before departure) was compared with the other operators'. */
+export interface CutoffSegment {
+  readonly from: string;
+  readonly to: string;
+  readonly vehicleType: string;
+  readonly vehicleClass: string;
+  readonly bookings: number;
+  readonly avgHours: number;
+  readonly peerAvgHours: number;
+  readonly peers: number;
+}
+
+/** How one operator's booking cut-off compares with other operators on the same routes, from the BigQuery sync. */
+export interface CutoffRecord {
+  readonly operatorName: string;
+  readonly nameKey: string;
+  readonly accountId: string | null;
+  readonly operatorId: number;
+  readonly bookingsCompared: number;
+  readonly segments: number;
+  /** Booking-weighted average cut-off of the operator, in hours before departure. */
+  readonly ownAvgHours: number;
+  /** What the same bookings would have had at the others' average cut-off. */
+  readonly marketAvgHours: number;
+  readonly windowDays: number;
+  /** The segments that differ most, biggest first. */
+  readonly detail: readonly CutoffSegment[];
+  readonly computedAt: string;
+}
+
 export interface WeeklyUpload {
   readonly kind: WeeklyKind;
   readonly week: string;
@@ -454,5 +484,9 @@ export interface WeeklyDataStore {
   addAlias(accountId: string, operatorName: string, by: string): Promise<void>;
   /** When the last price comparison was synced (null = never): without it, "no price line" means "not synced yet", with it, "nobody comparable". */
   pricingSyncedAt(): Promise<string | null>;
+  /** The cut-off comparison is one snapshot too. */
+  replaceCutoff(rows: readonly CutoffRecord[], by: string): Promise<void>;
+  cutoffFor(accountId: string): Promise<CutoffRecord[]>;
+  cutoffSyncedAt(): Promise<string | null>;
 }
 export const WEEKLY_DATA_STORE = Symbol('WEEKLY_DATA_STORE');

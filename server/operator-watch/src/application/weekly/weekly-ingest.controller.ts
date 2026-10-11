@@ -41,6 +41,14 @@ export class WeeklyIngestController {
     authorize(authorization);
     return this.weekly.ingestPricing(body, BIGQUERY_SYNC_ACTOR);
   }
+
+  /** `{ windowDays, rows: [{ operatorId, operatorName, bookingsCompared, segments, ownAvgHours, marketAvgHours, detail: [...] }] }` — replaces the cut-off comparison. */
+  @Post('cutoff')
+  @HttpCode(200)
+  cutoff(@Headers('authorization') authorization: string | undefined, @Body() body: unknown) {
+    authorize(authorization);
+    return this.weekly.ingestCutoff(body, BIGQUERY_SYNC_ACTOR);
+  }
 }
 
 function authorize(authorization: string | undefined): void {

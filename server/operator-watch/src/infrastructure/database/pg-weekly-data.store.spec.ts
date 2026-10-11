@@ -25,7 +25,7 @@ describeDb('PgWeeklyDataStore', () => {
     pool = new Pool({ connectionString: url });
     await migrate(pool);
     store = new PgWeeklyDataStore(pool);
-    await pool.query('delete from weekly_usage; delete from weekly_tickets; delete from operator_name_links; delete from operator_pricing;');
+    await pool.query('delete from weekly_usage; delete from weekly_tickets; delete from operator_name_links; delete from operator_pricing; delete from operator_cutoff;');
   });
 
   afterAll(async () => {

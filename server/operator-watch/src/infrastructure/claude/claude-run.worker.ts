@@ -4,7 +4,7 @@ import { LANGUAGES } from '../../domain/workspace/entities/workspace.entities';
 import { CaseStateError } from '../../domain/workspace/errors/workspace.errors';
 import { CaseSubmission, RunService } from '../../domain/workspace/services/run.service';
 import type { TicketsView, UsageWithFeatures } from '../../domain/workspace/services/weekly-data.service';
-import type { PricingRecord } from '../../domain/workspace/types/repositories/workspace.ports';
+import type { CutoffRecord, PricingRecord } from '../../domain/workspace/types/repositories/workspace.ports';
 import { AgentJob, AgentJobQueue, CrmActivitySource, WorkspaceStore } from '../../domain/workspace/types/repositories/workspace.ports';
 import { MAX_ATTEMPTS } from '../database/pg-agent.store';
 import { CLAUDE_AUTHOR } from './claude.agent';
@@ -26,7 +26,7 @@ const WEEKS_FOR_CASE = 6;
 
 /** Weekly numbers for one account (WeeklyDataService). */
 export interface WeeklyNumbers {
-  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing?: PricingRecord[]; pricingSyncedAt?: string | null }>;
+  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing?: PricingRecord[]; pricingSyncedAt?: string | null; cutoff?: CutoffRecord[]; cutoffSyncedAt?: string | null }>;
 }
 
 /** The case Claude returns for one operator: the submit_case contract the Hermes skill used. */

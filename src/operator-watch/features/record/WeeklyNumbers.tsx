@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Feature } from "../../api/types";
-import type { WeeklyPricing } from "../../api/types";
+import type { WeeklyCutoff, WeeklyPricing } from "../../api/types";
 import { workspaceApi } from "../../api/workspace";
 
 const SHORT: Record<Feature, string> = {
@@ -103,6 +103,73 @@ function PriceVsMarket({ pricing }: { pricing: WeeklyPricing[] }) {
   );
 }
 
+const hours = (n: number) => `${Math.round(n * 10) / 10}h`;
+
+/** Booking cut-off (hours before departure) vs other operators on the same route + vehicle type + vehicle class. */
+function CutoffVsMarket({ cutoff }: { cutoff: WeeklyCutoff }) {
+  const diff = Math.round((cutoff.ownAvgHours - cutoff.marketAvgHours) * 10) / 10;
+  const verdict =
+    Math.abs(diff) < 0.3
+      ? "about the same as the market"
+      : diff > 0
+        ? `${diff}h earlier than the market (closes sooner)`
+        : `${-diff}h later than the market (stays open longer)`;
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div className="d" style={{ marginBottom: 6 }}>
+        Cut-off vs other operators — same city-to-city route, vehicle type and class
+      </div>
+      <div>
+        <b>{hours(cutoff.ownAvgHours)}</b> before departure vs market{" "}
+        <b>{hours(cutoff.marketAvgHours)}</b> · {verdict}{" "}
+        <span className="d">
+          · {cutoff.segments} segment{cutoff.segments === 1 ? "" : "s"},{" "}
+          {cutoff.bookingsCompared.toLocaleString()} bookings, last{" "}
+          {cutoff.windowDays} days
+          {cutoff.segments < 5 ? " · few segments, treat as indicative" : ""}
+        </span>
+      </div>
+      {cutoff.detail.length > 0 && (
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse", marginTop: 4 }}>
+            <thead>
+              <tr className="d" style={{ textAlign: "left" }}>
+                <th>Route</th>
+                <th>Vehicle · class</th>
+                <th style={{ textAlign: "right" }}>Cut-off</th>
+                <th style={{ textAlign: "right" }}>Others</th>
+                <th style={{ textAlign: "right" }}>Bookings</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cutoff.detail.slice(0, 8).map((d, i) => (
+                <tr key={i} style={{ borderTop: "1px solid var(--line, #eee)" }}>
+                  <td>
+                    {d.from} → {d.to}
+                  </td>
+                  <td>
+                    {d.vehicleType} · {d.vehicleClass}
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    <b>{hours(d.avgHours)}</b>
+                  </td>
+                  <td
+                    style={{ textAlign: "right" }}
+                    title={`${d.peers} other operator${d.peers === 1 ? "" : "s"}`}
+                  >
+                    {hours(d.peerAvgHours)}
+                  </td>
+                  <td style={{ textAlign: "right" }}>{d.bookings.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** The weekly Looker uploads for this operator: features used (WAO) and tickets, newest first. */
 export function WeeklyNumbers({ accountId }: { accountId: string }) {
   const { data, isPending, error } = useQuery({
@@ -143,7 +210,7 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
           Weekly numbers could not be loaded: {error.message}
         </div>
       )}
-      {data && !weeks.length && !data.pricing?.length && (
+      {data && !weeks.length && !data.pricing?.length && !data.cutoff?.length && (
         <div className="d">
           No weekly upload matched to this operator yet (Settings → Weekly
           data).
@@ -210,6 +277,15 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
           {data.pricingSyncedAt
             ? 'Price vs market: cannot be compared — in the last 90 days no other operator sold enough tickets on the same city-to-city route with the same vehicle type and class.'
             : 'Price vs market: not available yet.'}
+        </div>
+      ) : null}
+      {data?.cutoff?.[0] ? (
+        <CutoffVsMarket cutoff={data.cutoff[0]} />
+      ) : data ? (
+        <div className="d" style={{ marginTop: 14 }}>
+          {data.cutoffSyncedAt
+            ? "Cut-off vs market: cannot be compared — in the last 30 days no other operator had enough bookings on the same city-to-city route with the same vehicle type and class."
+            : "Cut-off vs market: not available yet."}
         </div>
       ) : null}
       {latest && (

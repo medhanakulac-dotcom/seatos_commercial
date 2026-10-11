@@ -4,7 +4,7 @@
  * over. Keep these strings static: anything that changes per request goes in the user message, which keeps the
  * prompt cache valid.
  */
-import type { PricingRecord } from '../../domain/workspace/types/repositories/workspace.ports';
+import type { CutoffRecord, PricingRecord } from '../../domain/workspace/types/repositories/workspace.ports';
 import { formatCsToolkit } from './cs-toolkit';
 
 /** The team's CS Toolkit, appended to the assessment and chat prompts (static, so it stays in the cached prefix). */
@@ -213,6 +213,14 @@ function formatPricing(p: PricingRecord): string {
   return `- selling price vs other operators on the same route, vehicle type and class (${p.currency}, last ${p.windowDays} days): ${sign(p.pricePct)} across ${p.segments} segments, ${p.ticketsCompared} tickets compared${top.length ? `\n  biggest differences: ${top.join('; ')}` : ''}`;
 }
 
+/** The cut-off comparison: hours before departure that booking closes, vs other operators on the same route, vehicle type and class. */
+function formatCutoff(c: CutoffRecord): string {
+  const diff = Math.round((c.ownAvgHours - c.marketAvgHours) * 10) / 10;
+  const word = Math.abs(diff) < 0.3 ? 'about the same as the market' : diff > 0 ? `${diff}h earlier than the market (closes sooner)` : `${-diff}h later than the market (stays open longer)`;
+  const top = c.detail.slice(0, 5).map((d) => `${d.from}→${d.to} ${d.vehicleType}/${d.vehicleClass}: ${d.avgHours}h vs ${d.peerAvgHours}h (${d.bookings} bookings)`);
+  return `- booking cut-off vs other operators on the same route, vehicle type and class (last ${c.windowDays} days): own average ${c.ownAvgHours}h before departure vs market ${c.marketAvgHours}h: ${word}, across ${c.segments} segments, ${c.bookingsCompared} bookings compared${top.length ? `\n  biggest differences: ${top.join('; ')}` : ''}`;
+}
+
 /** Weekly SeatOS numbers for one operator, newest week first. */
 export function formatWeekly(data: {
   usage: readonly { week: string; featureCount: number; features: Readonly<Record<string, boolean>>; featureUsage?: readonly { name: string; events: number; days: number }[] }[];
@@ -223,8 +231,15 @@ export function formatWeekly(data: {
   pricing?: readonly PricingRecord[];
   /** When the price comparison was last synced for anyone (null/absent = never). */
   pricingSyncedAt?: string | null;
+  /** Booking cut-off vs other operators on the same route + vehicle type + vehicle class. */
+  cutoff?: readonly CutoffRecord[];
+  cutoffSyncedAt?: string | null;
 }): string {
   const priceLines = (data.pricing ?? []).map(formatPricing);
+  const cutoffLines = (data.cutoff ?? []).map(formatCutoff);
+  if (!cutoffLines.length && data.cutoffSyncedAt) {
+    cutoffLines.push('- booking cut-off vs other operators: cannot be compared. In the last 30 days no other operator had enough bookings on the same city-to-city route with the same vehicle type and vehicle class (or this operator had too few, or no cut-off is set). This is a data limit, not an error.');
+  }
   if (!priceLines.length) {
     priceLines.push(
       data.pricingSyncedAt
@@ -232,6 +247,7 @@ export function formatWeekly(data: {
         : '- selling price vs other operators: the price comparison is not available yet.',
     );
   }
+  priceLines.push(...cutoffLines);
   const weeks = [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week), ...(data.usageWeeks ?? [])])].sort().reverse();
   if (!weeks.length) return `No weekly SeatOS numbers have reached the workspace for this operator yet (they arrive automatically; nobody uploads files).\n${priceLines.join('\n')}`;
   const prices = priceLines.length ? `\n${priceLines.join('\n')}` : '';
