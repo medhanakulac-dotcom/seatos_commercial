@@ -40,6 +40,8 @@ export type TicketsView = Omit<WeeklyTicketRecord, 'gmvUsd'>;
 export const MAX_INGEST_ROWS = 3000;
 /** An account can carry a few aliases: read this many rows per week and merge them. */
 const ALIAS_ROWS_PER_WEEK = 4;
+/** More weeks than the sync will ever hold: "all history". */
+const ALL_WEEKS = 1000;
 /** A name is suggested for confirmation from this similarity on. */
 const SUGGEST_MIN_SCORE = 0.5;
 const REMATCH_EVERY_MS = 5 * 60_000;
@@ -329,8 +331,8 @@ export class WeeklyDataService {
     await this.store.setNameLink(key, accountId, by);
   }
 
-  /** The latest `weeks` weeks for one account, newest first. */
-  async forAccount(accountId: string, weeks = 12): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing: PricingRecord[]; pricingSyncedAt: string | null; cutoff: CutoffRecord[]; cutoffSyncedAt: string | null }> {
+  /** The latest `weeks` weeks for one account, newest first (the whole history unless a smaller number is asked for). */
+  async forAccount(accountId: string, weeks = ALL_WEEKS): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing: PricingRecord[]; pricingSyncedAt: string | null; cutoff: CutoffRecord[]; cutoffSyncedAt: string | null }> {
     await this.rematchUnmatched();
     const [usage, tickets, usageWeeks, pricing, pricingSyncedAt, cutoff, cutoffSyncedAt] = await Promise.all([
       this.store.usageFor(accountId, weeks * ALIAS_ROWS_PER_WEEK),

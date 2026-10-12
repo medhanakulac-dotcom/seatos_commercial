@@ -196,13 +196,12 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
       ]
         .sort()
         .reverse()
-        .slice(0, 8)
     : [];
   return (
     <div className="card" style={{ minWidth: 0 }}>
       <h2 className="st">
         <span>SeatOS weekly</span>
-        <span className="d">WAO = features used of 7</span>
+        <span className="d">WAO = features used of 7 · full history{weeks.length ? ` (${weeks.length} weeks)` : ""}</span>
       </h2>
       {isPending && <div className="d">Loading…</div>}
       {error && (
@@ -217,12 +216,13 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
         </div>
       )}
       {weeks.length > 0 && (
+        <div style={{ maxHeight: 340, overflowY: "auto" }}>
         <table
           style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}
         >
           <thead>
             <tr className="d" style={{ textAlign: "left" }}>
-              <th>Week</th>
+              <th style={{ position: "sticky", top: 0, background: "var(--card, #fff)" }}>Week</th>
               <th>WAO</th>
               <th>Features</th>
               <th style={{ textAlign: "right" }}>Tickets</th>
@@ -269,6 +269,7 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
             })}
           </tbody>
         </table>
+        </div>
       )}
       {data?.pricing?.length ? (
         <PriceVsMarket pricing={data.pricing} />

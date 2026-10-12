@@ -143,10 +143,10 @@ export class ClaudeAccountAssistant implements AccountAssistant {
               'tickets sold. Defaults to the operator this chat is about.',
             inputSchema: z.object({
               operator_id: z.string().optional().describe('Only when a user explicitly asks about a different operator'),
-              weeks: z.number().int().min(1).max(52).optional().describe('How many weeks back (default 8)'),
+              weeks: z.number().int().min(1).max(1000).optional().describe('How many weeks back (default 52; the full history is available)'),
             }),
             run: async ({ operator_id, weeks }) => {
-              const data = await weekly.forAccount(operator_id || account.id, weeks ?? 8);
+              const data = await weekly.forAccount(operator_id || account.id, weeks ?? 52);
               return formatWeekly(data);
             },
           }),

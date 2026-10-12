@@ -60,7 +60,7 @@ export function buildMcpServer(
       {
         description:
           "One operator's weekly SeatOS numbers, newest week first: WAO (features used of 7, and which), tickets sold, and its selling price vs other operators on the same route, vehicle type and class.",
-        inputSchema: { operator_id: z.string().min(1).max(64), weeks: z.number().int().min(1).max(52).default(8) },
+        inputSchema: { operator_id: z.string().min(1).max(64), weeks: z.number().int().min(1).max(1000).default(52) },
         annotations: { readOnlyHint: true },
       },
       ({ operator_id, weeks }) => safely(() => weekly.forAccount(operator_id, weeks)),
