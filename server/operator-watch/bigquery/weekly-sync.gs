@@ -221,6 +221,25 @@ function syncBack(weeks) {
   for (var back = weeks; back >= 0; back--) syncWeek_(back);
 }
 
+/**
+ * Tickets backfill for year-on-year comparison: syncTicketsBack(130) sends the tickets of the last 130 weeks (about 2.5 years),
+ * oldest first, from one query. Tickets only (cheap); usage history comes from syncBack.
+ */
+function syncTicketsBack(weeks) {
+  var names = {};
+  runQuery_('SELECT operator_id, operator_name FROM `' + PROJECT_ID + '.dwh.dim_operator`').forEach(function (r) { names[r[0]] = r[1]; });
+  var first = mondayOf_(weeks || 130);
+  var byWeek = {};
+  runQuery_('SELECT CAST(DATE_TRUNC(date, WEEK(MONDAY)) AS STRING) AS wk, operator_id, ANY_VALUE(operator_name) AS operator_name, SUM(daily_actual_tickets) AS tickets FROM `' + PROJECT_ID +
+    '.dwh.fact_operator_tickets_actual_vs_target` WHERE date >= \'' + first + '\' GROUP BY 1, 2 HAVING SUM(daily_actual_tickets) > 0 ORDER BY 1').forEach(function (r) {
+    (byWeek[r[0]] || (byWeek[r[0]] = [])).push({ operatorId: Number(r[1]), operatorName: r[2] || names[r[1]] || 'Operator ' + r[1], tickets: Number(r[3]) });
+  });
+  Object.keys(byWeek).sort().forEach(function (wk) {
+    var res = post_('weekly-tickets', { week: wk, rows: byWeek[wk] });
+    Logger.log('Tickets, week of %s: %s operators -> %s', wk, byWeek[wk].length, JSON.stringify(res));
+  });
+}
+
 function syncWeek_(weeksBack) {
   var monday = mondayOf_(weeksBack);
   var start = monday + ' 00:00:00+07:00';

@@ -43,6 +43,14 @@ describe('formatWeekly price line', () => {
     expect(formatWeekly({ ...base, cutoff: [], cutoffSyncedAt: null })).not.toContain('cut-off');
   });
 
+  it('compares tickets with the same weeks a year earlier when both years were delivered', () => {
+    const weeks = Array.from({ length: 70 }, (_, i) => new Date(Date.parse('2025-06-02T12:00:00Z') + i * 7 * 86_400_000).toISOString().slice(0, 10));
+    const tickets = weeks.map((week) => ({ week, tickets: week >= '2026-06-01' ? 30 : 10 }));
+    const text = formatWeekly({ usage: [], tickets, ticketWeeks: weeks });
+    expect(text).toMatch(/tickets, last 4 weeks up to \d{4}-\d{2}-\d{2} vs the same weeks a year earlier: 120 vs 40 \(\+200%\)/);
+    expect(formatWeekly({ usage: [], tickets: base.tickets, ticketWeeks: ['2026-10-05'] })).not.toContain('year earlier');
+  });
+
   it('keeps the weekly note when there are no weeks yet', () => {
     expect(formatWeekly({ usage: [], tickets: [], pricing: [], pricingSyncedAt: null })).toContain('No weekly SeatOS numbers');
   });

@@ -221,6 +221,35 @@ function formatCutoff(c: CutoffRecord): string {
   return `- booking cut-off vs other operators on the same route, vehicle type and class (last ${c.windowDays} days): own average ${c.ownAvgHours}h before departure vs market ${c.marketAvgHours}h: ${word}, across ${c.segments} segments, ${c.bookingsCompared} bookings compared${top.length ? `\n  biggest differences: ${top.join('; ')}` : ''}`;
 }
 
+const DAY_MS = 86_400_000;
+const shiftWeeks = (iso: string, weeks: number): string => new Date(Date.parse(`${iso}T12:00:00Z`) + weeks * 7 * DAY_MS).toISOString().slice(0, 10);
+
+/**
+ * Tickets over the last N delivered weeks vs the same weeks a year earlier (52 weeks back, same Mondays). Only when every
+ * week of both periods was delivered by the sync (no row in a delivered week = 0 tickets); the newest week is skipped when
+ * it is still running.
+ */
+function ticketsYearOnYear(tickets: readonly { week: string; tickets: number }[], delivered: readonly string[], now: Date): string[] {
+  const sold = new Map(tickets.map((t) => [t.week, t.tickets]));
+  const have = new Set(delivered);
+  const monday = new Date(now.getTime() - ((now.getUTCDay() + 6) % 7) * DAY_MS).toISOString().slice(0, 10);
+  const complete = [...have].filter((w) => w < monday).sort();
+  const last = complete.at(-1);
+  if (!last) return [];
+  const lines: string[] = [];
+  for (const n of [4, 13, 52]) {
+    const weeks = Array.from({ length: n }, (_, i) => shiftWeeks(last, -i));
+    const before = weeks.map((w) => shiftWeeks(w, -52));
+    if (!weeks.every((w) => have.has(w)) || !before.every((w) => have.has(w))) continue;
+    const sum = (ws: string[]) => ws.reduce((a, w) => a + (sold.get(w) ?? 0), 0);
+    const now_ = sum(weeks);
+    const then = sum(before);
+    const pct = then ? ` (${now_ >= then ? '+' : ''}${(Math.round(((now_ - then) / then) * 1000) / 10)}%)` : '';
+    lines.push(`- tickets, last ${n} weeks up to ${last} vs the same weeks a year earlier: ${now_} vs ${then}${pct}`);
+  }
+  return lines;
+}
+
 /** Weekly SeatOS numbers for one operator, newest week first. */
 export function formatWeekly(data: {
   usage: readonly { week: string; featureCount: number; features: Readonly<Record<string, boolean>>; featureUsage?: readonly { name: string; events: number; days: number }[] }[];
@@ -231,6 +260,8 @@ export function formatWeekly(data: {
   pricing?: readonly PricingRecord[];
   /** When the price comparison was last synced for anyone (null/absent = never). */
   pricingSyncedAt?: string | null;
+  /** Weeks the sync delivered ticket data for anyone (a missing row in one of them = 0 tickets). */
+  ticketWeeks?: readonly string[];
   /** Booking cut-off vs other operators on the same route + vehicle type + vehicle class. */
   cutoff?: readonly CutoffRecord[];
   cutoffSyncedAt?: string | null;
@@ -248,6 +279,7 @@ export function formatWeekly(data: {
     );
   }
   priceLines.push(...cutoffLines);
+  priceLines.push(...ticketsYearOnYear(data.tickets, data.ticketWeeks ?? [], new Date()));
   const weeks = [...new Set([...data.usage.map((u) => u.week), ...data.tickets.map((t) => t.week), ...(data.usageWeeks ?? [])])].sort().reverse();
   if (!weeks.length) return `No weekly SeatOS numbers have reached the workspace for this operator yet (they arrive automatically; nobody uploads files).\n${priceLines.join('\n')}`;
   const prices = priceLines.length ? `\n${priceLines.join('\n')}` : '';

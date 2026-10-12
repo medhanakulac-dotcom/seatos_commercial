@@ -29,7 +29,7 @@ export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
 
 /** Weekly numbers synced from BigQuery (WeeklyDataService). */
 export interface WeeklyLookup {
-  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing?: PricingRecord[]; pricingSyncedAt?: string | null; cutoff?: CutoffRecord[]; cutoffSyncedAt?: string | null }>;
+  forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; ticketWeeks?: string[]; pricing?: PricingRecord[]; pricingSyncedAt?: string | null; cutoff?: CutoffRecord[]; cutoffSyncedAt?: string | null }>;
   week(kind: 'usage' | 'tickets', week?: string): Promise<(UsageWithFeatures | TicketsView)[]>;
 }
 

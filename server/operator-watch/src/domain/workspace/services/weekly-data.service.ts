@@ -332,12 +332,13 @@ export class WeeklyDataService {
   }
 
   /** The latest `weeks` weeks for one account, newest first (the whole history unless a smaller number is asked for). */
-  async forAccount(accountId: string, weeks = ALL_WEEKS): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; pricing: PricingRecord[]; pricingSyncedAt: string | null; cutoff: CutoffRecord[]; cutoffSyncedAt: string | null }> {
+  async forAccount(accountId: string, weeks = ALL_WEEKS): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; ticketWeeks: string[]; pricing: PricingRecord[]; pricingSyncedAt: string | null; cutoff: CutoffRecord[]; cutoffSyncedAt: string | null }> {
     await this.rematchUnmatched();
-    const [usage, tickets, usageWeeks, pricing, pricingSyncedAt, cutoff, cutoffSyncedAt] = await Promise.all([
+    const [usage, tickets, usageWeeks, ticketWeeks, pricing, pricingSyncedAt, cutoff, cutoffSyncedAt] = await Promise.all([
       this.store.usageFor(accountId, weeks * ALIAS_ROWS_PER_WEEK),
       this.store.ticketsFor(accountId, weeks * ALIAS_ROWS_PER_WEEK),
       this.store.usageWeeks(weeks),
+      this.store.ticketWeeks(ALL_WEEKS),
       this.store.pricingFor(accountId),
       this.store.pricingSyncedAt(),
       this.store.cutoffFor(accountId),
@@ -345,7 +346,7 @@ export class WeeklyDataService {
     ]);
     // usageWeeks: weeks the sync delivered for anyone. The sync sends operators that had tracked events, so an account
     // without a usage row in one of those weeks was inactive in the SeatOS app (WAO 0/7), not "unknown".
-    return { usage: oneUsagePerWeek(usage).slice(0, weeks).map(withFeatureNames), tickets: sumTicketsPerWeek(tickets.map(withoutGmv)).slice(0, weeks), usageWeeks, pricing, pricingSyncedAt, cutoff, cutoffSyncedAt };
+    return { usage: oneUsagePerWeek(usage).slice(0, weeks).map(withFeatureNames), tickets: sumTicketsPerWeek(tickets.map(withoutGmv)).slice(0, weeks), usageWeeks, ticketWeeks, pricing, pricingSyncedAt, cutoff, cutoffSyncedAt };
   }
 
   /**

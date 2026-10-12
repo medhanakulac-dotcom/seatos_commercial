@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Feature } from "../../api/types";
 import type { WeeklyCutoff, WeeklyPricing } from "../../api/types";
 import { workspaceApi } from "../../api/workspace";
+import { mondayOf, pctChange, ticketsPeriods, yearAgo } from "../../lib/ticketsYoY";
 
 const SHORT: Record<Feature, string> = {
   inventory_management: "Inv",
@@ -170,6 +171,48 @@ function CutoffVsMarket({ cutoff }: { cutoff: WeeklyCutoff }) {
   );
 }
 
+const pctText = (p: number | null) => (p == null ? "—" : `${p > 0 ? "+" : ""}${p.toFixed(1)}%`);
+
+/** Tickets over the last 4 / 13 / 52 finished weeks vs the same weeks a year earlier. */
+function TicketsYoY({ tickets, delivered }: { tickets: { week: string; tickets: number }[]; delivered: string[] }) {
+  const periods = ticketsPeriods(tickets, delivered, new Date());
+  if (!periods.length)
+    return (
+      <div className="d" style={{ marginTop: 14 }}>
+        Tickets year on year: needs a full year of ticket history for this operator.
+      </div>
+    );
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div className="d" style={{ marginBottom: 6 }}>
+        Tickets year on year — the same weeks a year earlier (finished weeks, up to the week of {periods[0].to.slice(5)})
+      </div>
+      <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+        <thead>
+          <tr className="d" style={{ textAlign: "left" }}>
+            <th>Period</th>
+            <th style={{ textAlign: "right" }}>Tickets</th>
+            <th style={{ textAlign: "right" }}>Last year</th>
+            <th style={{ textAlign: "right" }}>Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          {periods.map((p) => (
+            <tr key={p.weeks} style={{ borderTop: "1px solid var(--line, #eee)" }}>
+              <td>Last {p.weeks} weeks</td>
+              <td style={{ textAlign: "right" }}>{p.tickets.toLocaleString()}</td>
+              <td style={{ textAlign: "right" }}>{p.lastYear.toLocaleString()}</td>
+              <td style={{ textAlign: "right" }}>
+                <b>{pctText(p.pct)}</b>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /** The weekly Looker uploads for this operator: features used (WAO) and tickets, newest first. */
 export function WeeklyNumbers({ accountId }: { accountId: string }) {
   const { data, isPending, error } = useQuery({
@@ -192,6 +235,7 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
           ...data.usage.map((u) => u.week),
           ...data.tickets.map((t) => t.week),
           ...(data.usageWeeks ?? []),
+          ...(data.ticketWeeks ?? []),
         ]),
       ]
         .sort()
@@ -226,10 +270,17 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
               <th>WAO</th>
               <th>Features</th>
               <th style={{ textAlign: "right" }}>Tickets</th>
+              <th style={{ textAlign: "right" }}>Last year</th>
+              <th style={{ textAlign: "right" }}>YoY</th>
             </tr>
           </thead>
           <tbody>
             {weeks.map((w) => {
+              const delivered = new Set(data!.ticketWeeks ?? []);
+              const ago = yearAgo(w);
+              const running = w >= mondayOf(new Date()); // the week still going: not comparable yet
+              const lastYear = delivered.has(ago) ? (data!.tickets.find((x) => x.week === ago)?.tickets ?? 0) : null;
+              const thisWeek = data!.tickets.find((x) => x.week === w)?.tickets ?? 0;
               const u = data!.usage.find((x) => x.week === w);
               const t = data!.tickets.find((x) => x.week === w);
               const noActivity = !u && (data!.usageWeeks ?? []).includes(w); // the sync delivered this week, this operator had no tracked events
@@ -264,6 +315,12 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
                   <td style={{ textAlign: "right" }}>
                     {t ? t.tickets.toLocaleString() : "—"}
                   </td>
+                  <td style={{ textAlign: "right" }}>
+                    {lastYear == null ? "—" : lastYear.toLocaleString()}
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    {running || lastYear == null ? "—" : <b>{pctText(pctChange(thisWeek, lastYear))}</b>}
+                  </td>
                 </tr>
               );
             })}
@@ -271,6 +328,7 @@ export function WeeklyNumbers({ accountId }: { accountId: string }) {
         </table>
         </div>
       )}
+      {data && <TicketsYoY tickets={data.tickets} delivered={data.ticketWeeks ?? []} />}
       {data?.pricing?.length ? (
         <PriceVsMarket pricing={data.pricing} />
       ) : data ? (
