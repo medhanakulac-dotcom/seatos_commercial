@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { SlackApi, SlackMessage } from '../../infrastructure/slack/slack.client';
-import { fitSlackMessage, questionText, toSlackMrkdwn, verifySlackSignature } from '../../infrastructure/slack/slack.format';
+import { fitSlackMessage, questionText, tablesToLists, toSlackMrkdwn, verifySlackSignature } from '../../infrastructure/slack/slack.format';
 import { SlackBotService, SlackEventPayload } from './slack.service';
 
 class FakeSlack implements SlackApi {
@@ -41,6 +41,14 @@ describe('Slack signature and text', () => {
     expect(verifySlackSignature('other', body, String(now), sign(now), now)).toBe(false);
     expect(verifySlackSignature(secret, body, undefined, sign(now), now)).toBe(false);
     expect(verifySlackSignature(secret, body, String(now - 600), sign(now - 600), now)).toBe(false);
+  });
+
+  it('turns a Markdown table into one readable line per row', () => {
+    const table = 'Recent weeks\n| Week | WAO | Features in use | Confirmed bookings |\n|---|---|---|---|\n| 12 Oct (partial) | **4/7** | reservation, trip | 207 |\n| 5 Oct | 2/7 | reservation | 592 |\nDone.';
+    expect(tablesToLists(table)).toBe('Recent weeks\n• *12 Oct (partial)* — WAO: **4/7** · Features in use: reservation, trip · Confirmed bookings: 207\n• *5 Oct* — WAO: 2/7 · Features in use: reservation · Confirmed bookings: 592\nDone.');
+    expect(toSlackMrkdwn(table)).not.toContain('|---');
+    expect(toSlackMrkdwn(table)).toContain('WAO: *4/7*');
+    expect(tablesToLists('a | b\nplain text')).toBe('a | b\nplain text');
   });
 
   it('strips the bot mention and turns Markdown into Slack formatting', () => {

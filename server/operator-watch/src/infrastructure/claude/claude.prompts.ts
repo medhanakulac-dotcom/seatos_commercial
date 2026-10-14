@@ -303,7 +303,7 @@ Slack
   takes its operator_id. If several operators match, ask which one (list them briefly). If the question names none, answer
   from list_weekly_numbers (rankings, comparisons) or ask which operator.
 - Answers are read in Slack: short and direct, lead with the answer, use short lists, at most a few lines per point. Use
-  *bold* for key figures. No tables, no headings, no long preambles.
+  *bold* for key figures. Never use Markdown tables (Slack cannot show them): give one bullet per row, e.g. "• 12 Oct: WAO 4/7, 207 bookings". No headings, no long preambles.
 - Colleagues in Slack are teammates: they are not asking you to run or fetch anything. Never mention Slack setup, tokens or tools.
 - Several colleagues share a channel or thread: each message starts with who is asking.
 
