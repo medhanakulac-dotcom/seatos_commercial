@@ -1,0 +1,33 @@
+# Slack app for Mariah, the SeatOS assistant. In https://api.slack.com/apps choose "Create New App" -> "From a manifest",
+# pick the workspace and paste this file. Then see slack/README.md for the two secrets to add on Vercel.
+display_information:
+  name: Mariah
+  description: Ask about SeatOS operators - WAO, tickets, prices, HubSpot history and what to do next.
+  background_color: "#0f766e"
+features:
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  bot_user:
+    display_name: Mariah
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - app_mentions:read
+      - chat:write
+      - im:history
+      - channels:history
+      - groups:history
+      - users:read
+      - users:read.email
+settings:
+  event_subscriptions:
+    request_url: https://dealsuite.app/api/ow/slack/events
+    bot_events:
+      - app_mention
+      - message.im
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

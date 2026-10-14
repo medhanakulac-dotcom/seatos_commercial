@@ -30,7 +30,7 @@ let ready: Promise<NestFastifyApplication> | undefined;
 
 async function boot(): Promise<NestFastifyApplication> {
   // abortOnError off: a failed boot must throw (and be answered below), not exit the function process.
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ trustProxy: true }), { abortOnError: false });
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ trustProxy: true }), { abortOnError: false, rawBody: true });
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
   return app;

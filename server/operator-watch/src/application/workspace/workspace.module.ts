@@ -7,7 +7,7 @@ import { RunService } from '../../domain/workspace/services/run.service';
 import { SendingService } from '../../domain/workspace/services/sending.service';
 import { SettingsService } from '../../domain/workspace/services/workspace.shared';
 import { WorkspaceService } from '../../domain/workspace/services/workspace.service';
-import { operatorActivity, operatorContext } from '../../domain/workspace/services/operator-context';
+import { findOperators, operatorActivity, operatorContext } from '../../domain/workspace/services/operator-context';
 import {
   ACCOUNT_ASSISTANT,
   AGENT_HARNESS,
@@ -68,6 +68,10 @@ import { WeeklyDataService } from '../../domain/workspace/services/weekly-data.s
 import { PgWeeklyDataStore } from '../../infrastructure/database/pg-weekly-data.store';
 import { InMemoryWeeklyDataStore } from '../../infrastructure/workspace-mocks/in-memory-weekly-data.store';
 import { WorkspaceController } from './controllers/workspace.controller';
+import { SlackController } from '../slack/slack.controller';
+import { SlackBotService } from '../slack/slack.service';
+import { SlackWebApi } from '../../infrastructure/slack/slack.client';
+import { ClaudeWorkspaceAssistant } from '../../infrastructure/claude/claude.agent';
 
 const AGENT_STORE = Symbol('AGENT_STORE');
 
@@ -78,7 +82,7 @@ const AGENT_STORE = Symbol('AGENT_STORE');
  */
 @Module({
   imports: [AuthModule, DatabaseModule, EmailModule],
-  controllers: [WorkspaceController, AdminController, McpController, InternalController, WeeklyDataController, WeeklyIngestController],
+  controllers: [WorkspaceController, AdminController, McpController, InternalController, WeeklyDataController, WeeklyIngestController, SlackController],
   providers: [
     {
       provide: WORKSPACE_STORE,
@@ -158,6 +162,20 @@ const AGENT_STORE = Symbol('AGENT_STORE');
         claude && memory
           ? new ClaudeAccountAssistant(claude, memory, seatos, (id) => operatorContext(runs, store, id), (id, limit) => operatorActivity(runs, activity, id, limit), weekly)
           : h.assistant,
+    },
+    // The Slack bot (SLACK_BOT_TOKEN + SLACK_SIGNING_SECRET): the account chat's assistant for the whole workspace.
+    {
+      provide: SlackBotService,
+      inject: [PG_POOL, CLAUDE, SeatosTools, RunService, WORKSPACE_STORE, CRM_ACTIVITY, WeeklyDataService],
+      useFactory: (pool: Pool | null, claude: ClaudeLike | null, seatos: SeatosTools, runs: RunService, store: WorkspaceStore, activity: CrmActivitySource, weekly: WeeklyDataService) => {
+        const token = process.env.SLACK_BOT_TOKEN;
+        if (!token || !process.env.SLACK_SIGNING_SECRET) return null;
+        const answerer = claude
+          ? new ClaudeWorkspaceAssistant(claude, seatos, (name) => findOperators(runs, name), (id) => operatorContext(runs, store, id), (id, limit) => operatorActivity(runs, activity, id, limit), weekly)
+          : null;
+        const isAllowed = async (email: string) => (pool ? (await pool.query('select 1 from public.allowed_users where lower(email) = $1 limit 1', [email.toLowerCase()])).rows.length > 0 : false);
+        return new SlackBotService(new SlackWebApi(token), answerer, isAllowed);
+      },
     },
     {
       provide: ClaudeRunWorker,

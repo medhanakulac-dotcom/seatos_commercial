@@ -22,7 +22,7 @@ import { renderHermesEvent } from '../hermes/hermes-agent.notifier';
 import { background } from '../runtime/background';
 import { ClaudeLike } from './claude.client';
 import { ClaudeMemory } from './claude.memory';
-import { CHAT_SYSTEM, COMPOSE_SYSTEM, formatActivity, formatWeekly, REWRITE_SYSTEM } from './claude.prompts';
+import { CHAT_SYSTEM, COMPOSE_SYSTEM, formatActivity, formatWeekly, REWRITE_SYSTEM, SLACK_SYSTEM } from './claude.prompts';
 import { SeatosTools } from './seatos.tools';
 
 export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
@@ -191,6 +191,91 @@ export class ClaudeAccountAssistant implements AccountAssistant {
       this.memory.retain({ operatorId: account.id, operatorName: account.name, kind: 'chat', text: `${asker}: ${question}\nAssistant: ${answer}` }),
     );
     return answer;
+  }
+}
+
+/**
+ * The Slack bot's brain: the account chat's tools and rules, but for the whole workspace. Every operator tool takes an
+ * operator_id; find_operators turns a name into one. Read-only: it never writes to HubSpot or sends anything.
+ */
+export class ClaudeWorkspaceAssistant {
+  constructor(
+    private readonly claude: ClaudeLike,
+    private readonly seatos: SeatosTools,
+    private readonly findOperators: (name: string) => Promise<unknown>,
+    private readonly operatorContext: (operatorId: string) => Promise<unknown>,
+    private readonly crmActivity: (operatorId: string, limit: number) => Promise<{ connected: boolean; items: CrmActivity[] }>,
+    private readonly weekly: WeeklyLookup,
+  ) {}
+
+  async ask({ question, asker, history }: { question: string; asker: string; history: readonly ChatTurn[] }): Promise<string> {
+    const messages: Anthropic.Beta.BetaMessageParam[] = [
+      ...history.slice(-HISTORY_TURNS).map((t) => ({ role: t.role, content: t.text }) as const),
+      { role: 'user', content: `Today: ${new Date().toISOString().slice(0, 10)}\n\n${asker} asks: ${question}` },
+    ];
+    while (messages[0]?.role === 'assistant') messages.shift();
+    const attempt = async (run: () => Promise<unknown>) => {
+      try {
+        return JSON.stringify(await run());
+      } catch (error) {
+        return `Lookup failed: ${error instanceof Error ? error.message : String(error)}`;
+      }
+    };
+    const weekly = this.weekly;
+    const tools = [
+      betaZodTool({
+        name: 'find_operators',
+        description: 'Find operators (SeatOS customers) by name. Returns operator_id, which every other tool takes.',
+        inputSchema: z.object({ name: z.string().min(1).max(200) }),
+        run: ({ name }) => attempt(() => this.findOperators(name)),
+      }),
+      betaZodTool({
+        name: 'get_operator_context',
+        description: 'Everything the workspace knows about one operator: its CRM record, health, owner, deals and recent activity.',
+        inputSchema: z.object({ operator_id: z.string().min(1) }),
+        run: ({ operator_id }) => attempt(() => this.operatorContext(operator_id)),
+      }),
+      betaZodTool({
+        name: 'get_hubspot_activity',
+        description: 'What was logged with the operator in HubSpot, newest first: notes, meetings, calls, emails, tasks and logged messages.',
+        inputSchema: z.object({
+          operator_id: z.string().min(1),
+          type: z.enum(CRM_ACTIVITY_TYPES).optional(),
+          limit: z.number().int().min(1).max(100).optional().describe('How many items (default 30)'),
+        }),
+        run: ({ operator_id, type, limit }) =>
+          attempt(async () => {
+            const { connected, items } = await this.crmActivity(operator_id, type ? 100 : (limit ?? 30));
+            if (!connected) return 'HubSpot is not connected, so there is no logged activity to read.';
+            return (type ? items.filter((i) => i.type === type) : items).slice(0, limit ?? 30).map(({ id: _id, url: _url, ...rest }) => rest);
+          }),
+      }),
+      betaZodTool({
+        name: 'get_weekly_numbers',
+        description:
+          "One operator's weekly SeatOS numbers, newest week first: WAO (features used of 7), tickets sold with year on year, selling price and booking cut-off vs other operators on the same route.",
+        inputSchema: z.object({ operator_id: z.string().min(1), weeks: z.number().int().min(1).max(1000).optional().describe('How many weeks back (default 52)') }),
+        run: async ({ operator_id, weeks }) => {
+          try {
+            return formatWeekly(await weekly.forAccount(operator_id, weeks ?? 52));
+          } catch (error) {
+            return `Could not read the numbers: ${error instanceof Error ? error.message : String(error)}`;
+          }
+        },
+      }),
+      betaZodTool({
+        name: 'list_weekly_numbers',
+        description: 'Every operator in one week, for rankings and comparisons: kind "usage" (WAO, high to low) or "tickets" (tickets sold, high to low). Defaults to the latest week.',
+        inputSchema: z.object({ kind: z.enum(['usage', 'tickets']), week: z.string().optional().describe('Monday of the week, YYYY-MM-DD') }),
+        run: ({ kind, week }) =>
+          attempt(async () => {
+            const rows = await weekly.week(kind, week);
+            if (!rows.length) return 'No numbers for that week.';
+            return rows.map((r) => ('tickets' in r ? { week: r.week, operator: r.operatorName, operator_id: r.accountId, tickets: r.tickets } : { week: r.week, operator: r.operatorName, operator_id: r.accountId, wao: r.featureCount }));
+          }),
+      }),
+    ];
+    return this.claude.converse({ system: SLACK_SYSTEM, messages, tools: [...tools, ...(await this.seatos.tools())], effort: 'medium', maxIterations: MAX_TOOL_STEPS, web: true });
   }
 }
 

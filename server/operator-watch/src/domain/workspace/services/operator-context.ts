@@ -1,6 +1,7 @@
 import { WorkspaceError } from '../errors/workspace.errors';
 import { CrmActivitySource, WorkspaceStore } from '../types/repositories/workspace.ports';
 import { RunService } from './run.service';
+import { nameKey } from './weekly-data';
 
 /**
  * Everything the workspace knows about one operator, without needing a run id: the CRM record from the latest run,
@@ -35,4 +36,15 @@ export async function operatorActivity(runs: RunService, source: CrmActivitySour
   const account = snapshot.accounts.find((a) => a.id === operatorId);
   if (!account) throw new WorkspaceError(`Operator ${operatorId} is not in the latest run (${run.label})`);
   return { connected: true, items: await source.activity(account, limit) };
+}
+
+/** Operators of the latest run whose name contains `name` (case, punctuation and company words ignored), at most 20. */
+export async function findOperators(runs: RunService, name: string) {
+  const run = await runs.latestRun();
+  if (!run) return { operators: [] };
+  const { snapshot } = await runs.operatorsForRun(run.id);
+  const key = nameKey(name);
+  if (!key) return { operators: [] };
+  const hits = snapshot.accounts.filter((a) => nameKey(a.name).includes(key));
+  return { operators: hits.slice(0, 20).map((a) => ({ operator_id: a.id, name: a.name, segment: a.segment, health: a.crmHealth, owner: a.owner, country: a.country })) };
 }
