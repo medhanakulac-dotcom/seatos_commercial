@@ -49,6 +49,14 @@ export class WeeklyIngestController {
     authorize(authorization);
     return this.weekly.ingestCutoff(body, BIGQUERY_SYNC_ACTOR);
   }
+
+  /** `{ windowDays, reset?, rows: [{ operatorId, operatorName, routes: [{ currency, from, to, vehicleType, vehicleClass, tickets, netAvg, netMin, netMax, retailAvg }] }] }` — a batch of the route prices; `reset: true` on the first batch. */
+  @Post('route-prices')
+  @HttpCode(200)
+  routePrices(@Headers('authorization') authorization: string | undefined, @Body() body: unknown) {
+    authorize(authorization);
+    return this.weekly.ingestRoutePrices(body, BIGQUERY_SYNC_ACTOR);
+  }
 }
 
 function authorize(authorization: string | undefined): void {

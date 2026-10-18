@@ -1,6 +1,6 @@
 import { Pool, QueryResultRow } from 'pg';
 import { FEATURES, Feature } from '../../domain/workspace/services/weekly-data';
-import { CutoffRecord, PricingRecord, WeeklyDataStore, WeeklyTicketRecord, WeeklyUpload, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
+import { CutoffRecord, PricingRecord, RoutePricesRecord, WeeklyDataStore, WeeklyTicketRecord, WeeklyUpload, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
 
 /** node-postgres turns a `date` into local midnight, so read it back with local fields (not UTC) to keep the day. */
 const day = (v: unknown): string =>
@@ -51,6 +51,16 @@ const toCutoff = (r: QueryResultRow): CutoffRecord => ({
   marketAvgHours: Number(r.market_avg_hours),
   windowDays: r.window_days,
   detail: r.detail ?? [],
+  computedAt: new Date(r.computed_at).toISOString(),
+});
+
+const toRoutePrices = (r: QueryResultRow): RoutePricesRecord => ({
+  operatorId: r.operator_id,
+  operatorName: r.operator_name,
+  nameKey: r.name_key,
+  accountId: r.account_id,
+  windowDays: r.window_days,
+  routes: r.routes ?? [],
   computedAt: new Date(r.computed_at).toISOString(),
 });
 
@@ -115,7 +125,7 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
   }
 
   async assignAccount(nameKey: string, accountId: string): Promise<void> {
-    for (const table of ['weekly_usage', 'weekly_tickets', 'operator_pricing', 'operator_cutoff']) {
+    for (const table of ['weekly_usage', 'weekly_tickets', 'operator_pricing', 'operator_cutoff', 'operator_route_prices']) {
       await this.pool.query(`update ${table} set account_id = $2 where name_key = $1 and account_id is null`, [nameKey, accountId]);
     }
   }
@@ -143,6 +153,7 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
       await client.query('update weekly_tickets set account_id = $2 where name_key = $1', [nameKey, accountId]);
       await client.query('update operator_pricing set account_id = $2 where name_key = $1', [nameKey, accountId]);
       await client.query('update operator_cutoff set account_id = $2 where name_key = $1', [nameKey, accountId]);
+      await client.query('update operator_route_prices set account_id = $2 where name_key = $1', [nameKey, accountId]);
       await client.query('commit');
     } catch (error) {
       await client.query('rollback');
@@ -195,6 +206,38 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
     } finally {
       client.release();
     }
+  }
+
+  async replaceRoutePrices(rows: readonly RoutePricesRecord[], by: string, reset: boolean): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('begin');
+      if (reset) await client.query('delete from operator_route_prices');
+      for (const r of rows) {
+        await client.query(
+          `insert into operator_route_prices (operator_id, operator_name, name_key, account_id, window_days, routes, uploaded_by)
+           values ($1, $2, $3, $4, $5, $6, $7)
+           on conflict (operator_id) do update set operator_name = excluded.operator_name, name_key = excluded.name_key, account_id = excluded.account_id,
+             window_days = excluded.window_days, routes = excluded.routes, computed_at = now(), uploaded_by = excluded.uploaded_by`,
+          [r.operatorId, r.operatorName, r.nameKey, r.accountId, r.windowDays, JSON.stringify(r.routes), by],
+        );
+      }
+      await client.query('commit');
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async routePricesFor(accountId: string): Promise<RoutePricesRecord[]> {
+    return (await this.pool.query('select * from operator_route_prices where account_id = $1 or operator_name in (select operator_name from account_aliases where account_id = $1)', [accountId])).rows.map(toRoutePrices);
+  }
+
+  async routePricesSyncedAt(): Promise<string | null> {
+    const at = (await this.pool.query('select max(computed_at) as at from operator_route_prices')).rows[0]?.at;
+    return at ? new Date(at).toISOString() : null;
   }
 
   async cutoffFor(accountId: string): Promise<CutoffRecord[]> {

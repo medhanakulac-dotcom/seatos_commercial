@@ -115,6 +115,7 @@ function syncAll() {
   syncWeek_(1); // last week, final
   syncPricing(); // price vs other operators (own error handling: a failure here must not hide the weekly sync)
   syncCutoff(); // booking cut-off vs other operators
+  syncRoutePrices(); // net and retail price per route
 }
 
 // Price comparison: each operator's average ticket price vs the other operators selling the SAME route (from city -> to city;
@@ -196,6 +197,44 @@ function cutoffSql_() {
     'WINDOW w AS (PARTITION BY from_city, to_city, vt, vc)) ' +
     'SELECT operator_id, operator_name, from_city, to_city, vt, vc, bookings, total / bookings AS avg_hours, peer_total / peer_bookings AS peer_avg_hours, peers ' +
     'FROM cmp WHERE peers >= 1 AND peer_bookings >= ' + CUTOFF_MIN_PEER_BOOKINGS + ' AND bookings >= ' + CUTOFF_MIN_OWN_BOOKINGS;
+}
+
+// Route prices: each operator's average NET price (total_price = what the operator receives; the agent price is identical) and RETAIL
+// price (what the customer pays) per ticket, per currency, city-to-city route, vehicle type and class. Confirmed bookings of the
+// last ROUTE_WINDOW_DAYS days. Sent in batches of operators (the site limits the request size); the first batch resets the snapshot.
+var ROUTE_WINDOW_DAYS = 90;
+var ROUTE_MAX_PER_OPERATOR = 100;
+var ROUTE_BATCH_OPERATORS = 15;
+
+function syncRoutePrices() {
+  var rows = runQuery_(routePricesSql_());
+  var byOperator = {};
+  var order = [];
+  rows.forEach(function (r) {
+    var id = Number(r[0]);
+    var o = byOperator[id];
+    if (!o) { o = byOperator[id] = { operatorId: id, operatorName: r[1], routes: [] }; order.push(id); }
+    if (o.routes.length < ROUTE_MAX_PER_OPERATOR) {
+      o.routes.push({ currency: r[2], from: r[3], to: r[4], vehicleType: r[5], vehicleClass: r[6], tickets: Number(r[7]), netAvg: round_(Number(r[8]), 2), netMin: round_(Number(r[9]), 2), netMax: round_(Number(r[10]), 2), retailAvg: round_(Number(r[11]), 2) });
+    }
+  });
+  var sent = 0;
+  for (var i = 0; i < order.length; i += ROUTE_BATCH_OPERATORS) {
+    var batch = order.slice(i, i + ROUTE_BATCH_OPERATORS).map(function (id) { return byOperator[id]; });
+    post_('route-prices', { windowDays: ROUTE_WINDOW_DAYS, reset: i === 0, rows: batch });
+    sent += batch.length;
+  }
+  Logger.log('Route prices: %s operators, %s routes', sent, rows.length);
+  return { operators: sent, routes: rows.length };
+}
+
+function routePricesSql_() {
+  return 'WITH b AS (SELECT t.operator_id, t.operator_name, t.currency, t.from_city, t.to_city, COALESCE(LOWER(TRIM(f.vehicle_type)), \'unknown\') AS vt, COALESCE(LOWER(TRIM(f.vehicle_class)), \'unknown\') AS vc, t.tickets, t.total_price, t.retail_price ' +
+    'FROM `' + PROJECT_ID + '.raw_tables.tc_export_bookings_table` t JOIN `' + PROJECT_ID + '.dwh.fact_booking` f USING (book_id) ' +
+    'WHERE t.status = \'CONFIRMED\' AND t.booked_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ' + ROUTE_WINDOW_DAYS + ' DAY) AND t.tickets > 0 AND t.total_price > 0 AND t.from_city IS NOT NULL AND t.to_city IS NOT NULL) ' +
+    'SELECT operator_id, ANY_VALUE(operator_name) AS operator_name, currency, from_city, to_city, vt, vc, SUM(tickets) AS tickets, SUM(total_price) / SUM(tickets) AS net_avg, ' +
+    'MIN(total_price / tickets) AS net_min, MAX(total_price / tickets) AS net_max, SUM(IFNULL(retail_price, total_price)) / SUM(tickets) AS retail_avg ' +
+    'FROM b GROUP BY operator_id, currency, from_city, to_city, vt, vc ORDER BY operator_id, tickets DESC';
 }
 
 function round_(n, digits) {

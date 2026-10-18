@@ -224,6 +224,24 @@ describe('Weekly data HTTP integration', () => {
     expect((await call('GET', `/workspace/accounts/${a.id}/weekly`, 'viewer')).json().cutoff).toEqual([]);
   });
 
+  it('takes route prices from the BigQuery sync in batches: token needed, matched to the account, reset on the first batch', async () => {
+    const [a] = accounts;
+    const route = { currency: 'thb', from: 'Phuket', to: 'Phi Phi', vehicleType: 'speedboat', vehicleClass: 'standard', tickets: 120, netAvg: 850.123, netMin: 800, netMax: 900, retailAvg: 1000 };
+    const rows = [{ operatorId: 1, operatorName: a.name, routes: [route] }, { operatorId: 3, operatorName: 'Unknown Sync Bus', routes: [route] }];
+    expect((await ingest({ windowDays: 90, reset: true, rows }, null, 'route-prices')).statusCode).toBe(401);
+    expect((await ingest({ windowDays: 0, rows }, INGEST_TOKEN, 'route-prices')).statusCode).toBe(400);
+    expect((await ingest({ windowDays: 90, rows: [{ operatorId: 1, operatorName: 'X', routes: [{ ...route, netAvg: 'x' }] }] }, INGEST_TOKEN, 'route-prices')).statusCode).toBe(400);
+    const res = await ingest({ windowDays: 90, reset: true, rows }, INGEST_TOKEN, 'route-prices');
+    expect(res.json()).toEqual({ rows: 2, matched: 1 });
+    const weekly = app.get(WeeklyDataService);
+    expect(await weekly.routePrices(a.id)).toMatchObject({ windowDays: 90, routes: [expect.objectContaining({ currency: 'THB', netAvg: 850.12, retailAvg: 1000, tickets: 120 })] });
+    // a later batch adds operators; the next reset clears the old ones
+    await ingest({ windowDays: 90, rows: [{ operatorId: 9, operatorName: 'Another Sync Bus', routes: [] }] }, INGEST_TOKEN, 'route-prices');
+    expect((await weekly.routePrices(a.id)).routes).toHaveLength(1);
+    await ingest({ windowDays: 90, reset: true, rows: [] }, INGEST_TOKEN, 'route-prices');
+    expect((await weekly.routePrices(a.id)).routes).toEqual([]);
+  });
+
   it('labels accounts with no tickets in the last two ticket weeks as zero ticket', async () => {
     const [a, b] = accounts;
     expect((await call('GET', '/workspace/zero-tickets', 'viewer')).statusCode).toBe(200);

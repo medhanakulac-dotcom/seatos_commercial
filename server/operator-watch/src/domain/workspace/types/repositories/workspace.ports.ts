@@ -443,6 +443,33 @@ export interface CutoffRecord {
   readonly computedAt: string;
 }
 
+/** One route + vehicle type + vehicle class of one operator, in one currency: average prices per ticket. */
+export interface RoutePrice {
+  readonly currency: string;
+  readonly from: string;
+  readonly to: string;
+  readonly vehicleType: string;
+  readonly vehicleClass: string;
+  readonly tickets: number;
+  /** Average net price per ticket: what the operator receives (the agent price is the same). */
+  readonly netAvg: number;
+  readonly netMin: number;
+  readonly netMax: number;
+  /** Average retail price per ticket: what the customer pays. */
+  readonly retailAvg: number;
+}
+
+/** Net and retail prices per route of one operator, from the BigQuery sync. */
+export interface RoutePricesRecord {
+  readonly operatorId: number;
+  readonly operatorName: string;
+  readonly nameKey: string;
+  readonly accountId: string | null;
+  readonly windowDays: number;
+  readonly routes: readonly RoutePrice[];
+  readonly computedAt: string;
+}
+
 export interface WeeklyUpload {
   readonly kind: WeeklyKind;
   readonly week: string;
@@ -488,5 +515,9 @@ export interface WeeklyDataStore {
   replaceCutoff(rows: readonly CutoffRecord[], by: string): Promise<void>;
   cutoffFor(accountId: string): Promise<CutoffRecord[]>;
   cutoffSyncedAt(): Promise<string | null>;
+  /** Route prices arrive in batches: `reset` (first batch) clears the old snapshot, later batches add to it. */
+  replaceRoutePrices(rows: readonly RoutePricesRecord[], by: string, reset: boolean): Promise<void>;
+  routePricesFor(accountId: string): Promise<RoutePricesRecord[]>;
+  routePricesSyncedAt(): Promise<string | null>;
 }
 export const WEEKLY_DATA_STORE = Symbol('WEEKLY_DATA_STORE');

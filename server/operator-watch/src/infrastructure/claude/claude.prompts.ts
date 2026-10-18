@@ -4,7 +4,7 @@
  * over. Keep these strings static: anything that changes per request goes in the user message, which keeps the
  * prompt cache valid.
  */
-import type { CutoffRecord, PricingRecord } from '../../domain/workspace/types/repositories/workspace.ports';
+import type { CutoffRecord, PricingRecord, RoutePrice } from '../../domain/workspace/types/repositories/workspace.ports';
 import { formatCsToolkit } from './cs-toolkit';
 
 /** The team's CS Toolkit, appended to the assessment and chat prompts (static, so it stays in the cached prefix). */
@@ -98,6 +98,7 @@ Facts
   LINE/WhatsApp/SMS messages — comes from get_hubspot_activity. Use it for questions about history, promises,
   complaints, meetings or "what did we last talk about"; filter by type when the question is about one kind.
 - Answer from the Context block when it suffices; greetings and small talk need no tools.
+- get_route_prices gives one operator's average NET price (what the operator receives; the agent price is identical) and RETAIL price (what the customer pays) per ticket on each city-to-city route, by vehicle type and class. Use it for questions about prices on a route. Quote the currency, say it is an average over recent confirmed bookings, and never mix currencies. If the route is not found, say which routes the operator does sell.
 - Live SeatOS numbers (bookings, routes, agents, trips) come only from the SeatOS tools when they are available. Use the
   SeatOS operator_id from the Context block directly; look the operator up by name only when it is missing.
 - Never invent numbers, bookings, routes or feature usage. If the data does not show it, say so.
@@ -219,6 +220,30 @@ function formatCutoff(c: CutoffRecord): string {
   const word = Math.abs(diff) < 0.3 ? 'about the same as the market' : diff > 0 ? `${diff}h earlier than the market (closes sooner)` : `${-diff}h later than the market (stays open longer)`;
   const top = c.detail.slice(0, 5).map((d) => `${d.from}→${d.to} ${d.vehicleType}/${d.vehicleClass}: ${d.avgHours}h vs ${d.peerAvgHours}h (${d.bookings} bookings)`);
   return `- booking cut-off vs other operators on the same route, vehicle type and class (last ${c.windowDays} days): own average ${c.ownAvgHours}h before departure vs market ${c.marketAvgHours}h: ${word}, across ${c.segments} segments, ${c.bookingsCompared} bookings compared${top.length ? `\n  biggest differences: ${top.join('; ')}` : ''}`;
+}
+
+/**
+ * Net and retail prices per route of one operator, for the route-price tool: net = what the operator receives (the agent
+ * price is the same), retail = what the customer pays, both per ticket. Optional filters pick routes by city name.
+ */
+export function formatRoutePrices(
+  data: { routes: readonly RoutePrice[]; windowDays: number | null; syncedAt: string | null },
+  filter: { from?: string; to?: string; limit?: number } = {},
+): string {
+  if (!data.syncedAt) return 'Route prices are not available yet.';
+  const has = (city: string, q?: string) => !q || city.toLowerCase().includes(q.trim().toLowerCase());
+  const picked = data.routes.filter((r) => has(r.from, filter.from) && has(r.to, filter.to));
+  if (!data.routes.length) return `No route prices for this operator: it had no confirmed sales with a known route in the last ${data.windowDays ?? 90} days.`;
+  if (!picked.length) return `No route matches that filter. The operator sells: ${[...new Set(data.routes.map((r) => `${r.from}→${r.to}`))].slice(0, 15).join(', ')}.`;
+  const limit = filter.limit ?? 30;
+  const money = (n: number) => (n >= 100 ? Math.round(n).toLocaleString('en-US') : String(Math.round(n * 100) / 100));
+  const lines = picked.slice(0, limit).map((r) => {
+    const markup = r.netAvg > 0 ? Math.round((r.retailAvg / r.netAvg - 1) * 1000) / 10 : 0;
+    const range = r.netMin === r.netMax ? '' : ` (range ${money(r.netMin)}–${money(r.netMax)})`;
+    return `- ${r.from}→${r.to} ${r.vehicleType}/${r.vehicleClass}: net ${money(r.netAvg)} ${r.currency}/ticket${range}, retail ${money(r.retailAvg)} (${markup >= 0 ? '+' : ''}${markup}% over net), ${r.tickets} tickets`;
+  });
+  const more = picked.length > limit ? `\n(${picked.length - limit} more routes not shown; ask for a specific route)` : '';
+  return `Average price per ticket, confirmed bookings of the last ${data.windowDays ?? 90} days. Net = what the operator receives (same as the agent price); retail = what the customer pays.\n${lines.join('\n')}${more}`;
 }
 
 const DAY_MS = 86_400_000;

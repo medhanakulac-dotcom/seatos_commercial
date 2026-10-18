@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CrmAccount } from '../entities/workspace.entities';
-import { Clock, CutoffRecord, CutoffSegment, PricingRecord, PricingSegment, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
+import { Clock, CutoffRecord, CutoffSegment, PricingRecord, RoutePrice, RoutePricesRecord, PricingSegment, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
 import { RunService } from './run.service';
 import { CATEGORY_CODES, featureByCode, SEATOS_FEATURES } from './seatos-features';
 import { cleanName, FEATURES, FeatureActivity, Feature, legacyNameKey, mondayOf, nameKey, nameSimilarity, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
@@ -269,6 +269,55 @@ export class WeeklyDataService {
     const rows = [...records.values()];
     await this.store.replaceCutoff(rows, by);
     return { rows: rows.length, matched: rows.filter((r) => r.accountId).length };
+  }
+
+  /**
+   * The BigQuery route prices: per operator, the average net and retail price per ticket on each city-to-city route (by
+   * vehicle type and class). Sent in batches of operators: `reset` on the first batch clears the old snapshot.
+   */
+  async ingestRoutePrices(payload: unknown, by: string): Promise<{ rows: number; matched: number }> {
+    const p = (payload ?? {}) as { windowDays?: unknown; reset?: unknown; rows?: unknown };
+    const windowDays = Math.round(Number(p.windowDays));
+    if (!Number.isFinite(windowDays) || windowDays < 1 || windowDays > 366) throw new WeeklyDataError('windowDays must be 1–366');
+    if (!Array.isArray(p.rows)) throw new WeeklyDataError('rows must be a list');
+    if (p.rows.length > MAX_INGEST_ROWS) throw new WeeklyDataError(`At most ${MAX_INGEST_ROWS} rows`);
+    const match = await this.matcher();
+    const num = (v: unknown, what: string): number => {
+      const n = Number(v);
+      if (!Number.isFinite(n)) throw new WeeklyDataError(`${what} must be a number`);
+      return n;
+    };
+    const computedAt = this.clock.now().toISOString();
+    const records = new Map<number, RoutePricesRecord>();
+    for (const raw of p.rows as Record<string, unknown>[]) {
+      const name = cleanName(typeof raw.operatorName === 'string' ? raw.operatorName : '');
+      if (!name || !Number.isInteger(raw.operatorId)) throw new WeeklyDataError('Every row needs operatorId (integer) and operatorName');
+      const routes: RoutePrice[] = (Array.isArray(raw.routes) ? raw.routes : []).slice(0, 300).map((d: Record<string, unknown>) => ({
+        currency: String(d.currency ?? '').trim().toUpperCase(),
+        from: String(d.from ?? ''),
+        to: String(d.to ?? ''),
+        vehicleType: String(d.vehicleType ?? ''),
+        vehicleClass: String(d.vehicleClass ?? ''),
+        tickets: Math.round(num(d.tickets, 'routes.tickets')),
+        netAvg: Math.round(num(d.netAvg, 'routes.netAvg') * 100) / 100,
+        netMin: Math.round(num(d.netMin, 'routes.netMin') * 100) / 100,
+        netMax: Math.round(num(d.netMax, 'routes.netMax') * 100) / 100,
+        retailAvg: Math.round(num(d.retailAvg, 'routes.retailAvg') * 100) / 100,
+      }));
+      const m = match(name);
+      records.set(raw.operatorId as number, { operatorName: name, nameKey: m.key, accountId: m.accountId, operatorId: raw.operatorId as number, windowDays, routes, computedAt });
+    }
+    const rows = [...records.values()];
+    await this.store.replaceRoutePrices(rows, by, p.reset === true);
+    return { rows: rows.length, matched: rows.filter((r) => r.accountId).length };
+  }
+
+  /** Net and retail prices per route for one account (all its operator names), biggest routes first. */
+  async routePrices(accountId: string): Promise<{ routes: RoutePrice[]; windowDays: number | null; syncedAt: string | null }> {
+    await this.rematchUnmatched();
+    const [records, syncedAt] = await Promise.all([this.store.routePricesFor(accountId), this.store.routePricesSyncedAt()]);
+    const routes = records.flatMap((r) => r.routes).sort((a, b) => b.tickets - a.tickets);
+    return { routes, windowDays: records[0]?.windowDays ?? null, syncedAt };
   }
 
   /** Uploads so far, names still unmatched in the latest weeks, and the accounts they can be matched to. */

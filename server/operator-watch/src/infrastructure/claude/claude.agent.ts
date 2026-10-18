@@ -4,7 +4,7 @@ import { z } from 'zod/v4';
 import { Actor, CRM_ACTIVITY_TYPES, CrmActivity } from '../../domain/workspace/entities/workspace.entities';
 import { WorkspaceSettings } from '../../domain/workspace/services/settings';
 import type { TicketsView, UsageWithFeatures } from '../../domain/workspace/services/weekly-data.service';
-import type { CutoffRecord, PricingRecord } from '../../domain/workspace/types/repositories/workspace.ports';
+import type { CutoffRecord, PricingRecord, RoutePrice } from '../../domain/workspace/types/repositories/workspace.ports';
 import {
   AccountAssistant,
   AccountContext,
@@ -22,7 +22,7 @@ import { renderHermesEvent } from '../hermes/hermes-agent.notifier';
 import { background } from '../runtime/background';
 import { ClaudeLike } from './claude.client';
 import { ClaudeMemory } from './claude.memory';
-import { CHAT_SYSTEM, COMPOSE_SYSTEM, formatActivity, formatWeekly, REWRITE_SYSTEM, SLACK_SYSTEM } from './claude.prompts';
+import { CHAT_SYSTEM, COMPOSE_SYSTEM, formatActivity, formatRoutePrices, formatWeekly, REWRITE_SYSTEM, SLACK_SYSTEM } from './claude.prompts';
 import { SeatosTools } from './seatos.tools';
 
 export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
@@ -31,6 +31,7 @@ export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
 export interface WeeklyLookup {
   forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; ticketWeeks?: string[]; pricing?: PricingRecord[]; pricingSyncedAt?: string | null; cutoff?: CutoffRecord[]; cutoffSyncedAt?: string | null }>;
   week(kind: 'usage' | 'tickets', week?: string): Promise<(UsageWithFeatures | TicketsView)[]>;
+  routePrices?(accountId: string): Promise<{ routes: RoutePrice[]; windowDays: number | null; syncedAt: string | null }>;
 }
 
 /** Chat turns kept in the prompt; older ones live on in memory. */
@@ -175,6 +176,24 @@ export class ClaudeAccountAssistant implements AccountAssistant {
               }
             },
           }),
+          ...(weekly.routePrices ? [betaZodTool({
+            name: 'get_route_prices',
+            description:
+              "One operator's average NET price (what the operator receives; the agent price is the same) and RETAIL price (what the customer pays) per ticket on each city-to-city route, by vehicle type and class, from recent confirmed bookings. Filter by city names.",
+            inputSchema: z.object({
+              operator_id: z.string().optional().describe('Only when a user explicitly asks about a different operator'),
+              from: z.string().optional().describe('Departure city (part of the name)'),
+              to: z.string().optional().describe('Arrival city (part of the name)'),
+              limit: z.number().int().min(1).max(100).optional().describe('How many routes (default 30, biggest first)'),
+            }),
+            run: async ({ operator_id, from, to, limit }) => {
+              try {
+                return formatRoutePrices(await weekly.routePrices!(operator_id || account.id), { from, to, limit });
+              } catch (error) {
+                return `Could not read the route prices: ${error instanceof Error ? error.message : String(error)}`;
+              }
+            },
+          }),] : []),
         ]
       : [];
 
@@ -274,6 +293,24 @@ export class ClaudeWorkspaceAssistant {
             return rows.map((r) => ('tickets' in r ? { week: r.week, operator: r.operatorName, operator_id: r.accountId, tickets: r.tickets } : { week: r.week, operator: r.operatorName, operator_id: r.accountId, wao: r.featureCount }));
           }),
       }),
+      ...(weekly.routePrices ? [betaZodTool({
+            name: 'get_route_prices',
+            description:
+              "One operator's average NET price (what the operator receives; the agent price is the same) and RETAIL price (what the customer pays) per ticket on each city-to-city route, by vehicle type and class, from recent confirmed bookings. Filter by city names.",
+            inputSchema: z.object({
+              operator_id: z.string().min(1),
+              from: z.string().optional().describe('Departure city (part of the name)'),
+              to: z.string().optional().describe('Arrival city (part of the name)'),
+              limit: z.number().int().min(1).max(100).optional().describe('How many routes (default 30, biggest first)'),
+            }),
+            run: async ({ operator_id, from, to, limit }) => {
+              try {
+                return formatRoutePrices(await weekly.routePrices!(operator_id), { from, to, limit });
+              } catch (error) {
+                return `Could not read the route prices: ${error instanceof Error ? error.message : String(error)}`;
+              }
+            },
+          }),] : []),
     ];
     return this.claude.converse({ system: SLACK_SYSTEM, messages, tools: [...tools, ...(await this.seatos.tools())], effort: 'medium', maxIterations: MAX_TOOL_STEPS, web: true });
   }
