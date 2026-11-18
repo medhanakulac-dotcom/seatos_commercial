@@ -31,6 +31,7 @@ export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
 export interface WeeklyLookup {
   forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; ticketWeeks?: string[]; pricing?: PricingRecord[]; pricingSyncedAt?: string | null; cutoff?: CutoffRecord[]; cutoffSyncedAt?: string | null }>;
   week(kind: 'usage' | 'tickets', week?: string): Promise<(UsageWithFeatures | TicketsView)[]>;
+  insights?(opts: { scope: 'top_features' | 'changes'; week?: string; accountId?: string }): Promise<unknown>;
   routePrices?(accountId: string): Promise<{ routes: RoutePrice[]; windowDays: number | null; syncedAt: string | null }>;
 }
 
@@ -151,6 +152,31 @@ export class ClaudeAccountAssistant implements AccountAssistant {
               return formatWeekly(data);
             },
           }),
+          ...(weekly.insights
+            ? [
+                betaZodTool({
+                  name: 'get_usage_insights',
+                  description:
+                    'Reads the pattern behind the numbers. scope "top_features": which features and WAO categories the most operators used in a week (adoption across all operators). '
+              + 'scope "changes": that week against the week before, to explain a WAO move: who crossed into or fell out of WAO, which categories and features they added or stopped, the biggest risers and fallers, and which features gained or lost users. '
+              + 'Defaults to the latest COMPLETE week (a running week is partial, label it WTD).' +
+                    ' With an operator_id (or by default for the operator this chat is about) "changes" is that one operator week on week.',
+                  inputSchema: z.object({
+                    scope: z.enum(['top_features', 'changes']),
+                    operator_id: z.string().optional().describe('For "changes": one operator. Defaults to this chat operator; pass "all" for everyone.'),
+                    week: z.string().optional().describe('Monday of the week, YYYY-MM-DD'),
+                  }),
+                  run: async ({ scope, operator_id, week }) => {
+                    try {
+                      const accountId = scope === 'changes' ? (operator_id === 'all' ? undefined : operator_id || account.id) : undefined;
+                      return JSON.stringify(await weekly.insights!({ scope, week, accountId }));
+                    } catch (error) {
+                      return `Could not read the insights: ${error instanceof Error ? error.message : String(error)}`;
+                    }
+                  },
+                }),
+              ]
+            : []),
           betaZodTool({
             name: 'list_weekly_numbers',
             description:
@@ -282,6 +308,24 @@ export class ClaudeWorkspaceAssistant {
           }
         },
       }),
+      ...(weekly.insights
+        ? [
+            betaZodTool({
+              name: 'get_usage_insights',
+              description:
+                'Reads the pattern behind the numbers. scope "top_features": which features and WAO categories the most operators used in a week (adoption across all operators). '
+              + 'scope "changes": that week against the week before, to explain a WAO move: who crossed into or fell out of WAO, which categories and features they added or stopped, the biggest risers and fallers, and which features gained or lost users. '
+              + 'Defaults to the latest COMPLETE week (a running week is partial, label it WTD).' +
+                ' With an operator_id "changes" is that one operator week on week; without it, everyone.',
+              inputSchema: z.object({
+                scope: z.enum(['top_features', 'changes']),
+                operator_id: z.string().optional().describe('For "changes": one operator'),
+                week: z.string().optional().describe('Monday of the week, YYYY-MM-DD'),
+              }),
+              run: ({ scope, operator_id, week }) => attempt(() => weekly.insights!({ scope, week, accountId: scope === 'changes' ? operator_id : undefined })),
+            }),
+          ]
+        : []),
       betaZodTool({
         name: 'list_weekly_numbers',
         description: 'Every operator in one week, for rankings and comparisons: kind "usage" (WAO, high to low) or "tickets" (tickets sold, high to low). Defaults to the latest week.',

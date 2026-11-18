@@ -3,6 +3,7 @@ import { CrmAccount } from '../entities/workspace.entities';
 import { Clock, CutoffRecord, CutoffSegment, PricingRecord, RoutePrice, RoutePricesRecord, PricingSegment, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
 import { RunService } from './run.service';
 import { CATEGORY_CODES, featureByCode, SEATOS_FEATURES } from './seatos-features';
+import { operatorChanges, portfolioChanges, topFeatures } from './usage-insights';
 import { cleanName, FEATURES, FeatureActivity, Feature, legacyNameKey, mondayOf, nameKey, nameSimilarity, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
 
 export interface UploadResult {
@@ -448,6 +449,32 @@ export class WeeklyDataService {
       }
     }
     return { weeks, features, feature: code, operators: [...operators.values()].sort((x, y) => y.events - x.events || x.operatorName.localeCompare(y.operatorName)) };
+  }
+
+  /**
+   * Pattern reading for the assistants. "top_features": adoption in one week. "changes": that week against the week before
+   * (everyone, or one account), so a WAO move can be explained. The week defaults to the latest COMPLETE week (Monday to
+   * Sunday); a week still running is only used when asked for and is flagged partial (WTD).
+   */
+  async insights({ scope, week, accountId }: { scope: 'top_features' | 'changes'; week?: string; accountId?: string }) {
+    await this.rematchUnmatched();
+    const weeks = await this.store.usageWeeks(12);
+    if (!weeks.length) return { error: 'No usage data yet.' };
+    const thisMonday = mondayOf(this.clock.now());
+    const complete = (w: string) => w < thisMonday;
+    const target = week ? parseWeek(week) : (weeks.find(complete) ?? weeks[0]);
+    const idx = weeks.indexOf(target);
+    if (idx < 0) return { error: `No usage data for the week of ${target}. Weeks available: ${weeks.join(', ')}` };
+    const partial = !complete(target);
+    const now = (await this.store.usageWeek(target)).map(withFeatureNames);
+    if (scope === 'top_features') return { week: target, partial_week_to_date: partial, ...topFeatures(now) };
+    const previous = weeks[idx + 1];
+    if (!previous) return { error: `No earlier week to compare the week of ${target} with.` };
+    const before = (await this.store.usageWeek(previous)).map(withFeatureNames);
+    if (!accountId) return { week: target, compared_with: previous, partial_week_to_date: partial, ...portfolioChanges(now, before) };
+    const [t1, t0] = await Promise.all([this.store.ticketsWeek(target), this.store.ticketsWeek(previous)]);
+    const tickets = (rows: readonly { accountId: string | null; tickets: number }[]) => rows.filter((r) => r.accountId === accountId).reduce((n, r) => n + r.tickets, 0);
+    return { week: target, compared_with: previous, partial_week_to_date: partial, ...operatorChanges(now, before, accountId), tickets_before: tickets(t0), tickets_now: tickets(t1) };
   }
 
   /** Every operator in one week (the latest when omitted). */
