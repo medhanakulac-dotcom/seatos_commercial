@@ -22,46 +22,74 @@ var PROJECT_ID = 'seatos-tms';
 var TZ = 'Asia/Bangkok';
 var DEFAULT_URL = 'https://dealsuite.app/api/ow/ingest';
 
-/** Event names (lower case) that count toward WAO, with their category: i d r t f a c. */
+/**
+ * Event names (lower case) that count toward WAO, with their category: i d r t f a c.
+ * V.6 (12 Nov 2026): 240 events (236 live, 4 planned), source of truth = 'WAO categories' sheet, tab V.6 (newest V.n tab is live).
+ * Operators are matched on ep_operator_id (never ep_operator_name: it holds the page title since 9 Nov). Only actions count; wls_* and
+ * grid_* never make an operator active. Raw events fire twice: the UNION DISTINCT below de-duplicates on
+ * (event_timestamp, user_pseudo_id, event_name). Do not compare V.6 weeks with older numbers (V.6 reads ~8 pts higher than V.5).
+ */
 var WAO_EVENTS = [
-  'aa_add_addons:i,aa_edit_addons:i,al_date_range_selected:c,al_exported:c,',
-  'al_filter_applied:c,al_opened:c,al_record_viewed:c,al_search_performed:c,',
-  'am_accounting_download_excel:c,am_add_new_agent:d,am_add_new_agent_type:d,am_invoices_add_invoice:c,',
-  'am_invoices_change_payment_status:c,am_invoices_download:c,am_invoices_email:c,am_invoices_regenerate:c,',
-  'am_refund_policy_agent_type:d,bf_operator_booking:r,bf_tour_booking_created:r,bf_vehicle_on_ferry_booking_completed:r,',
-  'bl_filter_arrival_station:r,bl_filter_bookingid:r,bl_filter_by_route:r,bl_filter_channel:r,',
-  'bl_filter_check_status:r,bl_filter_depart_st:r,bl_filter_depart_time:r,bl_filter_payment_status:r,',
-  'bl_filter_payonsite:r,bl_filter_status:r,bl_filter_user:r,bl_filter_vehicle:r,',
-  'bl_filters_to_settle_with:r,bl_trip_stat:t,bldr_custom_range:r,bldr_last_month:r,',
-  'bldr_next7days:r,bldr_next_month:r,bldr_this_month:r,bldr_today:r,',
-  'bldr_tomorrow:r,bldr_yesterday:r,bp_cancel_booking:r,bp_change_price:r,',
-  'bp_change_price_faretype:r,bp_download_pdf:r,bp_edit_booking:r,bp_print ticket:r,',
-  'bp_print_ticket:r,bp_send_by_email:r,bp_send_by_sms:r,checkin_done_with_print:t,',
-  'checkin_done_with_vehicle:t,checkin_qr_scan:t,db_click_booking_status_filter:a,db_click_booking_status_filter_option:a,',
-  'db_click_channel_filter:a,db_click_channel_filter_option:a,db_click_customer_segment_filter:a,db_click_customer_segment_filter_option:a,',
-  'db_click_date_picker:a,db_click_date_picker_option:a,db_click_lead_time_filter:a,db_click_lead_time_filter_option:a,',
+  'aa_add_addons:i,aa_addon_type_created:i,aa_addon_type_edited:i,aa_edit_addons:i,',
+  'al_date_range_selected:c,al_exported:c,al_filter_applied:c,al_opened:c,',
+  'al_record_viewed:c,al_search_performed:c,am_accounting_download_excel:c,am_add_new_agent:d,',
+  'am_add_new_agent_type:d,am_agent_api_access_changed:d,am_agent_deleted:d,am_agent_edited:d,',
+  'am_agent_funds_added:d,am_agent_list_exported:d,am_agent_message_sent:d,am_agent_price_type_created:d,',
+  'am_agent_price_type_deleted:d,am_agent_price_type_edited:d,am_agent_pricing_rules_saved:d,am_agent_type_deleted:d,',
+  'am_agent_type_edited:d,am_invoices_add_invoice:c,am_invoices_change_payment_status:c,am_invoices_download:c,',
+  'am_invoices_email:c,am_invoices_regenerate:c,am_refund_policy_agent_type:d,ap_connection_accepted:d,',
+  'ap_connection_declined:d,ap_connection_removed:d,ap_connection_requested:d,bf_operator_booking:r,',
+  'bf_tour_booking_created:r,bf_vehicle_on_ferry_booking_completed:r,bl_filter_arrival_station:r,bl_filter_bookingid:r,',
+  'bl_filter_by_route:r,bl_filter_channel:r,bl_filter_check_status:r,bl_filter_depart_st:r,',
+  'bl_filter_depart_time:r,bl_filter_payment_status:r,bl_filter_payonsite:r,bl_filter_status:r,',
+  'bl_filter_user:r,bl_filter_vehicle:r,bl_filters_to_settle_with:r,bl_trip_stat:t,',
+  'bldr_custom_range:r,bldr_last_month:r,bldr_next7days:r,bldr_next_month:r,',
+  'bldr_this_month:r,bldr_today:r,bldr_tomorrow:r,bldr_yesterday:r,',
+  'bp_cancel_booking:r,bp_change_price:r,bp_change_price_faretype:r,bp_download_pdf:r,',
+  'bp_edit_booking:r,bp_print_ticket:r,bp_send_by_email:r,bp_send_by_sms:r,',
+  'cc_attention_item_opened:a,cc_baseline_toggled:a,cc_date_changed:a,cc_home_revisited:a,',
+  'cc_widget_drilled:a,cc_widget_scrolled:a,cg_booking_created_from_chat:r,cg_conversation_resolved:r,',
+  'cg_handover_taken:r,cg_reply_sent:r,checkin_done:t,checkin_done_with_print:t,',
+  'checkin_done_with_vehicle:t,checkin_manual_entry:t,checkin_qr_scan:t,db_click_booking_status_filter:a,',
+  'db_click_booking_status_filter_option:a,db_click_channel_filter:a,db_click_channel_filter_option:a,db_click_channel_granularity_option:a,',
+  'db_click_customer_segment_filter:a,db_click_customer_segment_filter_option:a,db_click_date_picker:a,db_click_date_picker_option:a,',
+  'db_click_lead_time_filter:a,db_click_lead_time_filter_option:a,db_click_revenue_granularity:a,db_click_revenue_granularity_option:a,',
   'db_click_route_filter:a,db_click_route_filter_option:a,db_click_sales_channel_graph_granularity:a,db_click_sales_channel_graph_granularity_option:a,',
-  'db_click_tickets_revenue_graph_granulari:a,db_click_tickets_revenue_graph_granularity:a,db_click_tickets_revenue_graph_granularity_option:a,db_click_vehicle_class_filter:a,',
-  'db_click_vehicle_class_filter_option:a,db_hover_departure_time_graph_point:a,db_hover_sales_channel_graph_point:a,db_hover_tickets_revenue_graph_point:a,',
-  'db_page_view:a,db_scroll_to_channel_table:a,db_scroll_to_departure_time_graph:a,db_scroll_to_route_table:a,',
-  'db_scroll_to_vehicle_class_table:a,dm_driver_assigned_to_trip:f,dm_driver_created:f,dm_driver_documents_edited:f,',
-  'dm_driver_employment_edited:f,dm_driver_list_opened:f,dm_driver_note_added:f,dm_driver_personal_info_edited:f,',
-  'dm_driver_photo_uploaded:f,dm_driver_profile_opened:f,dm_driver_qualifications_edited:f,dm_driver_status_changed:f,',
-  'dm_driver_unassigned_from_trip:f,dm_fleet_schedule_opened:f,dm_fleet_schedule_view_toggled:f,dm_rot_plan_applied:f,',
-  'dm_rot_plan_created:f,dm_rot_plan_deleted:f,dm_rot_plan_opened:f,dm_rot_schedule_added:f,',
-  'drv_app_opened:f,drv_checkin_manual_entry:f,drv_checkin_scanned:f,drv_home_viewed:f,',
-  'drv_profile_settings_opened:f,drv_qr_scanner_opened:f,drv_schedule_view_toggled:f,drv_schedule_viewed:f,',
-  'drv_trip_detail_opened:f,manifest_printed_with_template:t,manifest_template_created:t,manifest_template_status_changed:t,',
-  'manifest_template_updated:t,pdp_arrival_st_filter:t,pdp_create_manifest:t,pdp_departure_st_filter:t,',
-  'pdp_departure_time_filter:t,pdp_pickup_drop_off_filter:t,pdp_route_filter:t,pn_open_notification_modal:t,',
-  'pn_select_channel_mode:t,pn_select_passengers:t,pn_select_template:t,pn_send_blocked:t,',
-  'pn_send_clicked:t,pn_send_initiated:t,rh_date_range_changed:a,rh_daterange_report_created:a,',
+  'db_click_tickets_revenue_graph_granularity:a,db_click_tickets_revenue_graph_granularity_option:a,db_click_vehicle_class_filter:a,db_click_vehicle_class_filter_option:a,',
+  'db_hover_departure_time_graph_point:a,db_hover_sales_channel_graph_point:a,db_hover_tickets_revenue_graph_point:a,db_page_view:a,',
+  'db_scroll_to_channel_table:a,db_scroll_to_departure_time_graph:a,db_scroll_to_route_table:a,db_scroll_to_vehicle_class_table:a,',
+  'dm_driver_assigned_to_trip:f,dm_driver_created:f,dm_driver_documents_edited:f,dm_driver_employment_edited:f,',
+  'dm_driver_list_opened:f,dm_driver_note_added:f,dm_driver_personal_info_edited:f,dm_driver_photo_uploaded:f,',
+  'dm_driver_profile_opened:f,dm_driver_qualifications_edited:f,dm_driver_status_changed:f,dm_driver_unassigned_from_trip:f,',
+  'dm_fleet_schedule_opened:f,dm_fleet_schedule_view_toggled:f,dm_rot_plan_applied:f,dm_rot_plan_created:f,',
+  'dm_rot_plan_deleted:f,dm_rot_plan_opened:f,dm_rot_schedule_added:f,dpr_rule_created:i,',
+  'dpr_rule_deleted:i,dpr_rule_edited:i,dpr_rule_status_changed:i,drv_app_opened:f,',
+  'drv_checkin_manual_entry:f,drv_checkin_scanned:f,drv_expense_receipt_attached:t,drv_expense_submitted:t,',
+  'drv_home_viewed:f,drv_profile_settings_opened:f,drv_qr_scanner_opened:f,drv_schedule_view_toggled:f,',
+  'drv_schedule_viewed:f,drv_trip_detail_opened:f,ei_dashboard_viewed:a,ei_date_changed:a,',
+  'manifest_printed_with_template:t,manifest_template_created:t,manifest_template_status_changed:t,manifest_template_updated:t,',
+  'pdp_arrival_st_filter:t,pdp_create_manifest:t,pdp_departure_st_filter:t,pdp_departure_time_filter:t,',
+  'pdp_pickup_drop_off_filter:t,pdp_route_filter:t,pn_open_notification_modal:t,pn_select_channel_mode:t,',
+  'pn_select_condition:t,pn_select_passengers:t,pn_select_template:t,pn_send_blocked:t,',
+  'pn_send_clicked:t,pn_send_initiated:t,pos_sale_completed:r,profile_chat_app_connected:r,',
+  'rh_auto_email_set:a,rh_comparison_applied:a,rh_date_range_changed:a,rh_daterange_report_created:a,',
   'rh_dynamic_report_created:a,rh_filter_applied:a,rh_report_created:a,rh_report_deleted:a,',
   'rh_report_duplicated:a,rh_report_edited:a,rh_report_exported:a,rh_report_refreshed:a,',
-  'rh_report_viewed:a,rm_addon_per_passenger_created:i,rm_seat_override_schedule:i,sr_set_up_rule:i,',
+  'rh_report_viewed:a,rh_summary_exported:a,rh_summary_viewed:a,rh_widgets_configured:a,',
+  'rm_addon_per_passenger_created:i,rm_passenger_prices_saved:i,rm_route_created:i,rm_route_duplicated:i,',
+  'rm_route_saved:i,rm_route_status_changed:i,rm_schedule_saved:i,rm_seat_override_schedule:i,',
+  'route_price_change:i,sr_set_up_rule:i,srp_date_changed:a,srp_exported:a,',
+  'srp_filter_applied:a,srp_report_viewed:a,st_station_created:i,st_station_edited:i,',
   'tm_activate_trip_bulk_action:t,tm_agent_register:d,tm_create_price_table_for_period:i,tm_deactivate_bulk_action:t,',
-  'tm_deactivate_trip_in_popup:t,tm_seat_reassigned:t,tm_trip_stat:t,trip_quota_changed:t,',
-  'trip_quota_override_changed:t,trm_total_vehicle_deck_capacity_set:f,trm_vehicle_deck_capacity_set:f,trm_vehicle_on_ferry_option_created:f'
+  'tm_deactivate_trip_in_popup:t,tm_expense_bulk_approved:t,tm_expense_category_created:t,tm_expense_draft_approved:t,',
+  'tm_expense_draft_edited:t,tm_expense_draft_rejected:t,tm_expense_exported:t,tm_expense_logged:t,',
+  'tm_expense_split:t,tm_fixedcost_created:t,tm_seat_reassigned:t,tm_trip_stat:t,',
+  'tp_booking_cancelled:r,tp_booking_created:r,tp_booking_edited:r,tp_option_created:i,',
+  'tp_option_saved:i,tp_option_status_changed:i,tp_pickup_plan_saved:i,tp_tour_created:i,',
+  'tp_tour_saved:i,tp_tour_status_changed:i,trip_quota_changed:t,trip_quota_override_changed:t,',
+  'trm_seat_layout_saved:f,trm_total_vehicle_deck_capacity_set:f,trm_vehicle_created:f,trm_vehicle_deck_capacity_set:f,',
+  'trm_vehicle_deleted:f,trm_vehicle_edited:f,trm_vehicle_on_ferry_option_created:f,wl_block_added:d,',
+  'wl_domain_added:d,wl_page_created:d,wl_page_published:d,wl_theme_saved:d'
 ].join('');
 
 /** Feature code -> pattern on the lower-cased event_name, checked in this order (first match wins). */
@@ -313,7 +341,7 @@ function ticketsSql_(firstDate, lastDate) {
 
 function usageSql_(start, end) {
   var events = '(SELECT event_timestamp, user_pseudo_id, LOWER(event_name) AS n, ep_operator_id AS op, DATE(timestamp, \'' + TZ + '\') AS d FROM `' + PROJECT_ID + '.raw_tables.TABLE` ' +
-    'WHERE timestamp >= TIMESTAMP(\'' + start + '\') AND timestamp < TIMESTAMP(\'' + end + '\') AND ep_operator_id IS NOT NULL)';
+    'WHERE timestamp >= TIMESTAMP(\'' + start + '\') AND timestamp < TIMESTAMP(\'' + end + '\') AND ep_operator_id IS NOT NULL AND NOT STARTS_WITH(LOWER(event_name), \'wls_\') AND NOT STARTS_WITH(LOWER(event_name), \'grid_\'))';
   var whens = FEATURE_PATTERNS.map(function (p) { return 'WHEN REGEXP_CONTAINS(n, r\'' + p[1] + '\') THEN \'' + p[0] + '\''; }).join(' ');
   return 'WITH ev AS (' + events.replace('TABLE', 'events_flatten') + ' UNION DISTINCT ' + events.replace('TABLE', 'events_flatten_intraday') + '), ' +
     'w AS (SELECT SPLIT(x, \':\')[OFFSET(0)] AS n, SPLIT(x, \':\')[OFFSET(1)] AS c FROM UNNEST(SPLIT(\'' + WAO_EVENTS + '\', \',\')) AS x), ' +
