@@ -47,6 +47,8 @@ export const SEATOS_FEATURES: readonly SeatosFeature[] = [
   { code: 'auth', name: 'Login & Registration', module: 'System / Platform' },
   { code: 'ff', name: 'Feature Flags', module: 'System / Platform' },
   { code: 'pin', name: 'Pinned Filters (reserved)', module: 'System / Platform' },
+  { code: 'wl', name: 'White-label Websites', module: 'Distribution Management' },
+  { code: 'dpr', name: 'Dynamic Pricing', module: 'Inventory Management' },
   { code: 'settings', name: 'Settings & Admin', module: 'System / Platform' },
 ];
 

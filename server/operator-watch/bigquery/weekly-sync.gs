@@ -131,6 +131,8 @@ var FEATURE_PATTERNS = [
   ['ga4', '^(page_view|scroll|user_engagement|session_start|first_visit|form_start|form_submit|file_download|click|view_search_results)$'],
   ['auth', '^tm_(manager|agent|booker|steward)_login$|^tm_agent_register$|^/login'],
   ['ff', '^ff_'],
+  ['wl', '^wl_'],
+  ['dpr', '^dpr_'],
   ['pin', '^(pin_filters_|filter_pinned|filter_unpinned)'],
   ['settings', '^(settings_saved|us_|profile_|pay_gateway|import_|website_)']
 ];
