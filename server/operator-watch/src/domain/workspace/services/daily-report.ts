@@ -21,16 +21,21 @@ interface Win {
   base: Map<string, { operator: string; country: string | null; categories: Set<string> }>;
 }
 
-/** The 7 days ending on `day` (the report's "last 7 days"): the base is the operators in the WAO base on `day`. */
+/** The 7 days ending on `day` (the report's "last 7 days"): the base is the live API-booking operators of `day` that were active in those days. */
 function window7(rows: readonly DailyRecord[], day: string): Win {
   const from = addDays(day, -6);
   const base = new Map<string, { operator: string; country: string | null; categories: Set<string> }>();
+  const active = new Set<string>();
   for (const r of rows) if (r.day === day && r.inBase) base.set(keyOf(r), { operator: r.operatorName, country: r.country, categories: new Set() });
   for (const r of rows) {
     if (r.day < from || r.day > day) continue;
     const b = base.get(keyOf(r));
-    if (b) for (const c of r.categories) b.categories.add(c);
+    if (!b) continue;
+    for (const c of r.categories) b.categories.add(c);
+    if (r.sessions > 0 || r.actions > 0) active.add(keyOf(r));
   }
+  // The WAO base is the live API-booking operators that were active in the window (as the WAO definition says).
+  for (const k of [...base.keys()]) if (!active.has(k)) base.delete(k);
   return { base };
 }
 
@@ -94,7 +99,7 @@ export function dailyReport(rows: readonly DailyRecord[], day: string) {
     wao: { pct: waoPct, operators: wao.length, base: w.base.size, change_vs_week_ago_pp: pp(waoPct, prePct), change_vs_previous_day_pp: pp(waoPct, prevPct) },
     scoreboard_vs_previous_7_days_daily_average: {
       operators_active: { value: t.operators_active, change_pct: vs(t.operators_active, avg((x) => x.operators_active)) },
-      logins: { value: t.operators_logged_in, change_pct: vs(t.operators_logged_in, avg((x) => x.operators_logged_in)), login_events: t.login_events },
+      logins: { value: t.login_events, change_pct: vs(t.login_events, avg((x) => x.login_events)), operators_who_logged_in: t.operators_logged_in },
       sessions: { value: t.sessions, change_pct: vs(t.sessions, avg((x) => x.sessions)) },
     },
     categories_last_7_days: cats.sort((a, b) => b.change_vs_week_ago_pp - a.change_vs_week_ago_pp),

@@ -415,9 +415,9 @@ function dailySql_(start, end) {
     'SELECT CAST(op AS STRING), d, \'login\' AS kind, \'\' AS code, COUNT(*) AS n FROM ev WHERE n = \'tm_login\' OR REGEXP_CONTAINS(n, r\'^tm_.*_login$\') GROUP BY 1, 2 ' +
     'UNION ALL SELECT CAST(op AS STRING), d, \'session\', \'\', COUNT(DISTINCT CONCAT(user_pseudo_id, \'-\', CAST(sid AS STRING))) FROM ev WHERE sid IS NOT NULL GROUP BY 1, 2 ' +
     'UNION ALL SELECT CAST(op AS STRING), d, \'action\', \'\', COUNT(*) FROM c GROUP BY 1, 2 ' +
-    'UNION ALL SELECT CAST(op AS STRING), d, \'category\', code, COUNT(*) FROM c GROUP BY 1, 2, 3 ' +
+    'UNION ALL SELECT CAST(op AS STRING), d, \'category\', code, COUNT(*) FROM c GROUP BY 1, 2, 4 ' +
     'UNION ALL SELECT CAST(op AS STRING), d, \'feature\', code, COUNT(*) FROM f WHERE code IS NOT NULL AND code NOT IN (' +
-    SKIP_FEATURES.map(function (s) { return '\'' + s + '\''; }).join(', ') + ') GROUP BY 1, 2, 3';
+    SKIP_FEATURES.map(function (s) { return '\'' + s + '\''; }).join(', ') + ') GROUP BY 1, 2, 4';
 }
 
 /** Runs a standard-SQL query and returns every row as an array of strings. */
