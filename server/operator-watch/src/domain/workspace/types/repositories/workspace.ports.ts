@@ -414,6 +414,23 @@ export interface PricingRecord {
 }
 
 /** One route + vehicle type + vehicle class where an operator's booking cut-off (hours before departure) was compared with the other operators'. */
+/** One operator's activity on one day (BigQuery sync): logins, counted actions, WAO categories and events per feature code. */
+export interface DailyRecord {
+  readonly day: string;
+  readonly operatorId: number;
+  readonly operatorName: string;
+  readonly nameKey: string;
+  readonly accountId: string | null;
+  readonly logins: number;
+  readonly sessions: number;
+  readonly country: string | null;
+  /** Live operator with an API booking operator on that day: the WAO base. */
+  readonly inBase: boolean;
+  readonly actions: number;
+  readonly categories: readonly string[];
+  readonly features: Readonly<Record<string, number>>;
+}
+
 export interface CutoffSegment {
   readonly from: string;
   readonly to: string;
@@ -511,6 +528,11 @@ export interface WeeklyDataStore {
   addAlias(accountId: string, operatorName: string, by: string): Promise<void>;
   /** When the last price comparison was synced (null = never): without it, "no price line" means "not synced yet", with it, "nobody comparable". */
   pricingSyncedAt(): Promise<string | null>;
+  /** Daily activity: a sync replaces each day it sends (and drops days older than the retention). */
+  replaceDaily(day: string, rows: readonly DailyRecord[], by: string): Promise<void>;
+  /** Rows for days from..to inclusive (YYYY-MM-DD), oldest first. */
+  dailyRange(from: string, to: string): Promise<DailyRecord[]>;
+  dailySyncedAt(): Promise<string | null>;
   /** The cut-off comparison is one snapshot too. */
   replaceCutoff(rows: readonly CutoffRecord[], by: string): Promise<void>;
   cutoffFor(accountId: string): Promise<CutoffRecord[]>;

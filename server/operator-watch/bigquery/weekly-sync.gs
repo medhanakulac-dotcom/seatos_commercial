@@ -144,6 +144,7 @@ function syncAll() {
   syncPricing(); // price vs other operators (own error handling: a failure here must not hide the weekly sync)
   syncCutoff(); // booking cut-off vs other operators
   syncRoutePrices(); // net and retail price per route
+  syncDaily(); // daily activity of the last 21 days (logins, sessions, actions) for "who did not log in / who dropped"
 }
 
 // Price comparison: each operator's average ticket price vs the other operators selling the SAME route (from city -> to city;
@@ -350,6 +351,73 @@ function usageSql_(start, end) {
     'SELECT op, \'feature\' AS kind, code, COUNT(*) AS events, COUNT(DISTINCT d) AS days FROM f WHERE code IS NOT NULL AND code NOT IN (' +
     SKIP_FEATURES.map(function (s) { return '\'' + s + '\''; }).join(', ') + ') GROUP BY 1, 2, 3 ' +
     'UNION ALL SELECT op, \'category\', code, COUNT(*), COUNT(DISTINCT d) FROM c GROUP BY 1, 2, 3';
+}
+
+/**
+ * Daily activity: per operator and Bangkok day, the logins (tm_login and the old tm_*_login events), GA sessions, the counted
+ * actions (WAO_EVENTS), which WAO categories and how many events per feature, plus the operator's country and whether it is in
+ * the WAO base that day (live, with an API booking operator). Admin users and the test operator tbilisi (28278) are left out,
+ * as on the November Launch Adoption page. Sends the last `days` days (default 21, today is partial) oldest first; the site
+ * replaces each day, so running it again is safe. Reads about 30 MB. First run: syncDaily(30) via syncDaily30.
+ */
+function syncDaily(days) {
+  var n = typeof days === 'number' && days > 0 ? days : 21;
+  var first = addDays_(mondayOf_(0), -7 * 8); // never earlier than 8 weeks back
+  var todayIso = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+  var start = addDays_(todayIso, -(n - 1));
+  if (start < first) start = first;
+  var end = addDays_(todayIso, 1);
+  var roster = {};
+  runQuery_('SELECT operator_id, operator_name, operator_country, CAST(live_date AS STRING), CAST(has_api_booking_operator AS STRING) FROM `' + PROJECT_ID + '.dwh.dim_operator`').forEach(function (r) {
+    roster[Number(r[0])] = { name: r[1], country: r[2], live: r[3], api: /^(true|1)$/i.test(String(r[4])) };
+  });
+  var byDay = {};
+  function opOf_(day, id) {
+    var ops = byDay[day] || (byDay[day] = {});
+    var info = roster[id] || {};
+    return ops[id] || (ops[id] = { operatorId: id, operatorName: info.name || 'Operator ' + id, country: info.country || null, inBase: !!(info.api && info.live && info.live.slice(0, 10) <= day), logins: 0, sessions: 0, actions: 0, categories: [], features: {} });
+  }
+  runQuery_(dailySql_(start + ' 00:00:00+07:00', end + ' 00:00:00+07:00')).forEach(function (r) {
+    var op = opOf_(r[1], Number(r[0]));
+    var kind = r[2], code = r[3], count = Number(r[4]);
+    if (kind === 'login') op.logins = count;
+    else if (kind === 'session') op.sessions = count;
+    else if (kind === 'action') op.actions = count;
+    else if (kind === 'category') op.categories.push(code);
+    else op.features[code] = count;
+  });
+  // The WAO base counts operators with no activity too: add every roster operator that is in the base that day.
+  for (var d = start; d <= todayIso; d = addDays_(d, 1)) {
+    Object.keys(roster).forEach(function (id) {
+      var info = roster[id];
+      if (info.api && info.live && info.live.slice(0, 10) <= d && Number(id) !== 28278) opOf_(d, Number(id));
+    });
+  }
+  Object.keys(byDay).sort().forEach(function (day) {
+    var rows = Object.keys(byDay[day]).map(function (k) { return byDay[day][k]; });
+    var res = post_('daily', { day: day, rows: rows });
+    Logger.log('Daily, %s: %s operators -> %s', day, rows.length, JSON.stringify(res));
+  });
+}
+
+/** First run / backfill: the last 30 days. */
+function syncDaily30() { syncDaily(30); }
+
+function dailySql_(start, end) {
+  var events = '(SELECT event_timestamp, user_pseudo_id, ep_ga_session_id AS sid, LOWER(event_name) AS n, ep_operator_id AS op, CAST(DATE(timestamp, \'' + TZ + '\') AS STRING) AS d FROM `' + PROJECT_ID + '.raw_tables.TABLE` ' +
+    'WHERE timestamp >= TIMESTAMP(\'' + start + '\') AND timestamp < TIMESTAMP(\'' + end + '\') AND ep_operator_id IS NOT NULL AND ep_operator_id != 28278 ' +
+    'AND COALESCE(LOWER(CAST(ep_is_admin AS STRING)), \'\') NOT IN (\'true\', \'1\') AND NOT STARTS_WITH(LOWER(event_name), \'wls_\') AND NOT STARTS_WITH(LOWER(event_name), \'grid_\'))';
+  var whens = FEATURE_PATTERNS.map(function (p) { return 'WHEN REGEXP_CONTAINS(n, r\'' + p[1] + '\') THEN \'' + p[0] + '\''; }).join(' ');
+  return 'WITH ev AS (' + events.replace('TABLE', 'events_flatten') + ' UNION DISTINCT ' + events.replace('TABLE', 'events_flatten_intraday') + '), ' +
+    'w AS (SELECT SPLIT(x, \':\')[OFFSET(0)] AS n, SPLIT(x, \':\')[OFFSET(1)] AS c FROM UNNEST(SPLIT(\'' + WAO_EVENTS + '\', \',\')) AS x), ' +
+    'f AS (SELECT op, d, CASE ' + whens + ' END AS code FROM ev), ' +
+    'c AS (SELECT ev.op, ev.d, w.c AS code FROM ev JOIN w USING (n)) ' +
+    'SELECT CAST(op AS STRING), d, \'login\' AS kind, \'\' AS code, COUNT(*) AS n FROM ev WHERE n = \'tm_login\' OR REGEXP_CONTAINS(n, r\'^tm_.*_login$\') GROUP BY 1, 2 ' +
+    'UNION ALL SELECT CAST(op AS STRING), d, \'session\', \'\', COUNT(DISTINCT CONCAT(user_pseudo_id, \'-\', CAST(sid AS STRING))) FROM ev WHERE sid IS NOT NULL GROUP BY 1, 2 ' +
+    'UNION ALL SELECT CAST(op AS STRING), d, \'action\', \'\', COUNT(*) FROM c GROUP BY 1, 2 ' +
+    'UNION ALL SELECT CAST(op AS STRING), d, \'category\', code, COUNT(*) FROM c GROUP BY 1, 2, 3 ' +
+    'UNION ALL SELECT CAST(op AS STRING), d, \'feature\', code, COUNT(*) FROM f WHERE code IS NOT NULL AND code NOT IN (' +
+    SKIP_FEATURES.map(function (s) { return '\'' + s + '\''; }).join(', ') + ') GROUP BY 1, 2, 3';
 }
 
 /** Runs a standard-SQL query and returns every row as an array of strings. */

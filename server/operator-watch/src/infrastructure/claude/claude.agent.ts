@@ -31,6 +31,8 @@ export const CLAUDE_AUTHOR: Actor = { id: 'agent:claude', name: 'Claude' };
 export interface WeeklyLookup {
   forAccount(accountId: string, weeks: number): Promise<{ usage: UsageWithFeatures[]; tickets: TicketsView[]; usageWeeks: string[]; ticketWeeks?: string[]; pricing?: PricingRecord[]; pricingSyncedAt?: string | null; cutoff?: CutoffRecord[]; cutoffSyncedAt?: string | null }>;
   week(kind: 'usage' | 'tickets', week?: string): Promise<(UsageWithFeatures | TicketsView)[]>;
+  dailyReportFor?(day?: string): Promise<unknown>;
+  dailyActivity?(opts: { day?: string; accountId?: string }): Promise<unknown>;
   insights?(opts: { scope: 'top_features' | 'changes'; week?: string; accountId?: string }): Promise<unknown>;
   routePrices?(accountId: string): Promise<{ routes: RoutePrice[]; windowDays: number | null; syncedAt: string | null }>;
 }
@@ -152,6 +154,41 @@ export class ClaudeAccountAssistant implements AccountAssistant {
               return formatWeekly(data);
             },
           }),
+          ...(weekly.dailyReportFor
+            ? [
+                betaZodTool({
+                  name: 'get_daily_report',
+                  description: 'The numbers behind the daily "November Release" Slack report for one day (default yesterday): WAO (rolling 7 days) with change vs a week earlier and vs the previous day, scoreboard (operators active, logins, sessions) vs the daily average of the previous 7 days, category share with change, WAO by country, and who crossed into or slipped below WAO that day.',
+                  inputSchema: z.object({ day: z.string().optional().describe('YYYY-MM-DD, default yesterday') }),
+                  run: async ({ day }) => {
+                    try {
+                      return JSON.stringify(await weekly.dailyReportFor!(day));
+                    } catch (error) {
+                      return `Could not read the daily report: ${error instanceof Error ? error.message : String(error)}`;
+                    }
+                  },
+                }),
+              ]
+            : []),
+          ...(weekly.dailyActivity
+            ? [
+                betaZodTool({
+                  name: 'get_daily_activity',
+                  description: 'Day-level activity from the daily sync. Without an operator_id: for one day (default yesterday) who did NOT log in although they usually do, and who dropped activity to half or less of their own typical day (with the features that fell). With an operator_id: that operator\'s last 14 days (logins, actions, categories per day) and how many days in a row it has been quiet. Today is partial (flagged).',
+                  inputSchema: z.object({
+                    operator_id: z.string().optional().describe('One operator; defaults to this chat operator, pass "all" for everyone'),
+                    day: z.string().optional().describe('YYYY-MM-DD, default yesterday'),
+                  }),
+                  run: async ({ operator_id, day }) => {
+                    try {
+                      return JSON.stringify(await weekly.dailyActivity!({ day, accountId: operator_id === 'all' ? undefined : operator_id || account.id }));
+                    } catch (error) {
+                      return `Could not read the daily activity: ${error instanceof Error ? error.message : String(error)}`;
+                    }
+                  },
+                }),
+              ]
+            : []),
           ...(weekly.insights
             ? [
                 betaZodTool({
@@ -308,6 +345,26 @@ export class ClaudeWorkspaceAssistant {
           }
         },
       }),
+      ...(weekly.dailyReportFor
+        ? [
+            betaZodTool({
+              name: 'get_daily_report',
+              description: 'The numbers behind the daily "November Release" Slack report for one day (default yesterday): WAO (rolling 7 days) with change vs a week earlier and vs the previous day, scoreboard (operators active, logins, sessions) vs the daily average of the previous 7 days, category share with change, WAO by country, and who crossed into or slipped below WAO that day.',
+              inputSchema: z.object({ day: z.string().optional().describe('YYYY-MM-DD, default yesterday') }),
+              run: ({ day }) => attempt(() => weekly.dailyReportFor!(day)),
+            }),
+          ]
+        : []),
+      ...(weekly.dailyActivity
+        ? [
+            betaZodTool({
+              name: 'get_daily_activity',
+              description: 'Day-level activity from the daily sync. Without an operator_id: for one day (default yesterday) who did NOT log in although they usually do, and who dropped activity to half or less of their own typical day (with the features that fell). With an operator_id: that operator\'s last 14 days (logins, actions, categories per day) and how many days in a row it has been quiet. Today is partial (flagged).',
+              inputSchema: z.object({ operator_id: z.string().optional().describe('One operator (omit for everyone)'), day: z.string().optional().describe('YYYY-MM-DD, default yesterday') }),
+              run: ({ operator_id, day }) => attempt(() => weekly.dailyActivity!({ day, accountId: operator_id })),
+            }),
+          ]
+        : []),
       ...(weekly.insights
         ? [
             betaZodTool({

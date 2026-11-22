@@ -1,6 +1,6 @@
 import { Pool, QueryResultRow } from 'pg';
 import { FEATURES, Feature } from '../../domain/workspace/services/weekly-data';
-import { CutoffRecord, PricingRecord, RoutePricesRecord, WeeklyDataStore, WeeklyTicketRecord, WeeklyUpload, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
+import { CutoffRecord, DailyRecord, PricingRecord, RoutePricesRecord, WeeklyDataStore, WeeklyTicketRecord, WeeklyUpload, WeeklyUsageRecord } from '../../domain/workspace/types/repositories/workspace.ports';
 
 /** node-postgres turns a `date` into local midnight, so read it back with local fields (not UTC) to keep the day. */
 const day = (v: unknown): string =>
@@ -38,6 +38,21 @@ const toPricing = (r: QueryResultRow): PricingRecord => ({
   windowDays: r.window_days,
   detail: r.detail ?? [],
   computedAt: new Date(r.computed_at).toISOString(),
+});
+
+const toDaily = (r: QueryResultRow): DailyRecord => ({
+  day: day(r.day),
+  operatorId: r.operator_id,
+  operatorName: r.operator_name,
+  nameKey: r.name_key,
+  accountId: r.account_id,
+  logins: r.logins,
+  sessions: r.sessions,
+  country: r.country,
+  inBase: r.in_base,
+  actions: r.actions,
+  categories: r.categories ?? [],
+  features: r.features ?? {},
 });
 
 const toCutoff = (r: QueryResultRow): CutoffRecord => ({
@@ -125,7 +140,7 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
   }
 
   async assignAccount(nameKey: string, accountId: string): Promise<void> {
-    for (const table of ['weekly_usage', 'weekly_tickets', 'operator_pricing', 'operator_cutoff', 'operator_route_prices']) {
+    for (const table of ['weekly_usage', 'weekly_tickets', 'operator_pricing', 'operator_cutoff', 'operator_route_prices', 'operator_daily']) {
       await this.pool.query(`update ${table} set account_id = $2 where name_key = $1 and account_id is null`, [nameKey, accountId]);
     }
   }
@@ -154,6 +169,7 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
       await client.query('update operator_pricing set account_id = $2 where name_key = $1', [nameKey, accountId]);
       await client.query('update operator_cutoff set account_id = $2 where name_key = $1', [nameKey, accountId]);
       await client.query('update operator_route_prices set account_id = $2 where name_key = $1', [nameKey, accountId]);
+      await client.query('update operator_daily set account_id = $2 where name_key = $1', [nameKey, accountId]);
       await client.query('commit');
     } catch (error) {
       await client.query('rollback');
@@ -185,6 +201,37 @@ export class PgWeeklyDataStore implements WeeklyDataStore {
     } finally {
       client.release();
     }
+  }
+
+  async replaceDaily(dayIso: string, rows: readonly DailyRecord[], by: string): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('begin');
+      await client.query('delete from operator_daily where day = $1', [dayIso]);
+      await client.query("delete from operator_daily where day < ($1::date - 60)", [dayIso]);
+      for (const r of rows) {
+        await client.query(
+          `insert into operator_daily (day, operator_id, operator_name, name_key, account_id, logins, sessions, country, in_base, actions, categories, features, uploaded_by)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+          [dayIso, r.operatorId, r.operatorName, r.nameKey, r.accountId, r.logins, r.sessions, r.country, r.inBase, r.actions, JSON.stringify(r.categories), JSON.stringify(r.features), by],
+        );
+      }
+      await client.query('commit');
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async dailyRange(from: string, to: string): Promise<DailyRecord[]> {
+    return (await this.pool.query('select * from operator_daily where day between $1 and $2 order by day', [from, to])).rows.map(toDaily);
+  }
+
+  async dailySyncedAt(): Promise<string | null> {
+    const at = (await this.pool.query('select max(uploaded_at) as at from operator_daily')).rows[0]?.at;
+    return at ? new Date(at).toISOString() : null;
   }
 
   async replaceCutoff(rows: readonly CutoffRecord[], by: string): Promise<void> {

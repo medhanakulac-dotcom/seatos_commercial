@@ -531,6 +531,41 @@ $ow_migration$;
 end
 $ow$;
 
+do $ow$
+begin
+  if not exists (select 1 from operator_watch.schema_migrations where name = '013_daily_activity.sql') then
+    execute $ow_migration$
+-- Daily activity from BigQuery (the daily sync): per operator and day, how many logins and counted actions, which WAO
+-- categories and which features (events per feature code). The sync replaces each day it sends; the last 60 days are kept.
+-- sessions: distinct GA sessions; country: operator country; in_base: live operator with an API booking operator that day (the WAO base).
+-- Answers "who did not log in yesterday" and "who dropped activity" without waiting for the week to end.
+
+create table operator_daily (
+  day           date not null,
+  operator_id   integer not null,
+  operator_name text not null,
+  name_key      text not null,
+  account_id    text,
+  logins        integer not null default 0,
+  sessions      integer not null default 0,
+  country       text,
+  in_base       boolean not null default false,
+  actions       integer not null default 0,
+  categories    jsonb not null default '[]',
+  features      jsonb not null default '{}',
+  uploaded_at   timestamptz not null default now(),
+  uploaded_by   text not null,
+  primary key (day, operator_id)
+);
+create index operator_daily_account on operator_daily (account_id, day);
+create index operator_daily_name on operator_daily (name_key);
+$ow_migration$;
+    insert into operator_watch.schema_migrations (name) values ('013_daily_activity.sql');
+    raise notice 'Applied 013_daily_activity.sql';
+  end if;
+end
+$ow$;
+
 reset role;
 reset search_path;
 

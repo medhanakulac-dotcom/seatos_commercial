@@ -50,6 +50,14 @@ export class WeeklyIngestController {
     return this.weekly.ingestCutoff(body, BIGQUERY_SYNC_ACTOR);
   }
 
+  /** `{ day, rows: [{ operatorId, operatorName, logins, actions, categories: ['i','r',...], features: { bl: 12 } }] }` — replaces one day of activity. */
+  @Post('daily')
+  @HttpCode(200)
+  daily(@Headers('authorization') authorization: string | undefined, @Body() body: unknown) {
+    authorize(authorization);
+    return this.weekly.ingestDaily(body, BIGQUERY_SYNC_ACTOR);
+  }
+
   /** `{ windowDays, reset?, rows: [{ operatorId, operatorName, routes: [{ currency, from, to, vehicleType, vehicleClass, tickets, netAvg, netMin, netMax, retailAvg }] }] }` — a batch of the route prices; `reset: true` on the first batch. */
   @Post('route-prices')
   @HttpCode(200)

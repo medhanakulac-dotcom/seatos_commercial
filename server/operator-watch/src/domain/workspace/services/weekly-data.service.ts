@@ -1,8 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { CrmAccount } from '../entities/workspace.entities';
-import { Clock, CutoffRecord, CutoffSegment, PricingRecord, RoutePrice, RoutePricesRecord, PricingSegment, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
+import { Clock, CutoffRecord, DailyRecord, CutoffSegment, PricingRecord, RoutePrice, RoutePricesRecord, PricingSegment, WEEKLY_DATA_STORE, WeeklyDataStore, WeeklyTicketRecord, WeeklyUsageRecord, WORKSPACE_CLOCK } from '../types/repositories/workspace.ports';
 import { RunService } from './run.service';
 import { CATEGORY_CODES, featureByCode, SEATOS_FEATURES } from './seatos-features';
+import { dailyOverview, operatorTimeline } from './daily-insights';
+import { dailyReport } from './daily-report';
 import { operatorChanges, portfolioChanges, topFeatures } from './usage-insights';
 import { cleanName, FEATURES, FeatureActivity, Feature, legacyNameKey, mondayOf, nameKey, nameSimilarity, parseTicketsCsv, parseUsageCsv, parseWeek, WeeklyDataError, WeeklyKind } from './weekly-data';
 
@@ -449,6 +451,57 @@ export class WeeklyDataService {
       }
     }
     return { weeks, features, feature: code, operators: [...operators.values()].sort((x, y) => y.events - x.events || x.operatorName.localeCompare(y.operatorName)) };
+  }
+
+  /** One day of activity from the BigQuery sync: replaces that day. `{ day, rows: [{ operatorId, operatorName, logins, actions, categories: codes, features: { code: events } }] }` */
+  async ingestDaily(payload: unknown, by: string): Promise<{ day: string; rows: number; matched: number }> {
+    const p = (payload ?? {}) as { day?: unknown; rows?: unknown };
+    const day = parseWeek(String(p.day ?? ''));
+    if (!Array.isArray(p.rows)) throw new WeeklyDataError('rows must be a list');
+    if (p.rows.length > MAX_INGEST_ROWS) throw new WeeklyDataError(`At most ${MAX_INGEST_ROWS} rows`);
+    const match = await this.matcher();
+    const int = (v: unknown) => Math.max(0, Math.round(Number(v) || 0));
+    const records = new Map<number, DailyRecord>();
+    for (const raw of p.rows as Record<string, unknown>[]) {
+      const name = cleanName(typeof raw.operatorName === 'string' ? raw.operatorName : '');
+      if (!name || !Number.isInteger(raw.operatorId)) throw new WeeklyDataError('Every row needs operatorId (integer) and operatorName');
+      const features: Record<string, number> = {};
+      for (const [code, n] of Object.entries((raw.features ?? {}) as Record<string, unknown>)) if (featureByCode(code)) features[code] = int(n);
+      const categories = (Array.isArray(raw.categories) ? raw.categories : []).map((c) => CATEGORY_CODES[c as keyof typeof CATEGORY_CODES]).filter(Boolean) as string[];
+      const m = match(name);
+      records.set(raw.operatorId as number, { day, operatorId: raw.operatorId as number, operatorName: name, nameKey: m.key, accountId: m.accountId, logins: int(raw.logins), sessions: int(raw.sessions), country: typeof raw.country === 'string' && raw.country.trim() ? raw.country.trim() : null, inBase: raw.inBase === true, actions: int(raw.actions), categories, features });
+    }
+    const rows = [...records.values()];
+    await this.store.replaceDaily(day, rows, by);
+    return { day, rows: rows.length, matched: rows.filter((r) => r.accountId).length };
+  }
+
+  /**
+   * Day-level reading: with no account, who did not log in and who dropped activity on a day (against each operator's own
+   * pattern); with an account, its last 14 days. The day defaults to yesterday (Bangkok); today is partial and flagged.
+   */
+  async dailyActivity({ day, accountId }: { day?: string; accountId?: string }) {
+    await this.rematchUnmatched();
+    const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(this.clock.now());
+    const shift = (iso: string, n: number) => new Date(new Date(`${iso}T00:00:00Z`).getTime() + n * 86_400_000).toISOString().slice(0, 10);
+    const target = day ? parseWeek(day) : shift(todayIso, -1);
+    const rows = await this.store.dailyRange(shift(target, -14), target);
+    if (!rows.length) return { error: 'No daily activity synced yet.' };
+    if (!rows.some((r) => r.day === target)) return { error: `No activity synced for ${target}. Latest synced day: ${rows[rows.length - 1].day}.` };
+    const partial = target >= todayIso;
+    if (accountId) return { day: target, partial_day_so_far: partial, ...operatorTimeline(rows, accountId, target) };
+    return { partial_day_so_far: partial, ...dailyOverview(rows, target, (code) => featureByCode(code)?.name ?? code) };
+  }
+
+  /** The numbers of the daily November Release report for one day (default yesterday): WAO (rolling 7 days), scoreboard, categories, countries, who crossed in or slipped. */
+  async dailyReportFor(day?: string) {
+    await this.rematchUnmatched();
+    const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(this.clock.now());
+    const shift = (iso: string, n: number) => new Date(new Date(`${iso}T00:00:00Z`).getTime() + n * 86_400_000).toISOString().slice(0, 10);
+    const target = day ? parseWeek(day) : shift(todayIso, -1);
+    const rows = await this.store.dailyRange(shift(target, -14), target);
+    if (!rows.some((r) => r.day === target)) return { error: `No daily activity synced for ${target}.` };
+    return { partial_day_so_far: target >= todayIso, ...dailyReport(rows, target) };
   }
 
   /**
