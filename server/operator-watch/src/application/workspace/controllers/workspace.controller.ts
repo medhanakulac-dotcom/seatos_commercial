@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, Param, Post, Query, Req, UseFilters, U
 import { displayNameOf } from '../../../auth/display-name';
 import { AuthenticatedUser, RbacGuard, RequirePermission, SessionGuard } from '../../../auth/guards';
 import { Actor, HEALTHS, Language, RewriteMode } from '../../../domain/workspace/entities/workspace.entities';
+import { engineOverview } from '../../../domain/workspace/services/engine';
 import { DORMANT_PLAYBOOK, PLAYBOOK_MATRIX } from '../../../domain/workspace/services/playbook.rules';
 import { WeeklyDataService } from '../../../domain/workspace/services/weekly-data.service';
 import { WorkspaceService } from '../../../domain/workspace/services/workspace.service';
@@ -166,6 +167,14 @@ export class WorkspaceController {
   async resolveTmsLink(@Param('id', AccountIdPipe) id: string) {
     await this.workspace.resolveTmsLink(id);
     return this.detail(id);
+  }
+
+  /** The Engine page: what the weekly run read, flagged and left for people, WAO category mix, agents, recent events. */
+  @Get('engine')
+  async engine() {
+    await this.workspace.ready();
+    const [inputs, mix, zero] = await Promise.all([this.workspace.engineInputs(15), this.weeklyData.categoryMix(), this.weeklyData.zeroTickets()]);
+    return engineOverview({ ...inputs, mix, zeroTicketIds: zero.accountIds });
   }
 
   /** Accounts that were weekly active (used at least 3 of 7 categories) in the latest week with usage data. */

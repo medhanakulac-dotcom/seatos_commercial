@@ -515,8 +515,8 @@ export class WorkspaceService {
 
   // ── dashboards ────────────────────────────────────────────────────────────
 
-  async activity(limit: number): Promise<(CaseEvent & { name: string })[]> {
-    const [{ snapshot }, events] = await Promise.all([this.current(), this.store.recentActivity(limit)]);
+  async activity(limit: number, scope: 'user' | 'all' = 'user'): Promise<(CaseEvent & { name: string })[]> {
+    const [{ snapshot }, events] = await Promise.all([this.current(), this.store.recentActivity(limit, scope)]);
     const names = new Map(snapshot.accounts.map((a) => [a.id, a.name]));
     return events.map((e) => ({ ...e, name: names.get(e.operatorId) ?? e.operatorId }));
   }
@@ -552,6 +552,12 @@ export class WorkspaceService {
       thisWeek: [...byOwner.values()].sort((a, b) => b.total - a.total),
       lastWeek: { week: previous?.label ?? '—', rows: [...last.values()].sort((a, b) => b.total - a.total) },
     };
+  }
+
+  /** Inputs of the Engine page that live in the workspace: the run, every account's view, recent events, sent count. */
+  async engineInputs(eventLimit = 15) {
+    const [{ run }, views, events, sentCount] = await Promise.all([this.current(), this.list(), this.activity(eventLimit, 'all'), this.store.countSent()]);
+    return { run, views, events, sentCount };
   }
 
   async sent() {

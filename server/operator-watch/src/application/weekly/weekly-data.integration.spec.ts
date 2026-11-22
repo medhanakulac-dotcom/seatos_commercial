@@ -276,6 +276,20 @@ describe('Weekly data HTTP integration', () => {
     expect((await call('GET', '/workspace/feature-usage?feature=nope', 'viewer')).statusCode).toBe(400);
   });
 
+  it('serves the Engine page: run counts, 8 agents, WAO category mix and who is one category short', async () => {
+    const [, , c] = accounts;
+    expect((await ingest({ week: '2026-12-14', rows: [{ operatorId: 3, operatorName: c.name, categories: ['r', 't'], features: {} }] }, INGEST_TOKEN, 'weekly-usage')).statusCode).toBe(200);
+    expect((await call('GET', '/workspace/engine', 'viewer')).statusCode).toBe(200);
+    const e = (await call('GET', '/workspace/engine', 'viewer')).json();
+    expect(e.agents).toHaveLength(8);
+    expect(e.milestones.week).toBe('2026-12-14');
+    expect(e.milestones.buckets.find((b: { categories: number }) => b.categories === 2).operators).toBe(1);
+    expect(e.milestones.stuckAtTwo).toEqual([{ accountId: c.id, name: c.name }]);
+    expect(e.kpis.scanned).toBeGreaterThan(0);
+    expect(e.kpis.flagged).toBe(e.kpis.scanned - e.kpis.filtered);
+    expect(Array.isArray(e.queue) && Array.isArray(e.log)).toBe(true);
+  });
+
   it('shows an aliased account the usage and tickets of the other operator name, and does not call it zero ticket', async () => {
     const [a, b] = accounts;
     const week = '2027-01-04';

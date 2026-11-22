@@ -5,6 +5,7 @@ import { Topbar } from '../components/layout/Topbar';
 import { AccountRecordPage } from '../features/record/AccountRecordPage';
 import { AccountsPage } from '../features/accounts/AccountsPage';
 import { AuthGate } from '../features/auth/AuthGate';
+import { EnginePage } from '../features/engine/EnginePage';
 import { HomePage } from '../features/home/HomePage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 
@@ -35,6 +36,7 @@ export function App() {
       <Routes>
         <Route element={<Shell />}>
           <Route index element={<HomePage />} />
+          <Route path="engine" element={<EnginePage />} />
           <Route path="accounts" element={<AccountsPage />} />
           <Route path="accounts/:id" element={<AccountRecordPage />} />
           <Route path="settings" element={<SettingsPage />} />

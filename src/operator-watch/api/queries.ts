@@ -37,6 +37,8 @@ export const useFeatureUsage = (feature?: string) => useQuery({ queryKey: ['work
 /** Ids of the accounts that sold no tickets in the last two weeks of ticket data. */
 export const useZeroTicketIds = () =>
   useQuery({ queryKey: ['workspace', 'zero-tickets'], queryFn: workspaceApi.zeroTickets, staleTime: 5 * 60_000, select: (d) => new Set(d.accountIds) });
+/** The Engine page: what the weekly run read, flagged and left for people. */
+export const useEngine = () => useQuery({ queryKey: ['workspace', 'engine'], queryFn: workspaceApi.engine, refetchInterval: 60_000 });
 export const useActivity = () => useQuery({ queryKey: keys.activity, queryFn: () => workspaceApi.activity(6) });
 export const useSent = () => useQuery({ queryKey: keys.sent, queryFn: workspaceApi.sent });
 export const useLeader = () => useQuery({ queryKey: keys.leader, queryFn: workspaceApi.leader });
@@ -68,5 +70,6 @@ export function invalidateWorkspace(qc: QueryClient) {
     qc.invalidateQueries({ queryKey: keys.activity }),
     qc.invalidateQueries({ queryKey: keys.sent }),
     qc.invalidateQueries({ queryKey: keys.leader }),
+    qc.invalidateQueries({ queryKey: ['workspace', 'engine'] }),
   ]);
 }

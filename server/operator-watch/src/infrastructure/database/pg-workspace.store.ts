@@ -322,8 +322,9 @@ export class PgWorkspaceStore implements WorkspaceStore {
     return rows.map((r: any) => ({ id: r.id, operatorId: r.operator_id, role: r.role, authorId: r.author_id, authorName: r.author_name, text: r.text, at: new Date(r.created_at).toISOString() }));
   }
 
-  async recentActivity(limit: number): Promise<CaseEvent[]> {
-    return (await this.q(`select * from case_events where origin = 'user' order by created_at desc limit $1`, [limit])).map(toEvent);
+  async recentActivity(limit: number, scope: 'user' | 'all' = 'user'): Promise<CaseEvent[]> {
+    const where = scope === 'all' ? `origin <> 'crm'` : `origin = 'user'`;
+    return (await this.q(`select * from case_events where ${where} order by created_at desc limit $1`, [limit])).map(toEvent);
   }
 
   async insertSendJob(j: SendJobRecord): Promise<void> {

@@ -75,7 +75,8 @@ export interface WorkspaceStore {
   insertEvent(e: CaseEvent): Promise<void>;
   updateEvent(e: CaseEvent): Promise<void>;
   eventsForOperator(operatorId: string): Promise<CaseEvent[]>;
-  recentActivity(limit: number): Promise<CaseEvent[]>;
+  /** Newest events across operators: people's actions only, or (`all`) also agent and system events (CRM facts excluded). */
+  recentActivity(limit: number, scope?: 'user' | 'all'): Promise<CaseEvent[]>;
 
   insertChatMessage(m: ChatMessage): Promise<void>;
   /** Oldest first; `limit` keeps the most recent messages. */

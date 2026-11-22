@@ -139,9 +139,9 @@ export class InMemoryWorkspaceStore implements WorkspaceStore {
     return this.chat.filter((m) => m.operatorId === operatorId).slice(-limit).map(clone);
   }
 
-  async recentActivity(limit: number) {
+  async recentActivity(limit: number, scope: 'user' | 'all' = 'user') {
     return this.events
-      .filter((e) => e.origin === 'user')
+      .filter((e) => (scope === 'all' ? e.origin !== 'crm' : e.origin === 'user'))
       .sort((a, b) => b.seq - a.seq)
       .slice(0, limit)
       .map(({ seq: _seq, ...e }) => clone(e));

@@ -430,6 +430,27 @@ export class WeeklyDataService {
   }
 
   /**
+   * Latest usage week by number of WAO categories used (for the Engine page): operators per category count, and the
+   * matched accounts that used exactly 2 — one category short of WAO.
+   */
+  async categoryMix(): Promise<{ week: string | null; byCategories: number[]; stuckAtTwo: { accountId: string; name: string }[] }> {
+    await this.rematchUnmatched();
+    const [rows, accounts] = await Promise.all([this.store.usageWeek(), this.accounts()]);
+    const byCategories = Array.from({ length: 8 }, () => 0);
+    const perKey = new Map<string, number>();
+    for (const r of rows) perKey.set(r.nameKey, Math.max(perKey.get(r.nameKey) ?? 0, r.featureCount));
+    for (const n of perKey.values()) byCategories[Math.min(Math.max(n, 0), 7)]++;
+    const perAccount = new Map<string, number>();
+    for (const r of rows) if (r.accountId) perAccount.set(r.accountId, Math.max(perAccount.get(r.accountId) ?? 0, r.featureCount));
+    const names = new Map(accounts.map((a) => [a.id, a.name]));
+    const stuckAtTwo = [...perAccount]
+      .filter(([id, n]) => n === 2 && names.has(id))
+      .map(([accountId]) => ({ accountId, name: names.get(accountId) as string }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return { week: rows[0]?.week ?? null, byCategories, stuckAtTwo };
+  }
+
+  /**
    * Who used a feature over the last four weeks of usage data: one entry per operator with its events and active days
    * in each week, most active first. A week only counts at 3 or more events (active); less is not use. Without a feature code only the picker (features and weeks) comes back.
    */

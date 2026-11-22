@@ -7,6 +7,7 @@ import './styles/operator-watch.css';
 /** Operator Watch pages the site's sidebar links to, and the in-app path each one opens. */
 export const OW_PAGES = {
   home: '/',
+  engine: '/engine',
   accounts: '/accounts',
   settings: '/settings',
 } as const;

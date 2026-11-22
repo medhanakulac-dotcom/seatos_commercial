@@ -4,7 +4,7 @@
 import {
   icHome, icSales, icToolkit, icOnboarding, icTraining, icCS, icCSTools,
   icPricing, icCalc, icProposal, icContract, icTemplates, icAdmin,
-  icOwHome, icOwAccounts, icOwSettings,
+  icOwHome, icOwEngine, icOwAccounts, icOwSettings,
 } from "./ui.jsx";
 import Home from "./sections/Home.jsx";
 import SalesProcess from "./sections/SalesProcess.jsx";
@@ -37,6 +37,7 @@ export const TOOLS = {
   admin: { title: "Admin" },
   // CS Operator Watch (src/operator-watch): one app, each item opens one of its pages.
   "ow-home": { title: "Operator Watch" },
+  "ow-engine": { title: "Operator Watch · Engine" },
   "ow-accounts": { title: "Operator Watch · Accounts" },
   "ow-settings": { title: "Operator Watch · Settings" },
 };
@@ -66,6 +67,7 @@ export const NAV = [
     badge: { text: "New", bg: "#2DD4BF" },
     items: [
       { tool: "ow-home", label: "Overview", icon: icOwHome, accent: "#2DD4BF" },
+      { tool: "ow-engine", label: "Engine", icon: icOwEngine, accent: "#2DD4BF", badge: { text: "New", bg: "#2DD4BF" } },
       { tool: "ow-accounts", label: "Accounts", icon: icOwAccounts, accent: "#2DD4BF" },
       { tool: "ow-settings", label: "Settings", icon: icOwSettings, accent: "#2DD4BF" },
     ],

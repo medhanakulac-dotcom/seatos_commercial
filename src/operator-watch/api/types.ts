@@ -372,3 +372,15 @@ export interface WeeklySummary {
   ignored: string[];
   accounts: { id: string; name: string }[];
 }
+
+/** GET /workspace/engine — the Engine page (server: domain/workspace/services/engine.ts). */
+export type EngineAgentStatus = 'live' | 'phase2' | 'phase3' | 'needs_data';
+export interface EngineOverview {
+  run: { label: string; status: string; trigger: 'schedule' | 'manual'; agent: string; startedAt: string; completedAt: string | null } | null;
+  kpis: { scanned: number; flagged: number; filtered: number; pending: number; approved: number; closed: number; rejected: number; hold: number; sentTotal: number };
+  wao: { week: string | null; active: number; withUsage: number };
+  agents: { key: string; name: string; job: string; data: string; status: EngineAgentStatus; count: number | null; countLabel: string | null }[];
+  queue: { accountId: string; name: string; owner: string | null; playbook: string; play: string; health: string; summary: string; signals: string[]; drafted: boolean }[];
+  milestones: { week: string | null; buckets: { categories: number; operators: number }[]; stuckAtTwo: { accountId: string; name: string }[] };
+  log: { id: string; at: string; kind: string; origin: string; accountId: string; name: string; text: string }[];
+}
